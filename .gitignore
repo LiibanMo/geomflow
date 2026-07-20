@@ -1,3 +1,5 @@
+gitignore
+
 # Prerequisites
 *.d
 
@@ -67,3 +69,14 @@ vcpkg_installed/
 # test output & cache
 Testing/
 .cache/
+
+# Formatting & linter
+.clangd
+.aider*
+
+# misc
+AGENTS.md
+papers/
+auth
+login
+opencode.json
