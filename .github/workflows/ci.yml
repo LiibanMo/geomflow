@@ -1,0 +1,90 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  build-test:
+    name: ${{ matrix.os }} / ${{ matrix.compiler }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-14]
+        compiler: [gcc, clang]
+        include:
+          - os: ubuntu-24.04
+            compiler: gcc
+            cc: gcc
+            cxx: g++
+          - os: ubuntu-24.04
+            compiler: clang
+            cc: clang
+            cxx: clang++
+          - os: macos-14
+            compiler: gcc
+            cc: gcc-14
+            cxx: g++-14
+          - os: macos-14
+            compiler: clang
+            cc: clang
+            cxx: clang++
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake build-essential
+
+      - name: Install dependencies (macOS)
+        if: runner.os == 'macOS'
+        run: brew install cmake
+
+      - name: Configure
+        run: |
+          CC=${{ matrix.cc }} CXX=${{ matrix.cxx }} \
+          cmake -B build -DBUILD_TESTING=ON
+
+      - name: Build
+        run: cmake --build build --target geomflow_tests -j $(nproc 2>/dev/null || sysctl -n hw.logicalcpu)
+
+      - name: Run tests
+        run: ./build/tests/geomflow_tests
+
+      - name: Clang-format check
+        run: |
+          find include tests -name '*.h' -o -name '*.cpp' | \
+          xargs clang-format --dry-run -Werror
+
+  python-bindings:
+    name: Python bindings
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install system deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake build-essential
+
+      - name: Install pybind11
+        run: pip install pybind11
+
+      - name: Configure
+        run: cmake -B build -DGEOMFLOW_BUILD_PYTHON=ON
+
+      - name: Build
+        run: cmake --build build -j $(nproc)
+
+      - name: Import test
+        run: PYTHONPATH=build python -c "import geomflow; print(geomflow.EuclideanMetric3D())"
