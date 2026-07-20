@@ -77,8 +77,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y cmake build-essential
 
-      - name: Install pybind11
-        run: pip install pybind11
+      - name: Install key modules
+        run: pip install pybind11 numpy
 
       - name: Get pybind11 CMake dir
         run: echo "PYBIND11_DIR=$(python -c 'import pybind11; print(pybind11.get_cmake_dir())')" >> $GITHUB_ENV
