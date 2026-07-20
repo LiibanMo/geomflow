@@ -80,8 +80,11 @@ jobs:
       - name: Install pybind11
         run: pip install pybind11
 
+      - name: Get pybind11 CMake dir
+        run: echo "PYBIND11_DIR=$(python -c 'import pybind11; print(pybind11.get_cmake_dir())')" >> $GITHUB_ENV
+
       - name: Configure
-        run: cmake -B build -DBUILD_PYTHON=ON
+        run: cmake -B build -DBUILD_PYTHON=ON -Dpybind11_DIR=${{ env.PYBIND11_DIR }}
 
       - name: Build
         run: cmake --build build -j $(nproc)
