@@ -8,8 +8,10 @@ version = "0.1.0"
 description = "Intrinsic Riemannian Manifold Continuous Normalizing Flow Library"
 requires-python = ">=3.12"
 dependencies = [
-    "torch>=2.0.0",
-    "numpy>=1.24.0",
+    "torch>=2.0",
+    "numpy>=1.24",
+    "matplotlib>=3.7",
+    "imageio>=2.31",
 ]
 readme = "README.md"
 license = { text = "MIT" }

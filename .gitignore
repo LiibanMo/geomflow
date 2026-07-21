@@ -75,6 +75,8 @@ Testing/
 .aider*
 
 # misc
+.venv/
+.clang-format
 AGENTS.md
 papers/
 auth
