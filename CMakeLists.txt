@@ -16,6 +16,12 @@ if(BUILD_TESTS)
   add_subdirectory(tests)
 endif()
 
+# --- C++ examples ---
+option(BUILD_EXAMPLES "Build C++ example applications" ON)
+if(BUILD_EXAMPLES)
+  add_subdirectory(examples/cpp)
+endif()
+
 # --- Python module (pybind11) ---
 option(BUILD_PYTHON "Build Python pybind11 module" OFF)
 if(BUILD_PYTHON)
