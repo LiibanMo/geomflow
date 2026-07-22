@@ -36,6 +36,59 @@ except ImportError:
     print("pyvista is required.  Install it with:  pip install pyvista")
     sys.exit(1)
 
+try:
+    from manifolds import sphere as sphere_manifold
+    from manifolds import torus as torus_manifold
+except ImportError:
+    sphere_manifold = None  # type: ignore[assignment]
+    torus_manifold = None   # type: ignore[assignment]
+
+
+# ---------------------------------------------------------------------------
+# target generation helpers (inlined for C++ pipeline)
+# ---------------------------------------------------------------------------
+
+def _generate_target_data(manifold: str, n: int) -> np.ndarray | None:
+    rng = np.random.default_rng(123)
+    if manifold == "euclidean":
+        centers = np.array([[3, 3], [3, -3], [-3, 3], [-3, -3]])
+        pick = rng.integers(0, 4, n)
+        return centers[pick] + rng.normal(0, 0.3, (n, 2))
+    elif manifold == "sphere":
+        theta = rng.normal(np.pi / 2, 0.3, n) + rng.normal(0, 0.05, n)
+        phi1 = rng.uniform(0, 2 * np.pi, n // 2)
+        phi2 = rng.uniform(0, 2 * np.pi, n - n // 2)
+        phi = np.concatenate([phi1, phi2])
+        rng.shuffle(phi)
+        return np.column_stack([theta, phi])
+    elif manifold == "torus":
+        theta = rng.uniform(0, 2 * np.pi, n) + rng.normal(0, 0.1, n)
+        pick = rng.integers(0, 2, n)
+        phi = np.where(pick == 0, rng.normal(0, 0.3, n), rng.normal(np.pi, 0.3, n))
+        phi += rng.normal(0, 0.1, n)
+        return np.column_stack([theta, phi])
+    return None
+
+
+def _chart_to_cartesian(points: np.ndarray, manifold: str) -> np.ndarray:
+    if manifold == "sphere":
+        theta, phi = points[:, 0], points[:, 1]
+        st = np.sin(theta)
+        x = st * np.cos(phi)
+        y = st * np.sin(phi)
+        z = np.cos(theta)
+        return np.column_stack([x, y, z])
+    elif manifold == "torus":
+        major, minor = points[:, 0], points[:, 1]
+        a = 2.0 + np.cos(minor)
+        x = a * np.cos(major)
+        y = a * np.sin(major)
+        z = np.sin(minor)
+        return np.column_stack([x, y, z])
+    else:
+        z = np.zeros((points.shape[0], 1))
+        return np.column_stack([points, z])
+
 
 # ---------------------------------------------------------------------------
 # data loaders
@@ -129,13 +182,20 @@ def main():
     parser.add_argument("--fps", type=int, default=10)
     parser.add_argument("--point-size", type=float, default=8.0)
     parser.add_argument("--figsize", type=int, default=6)
-    parser.add_argument("--n-trails", type=int, default=30,
+    parser.add_argument("--n-trails", type=int, default=0,
                         help="Number of trajectory streamlines (0=off)")
     parser.add_argument("--trail-width", type=float, default=2.0)
     parser.add_argument("--manifold-opacity", type=float, default=0.20)
     parser.add_argument("--window-size", type=int, default=800)
-    parser.add_argument("--z-colour", action="store_true",
-                        help="Colour points by Z height")
+    parser.add_argument("--color-mode", default="transition",
+                        choices=["transition", "z", "fixed"],
+                        help="Point colouring: red→blue progress, Z-height, or fixed blue")
+    parser.add_argument("--test-data", default="",
+                        help="Path to CSV of target data (chart coords); if omitted, samples from target distribution")
+    parser.add_argument("--hide-target", action="store_true", default=False,
+                        help="Hide the green target-distribution reference points")
+    parser.add_argument("--hold", type=float, default=2.0,
+                        help="Seconds to hold on the final fitted state (0=off)")
     args = parser.parse_args()
 
     # ---- read frames ------------------------------------------------------
@@ -214,15 +274,44 @@ def main():
             line_width=args.trail_width, opacity=0.55, show_scalar_bar=False,
         )
 
+    # ---- target (original) data -------------------------------------------
+    if manifold in ("sphere", "torus", "euclidean"):
+        if args.test_data:
+            target_chart = np.loadtxt(args.test_data, delimiter=",", skiprows=0, dtype=np.float64)
+            if target_chart.ndim == 1:
+                target_chart = target_chart.reshape(1, -1)
+            if target_chart.shape[1] != 2 and manifold != "euclidean":
+                raise ValueError(f"--test-data expected N×2, got {target_chart.shape}")
+        else:
+            target_chart = _generate_target_data(manifold, n_points)
+        if target_chart is not None:
+            target_cart = _chart_to_cartesian(target_chart, manifold)
+        else:
+            target_cart = None
+    else:
+        target_cart = None
+
+    # ---- colour mode -------------------------------------------------------
+    use_transition = args.color_mode == "transition"
+    use_z = args.color_mode == "z"
+
     # initial point cloud
     init_pts = frames[0][1]
     pc = pv.PolyData(init_pts)
-    scalar_name = "_z" if args.z_colour else None
-    cmap = "plasma"
-    if args.z_colour:
+
+    if use_transition:
+        rgb = np.zeros((init_pts.shape[0], 3), dtype=np.uint8)
+        rgb[:, 0] = 255  # red
+        pc["_rgb"] = rgb
+        pc_actor = plotter.add_mesh(
+            pc, scalars="_rgb", rgb=True,
+            point_size=args.point_size, render_points_as_spheres=True,
+            opacity=0.9, show_scalar_bar=False,
+        )
+    elif use_z:
         pc["_z"] = init_pts[:, 2]
         pc_actor = plotter.add_mesh(
-            pc, scalars=scalar_name, cmap=cmap,
+            pc, scalars="_z", cmap="plasma",
             point_size=args.point_size, render_points_as_spheres=True,
             opacity=0.9, show_scalar_bar=False,
         )
@@ -231,6 +320,17 @@ def main():
             pc, color="#2979ff",
             point_size=args.point_size, render_points_as_spheres=True,
             opacity=0.9,
+        )
+
+    # ---- target (original) reference cloud --------------------------------
+    if target_cart is not None and not args.hide_target:
+        tpc = pv.PolyData(target_cart)
+        plotter.add_mesh(
+            tpc,
+            color="#00e676",
+            point_size=args.point_size * 0.9,
+            render_points_as_spheres=True,
+            opacity=0.85,
         )
 
     # camera
@@ -256,9 +356,18 @@ def main():
             vtk_pts.SetPoint(j, pts[j, 0], pts[j, 1], pts[j, 2])
         vtk_pts.Modified()
 
-        if args.z_colour:
+        if use_transition:
+            alpha = i / max(n_frames - 1, 1)
+            rgb = pc.point_data["_rgb"]
+            r = int(255 * (1 - alpha))
+            b = int(255 * alpha)
+            for j in range(pts.shape[0]):
+                rgb[j, 0] = r
+                rgb[j, 1] = 0
+                rgb[j, 2] = b
+        elif use_z:
             z_arr = pts[:, 2]
-            scalars = pc.point_data[scalar_name]
+            scalars = pc.point_data["_z"]
             for j in range(len(z_arr)):
                 scalars[j] = z_arr[j]
 
@@ -274,9 +383,17 @@ def main():
 
     plotter.close()
 
+    # ---- hold on final fitted state ----------------------------------------
+    n_hold = int(args.hold * args.fps)
+    if n_hold > 0 and images:
+        last_frame = images[-1]
+        for _ in range(n_hold):
+            images.append(last_frame)
+        print(f"  Appended {n_hold} hold frames ({args.hold}s)")
+
     # ---- write output -----------------------------------------------------
     duration = 1.0 / args.fps
-    iio.imwrite(args.output, images, duration=duration, loop=0)
+    iio.imwrite(args.output, images, duration=duration, loop=1)
     print(f"Saved animation to {args.output}  ({len(images)} frames, {args.fps} fps)")
 
 

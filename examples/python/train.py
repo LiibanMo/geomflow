@@ -17,7 +17,7 @@ import math
 import numpy as np
 import torch
 import torch.nn as nn
-from torch.nn.utils import spectral_norm
+from model import CNFNet
 
 from manifolds.sphere import generate_target_data as gen_sphere
 from manifolds.torus import generate_target_data as gen_torus
@@ -60,28 +60,6 @@ class LambdaScheduler:
         return self.lambda_k_max, self.lambda_j_max
 
 
-class CNFNet(nn.Module):
-    """Simple MLP vector field f(t, x; theta)."""
-
-    def __init__(self, dim: int = 2, hidden: int = 32):
-        super().__init__()
-        self.net = nn.Sequential(
-            spectral_norm(nn.Linear(dim + 1, hidden)),
-            nn.Tanh(),
-            spectral_norm(nn.Linear(hidden, hidden)),
-            nn.Tanh(),
-            spectral_norm(nn.Linear(hidden, dim)),
-        )
-
-    def forward(self, t: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
-        if t.dim() == 0:
-            t = t.expand(x.shape[0], 1)
-        elif t.dim() == 1:
-            t = t.unsqueeze(-1)
-        tx = torch.cat([t, x], dim=-1)
-        return self.net(tx)
-
-
 def rk4_step(fn, t, x, dt):
     k1 = fn(t, x)
     k2 = fn(t + dt / 2, x + dt / 2 * k1)
@@ -116,9 +94,14 @@ def integrate(fn, x0, t0, t1, dt, track: bool = False):
 
 @torch.enable_grad()
 def compute_loss(
-    model: CNFNet, z: torch.Tensor,
-    t0: float, t1: float, dt: float, manifold: str,
-    lambda_kinetic: float, lambda_jac: float,
+    model: CNFNet,
+    z: torch.Tensor,
+    t0: float,
+    t1: float,
+    dt: float,
+    manifold: str,
+    lambda_kinetic: float,
+    lambda_jac: float,
 ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
     n_steps = int(abs(t1 - t0) / dt)
     device = z.device
@@ -147,9 +130,7 @@ def compute_loss(
         # Hutchinson estimator: divergence (trace) + Frobenius norm squared
         f_val = model(ts, x)
         v = torch.randn_like(x)
-        Jv = torch.autograd.grad(
-            f_val, x, v, create_graph=True, retain_graph=True
-        )[0]
+        Jv = torch.autograd.grad(f_val, x, v, create_graph=True, retain_graph=True)[0]
 
         div = (v * Jv).sum(dim=-1)
         frob_sq = (Jv * Jv).sum(dim=-1)
@@ -169,7 +150,9 @@ def compute_loss(
             [[3, 3], [3, -3], [-3, 3], [-3, -3]], device=device, dtype=torch.float32
         )
         diffs = x.unsqueeze(1) - mus.unsqueeze(0)
-        log_probs = -0.5 * (diffs**2).sum(dim=-1) / sigma_sq - math.log(2 * math.pi * sigma_sq)
+        log_probs = -0.5 * (diffs**2).sum(dim=-1) / sigma_sq - math.log(
+            2 * math.pi * sigma_sq
+        )
         log_target = torch.logsumexp(log_probs, dim=-1) - math.log(4)
     elif manifold == "sphere":
         sigma_sq = 0.09
@@ -177,7 +160,9 @@ def compute_loss(
             [[1.57, 0.5], [1.57, 3.64]], device=device, dtype=torch.float32
         )
         diffs = x.unsqueeze(1) - mus.unsqueeze(0)
-        log_probs = -0.5 * (diffs**2).sum(dim=-1) / sigma_sq - math.log(2 * math.pi * sigma_sq)
+        log_probs = -0.5 * (diffs**2).sum(dim=-1) / sigma_sq - math.log(
+            2 * math.pi * sigma_sq
+        )
         log_target = torch.logsumexp(log_probs, dim=-1) - math.log(2)
     elif manifold == "torus":
         sigma_sq = 0.09
@@ -186,7 +171,9 @@ def compute_loss(
         xy = torch.cat([cos_y, sin_y], dim=-1)
         mus = torch.tensor([[1, 0], [-1, 0]], device=device, dtype=torch.float32)
         diffs = xy.unsqueeze(1) - mus.unsqueeze(0)
-        log_probs = -0.5 * (diffs**2).sum(dim=-1) / sigma_sq - math.log(2 * math.pi * sigma_sq)
+        log_probs = -0.5 * (diffs**2).sum(dim=-1) / sigma_sq - math.log(
+            2 * math.pi * sigma_sq
+        )
         log_target = torch.logsumexp(log_probs, dim=-1) - math.log(2)
     else:
         raise ValueError(f"Unknown manifold: {manifold}")
@@ -213,12 +200,24 @@ def main():
     parser.add_argument("--dt", type=float, default=0.05)
     parser.add_argument("--output", default="cnf_model.pt")
     parser.add_argument("--device", default="cpu")
-    parser.add_argument("--weight-decay", type=float, default=1e-4,
-                        help="Weight decay (L2) for Adam optimizer")
-    parser.add_argument("--lambda-kinetic", type=float, default=1e-3,
-                        help="Max kinetic-energy regularization coefficient")
-    parser.add_argument("--lambda-jac", type=float, default=1e-4,
-                        help="Max Jacobian Frobenius norm coefficient")
+    parser.add_argument(
+        "--weight-decay",
+        type=float,
+        default=1e-4,
+        help="Weight decay (L2) for Adam optimizer",
+    )
+    parser.add_argument(
+        "--lambda-kinetic",
+        type=float,
+        default=1e-3,
+        help="Max kinetic-energy regularization coefficient",
+    )
+    parser.add_argument(
+        "--lambda-jac",
+        type=float,
+        default=1e-4,
+        help="Max Jacobian Frobenius norm coefficient",
+    )
     args = parser.parse_args()
 
     device = torch.device(args.device)
@@ -228,7 +227,8 @@ def main():
         model.parameters(), lr=args.lr, weight_decay=args.weight_decay
     )
     scheduler = LambdaScheduler(
-        warmup_start=20, warmup_end=60,
+        warmup_start=20,
+        warmup_end=60,
         lambda_kinetic_max=args.lambda_kinetic,
         lambda_jac_max=args.lambda_jac,
     )
@@ -236,8 +236,10 @@ def main():
     t0, t1 = 0.0, 1.0
 
     print(f"Training CNF on {args.manifold} manifold")
-    print(f"  epochs={args.epochs}  batch={args.batch_size}  lr={args.lr}"
-          f"  dt={args.dt}  wd={args.weight_decay}")
+    print(
+        f"  epochs={args.epochs}  batch={args.batch_size}  lr={args.lr}"
+        f"  dt={args.dt}  wd={args.weight_decay}"
+    )
     print(f"  λ_kinetic_max={args.lambda_kinetic}  λ_jac_max={args.lambda_jac}")
     print()
 
@@ -262,11 +264,11 @@ def main():
 
         if (epoch + 1) % 20 == 0:
             print(
-                f"Epoch {epoch+1:>3d}/{args.epochs}"
+                f"Epoch {epoch + 1:>3d}/{args.epochs}"
                 f"  total={total_loss.item():.3f}"
                 f"  nll={nll_loss.item():.3f}"
-                f"  kinetic={reg_kinetic.item():.3f}"
-                f"  jac_reg={reg_jac.item():.3f}"
+                f"  kinetic={reg_kinetic.item():.6f}"
+                f"  jac_reg={reg_jac.item():.6f}"
             )
 
     print(f"\nBest loss: {best_loss:.4f}")

@@ -82,3 +82,6 @@ papers/
 auth
 login
 opencode.json
+*.pt
+*.gif
+*.pdf
