@@ -82,6 +82,8 @@ papers/
 auth
 login
 opencode.json
+uv.lock
+*__pycache__/
 *.pt
 *.gif
 *.pdf
