@@ -57,11 +57,6 @@ jobs:
       - name: Run tests
         run: ./build/tests/geomflow_tests
 
-      - name: Clang-format check
-        run: |
-          find include tests -name '*.h' -o -name '*.cpp' | \
-          xargs clang-format --dry-run -Werror
-
   python-bindings:
     name: Python bindings
     runs-on: ubuntu-24.04

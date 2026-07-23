@@ -10,11 +10,18 @@ requires-python = ">=3.12"
 dependencies = [
     "torch>=2.0",
     "numpy>=1.24",
+    "scipy>=1.10",
     "matplotlib>=3.7",
     "imageio>=2.31",
 ]
 readme = "README.md"
 license = { text = "MIT" }
+
+[project.optional-dependencies]
+dev = [
+    "torchdiffeq>=0.2",
+    "pytest>=7.0",
+]
 
 [tool.scikit-build]
 cmake.args = ["-DBUILD_TESTS=OFF", "-DBUILD_PYTHON=ON"]
