@@ -2,7 +2,7 @@
 
 **General Manifold-Constraint Continuous Normalizing Flows using Intrinsic Riemannian Geometry**
 
-`geomflow` is a high-performance, header-only C++20 library and PyTorch framework for Continuous Normalizing Flows (CNFs) on Riemannian manifolds. Built directly on Liiban Mohamud's purely intrinsic manifold formulation, `geomflow` requires **no ambient space embedding** (such as Whitney's embedding theorem) to evaluate density, integrate flows, or compute adjoint gradients.
+`geomflow` is a high-performance, header-only C++20 library and PyTorch framework for Continuous Normalizing Flows (CNFs) on Riemannian manifolds. Built directly on the purely intrinsic manifold formulation I formulated, `geomflow` requires **no ambient space embedding** (such as Whitney's embedding theorem) to evaluate density, integrate flows, or compute adjoint gradients.
 
 ---
 
@@ -28,7 +28,7 @@
 ### Python (PyTorch)
 
 ```bash
-git clone https://github.com/liibanmohamud/geomflow.git
+git clone https://github.com/LiibanMo/geomflow.git
 cd geomflow
 pip install -e .
 ```
@@ -61,7 +61,7 @@ Fit a density model on a manifold using built-in presets in just a few lines:
 
 ```python
 import torch
-from geomflow.torch import ManifoldCNF, Sphere2DAtlas, Torus2D, PoincareDisk
+from geomflow import ManifoldCNF, Sphere2DAtlas, Torus2D, PoincareDisk
 
 # 1. Select geometry: 2-chart stereographic sphere atlas
 manifold = Sphere2DAtlas(n_samples=500)
@@ -92,7 +92,7 @@ Define custom manifolds by providing an explicit embedding map $\phi: U \subset 
 
 ```python
 import torch
-from geomflow.torch import ManifoldCNF, InducedMetric
+from geomflow import ManifoldCNF, InducedMetric
 
 # Define surface z = x^2 + y^2 embedded in R^3
 def paraboloid_immersion(x: torch.Tensor) -> torch.Tensor:
@@ -115,7 +115,7 @@ Define custom analytic metrics $g_{ij}(x)$ directly and execute intrinsic operat
 
 ```python
 import torch
-from geomflow.torch import AnalyticMetric, christoffel, divergence, gradient
+from geomflow import AnalyticMetric, christoffel, divergence, gradient
 
 # Custom metric function G(x)
 def custom_metric_fn(x: torch.Tensor) -> torch.Tensor:
@@ -138,7 +138,7 @@ div_val = divergence(vf, x, metric)  # (4,)
 
 ---
 
-### 4. Mohamud Intrinsic Adjoint (Theorem 3.7)
+### 4. The Intrinsic Adjoint ODE (Theorem 3.7)
 
 For memory-efficient backpropagation without saving intermediate ODE trajectory states:
 
