@@ -69,7 +69,7 @@ def cnf_nll(
     return loss
 
 
-class MohamudAdjointFunction(torch.autograd.Function):
+class IntrinsicAdjointFunction(torch.autograd.Function):
     """Custom PyTorch autograd Function implementing Mohamud's Theorem 3.7 intrinsic adjoint ODE.
 
     Theorem 3.7 (Mohamud):

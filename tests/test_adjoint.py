@@ -12,7 +12,7 @@ import torch
 from geomflow.torch import (
     EuclideanSpace,
     ManifoldVectorField,
-    MohamudAdjointFunction,
+    IntrinsicAdjointFunction,
     cnf_nll,
 )
 
@@ -32,7 +32,7 @@ def test_mohamud_adjoint_gradients():
     grad_autograd = x_data_1.grad
 
     # Mohamud intrinsic adjoint loss
-    loss_mohamud = MohamudAdjointFunction.apply(x_data_2, vf, metric, 0.05, 0.0, 1.0)
+    loss_mohamud = IntrinsicAdjointFunction.apply(x_data_2, vf, metric, 0.05, 0.0, 1.0)
     loss_mohamud.backward()
     grad_mohamud = x_data_2.grad
 

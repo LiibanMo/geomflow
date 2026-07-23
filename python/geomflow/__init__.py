@@ -1,38 +1,16 @@
+"""geomflow — purely intrinsic Riemannian manifold CNF library.
+
+The public API is split into a lightweight core (pre-processing and the
+C++20 header-only extension bound via pybind11) and a PyTorch sub-package
+for training continuous normalizing flows on manifolds.
+"""
+
 from . import _geomflow
-from ._preprocess import preprocess, ArrayLike
+from ._preprocess import ArrayLike, preprocess
 from ._vector_field import CNFVectorField
 
-__all__ = [
-    "preprocess",
-    "ArrayLike",
-    "CNFVectorField",
-    "TangentVector2D",
-    "TangentVector3D",
-    "CotangentVector2D",
-    "CotangentVector3D",
-    "EuclideanMetric2D",
-    "EuclideanMetric3D",
-    "ParametrizedVectorField2D",
-    "ParametrizedVectorField3D",
-    "FlowResult2D",
-    "FlowResult3D",
-    "FlowIntegrator2D",
-    "FlowIntegrator3D",
-    "AdjointState2D",
-    "AdjointState3D",
-    "AdjointSolver2D",
-    "AdjointSolver3D",
-    "ScalarField2D",
-    "ScalarField3D",
-    "Divergence2D",
-    "Divergence3D",
-    "Gradient2D",
-    "Gradient3D",
-    "CovariantDerivative2D",
-    "CovariantDerivative3D",
-]
-
-for name in [
+# Re-export core C++ geometric objects from the compiled extension.
+for _name in [
     "TangentVector2D",
     "TangentVector3D",
     "CotangentVector2D",
@@ -58,4 +36,98 @@ for name in [
     "CovariantDerivative2D",
     "CovariantDerivative3D",
 ]:
-    globals()[name] = getattr(_geomflow, name)
+    globals()[_name] = getattr(_geomflow, _name)
+
+# PyTorch public API (requires torch to be installed).
+from .torch import (
+    AnalyticMetric,
+    Atlas,
+    Chart,
+    EuclideanSpace,
+    FlowResult,
+    HyperbolicSpace,
+    InducedMetric,
+    IntrinsicAdjointFunction,
+    ManifoldCNF,
+    ManifoldVectorField,
+    MultiChartVectorField,
+    PoincareDisk,
+    Sphere2DAtlas,
+    SphereStereographicMetric,
+    Torus2D,
+    christoffel,
+    cnf_nll,
+    cnf_nll_multichart,
+    covariant_derivative_tensor,
+    divergence,
+    gradient,
+    integrate_multichart,
+    integrate_rk4,
+    lipschitz_regularizer,
+    overlap_consistency_loss,
+    pullback_covector,
+    pushforward_vector,
+    transform_metric,
+    weight_decay_loss,
+)
+
+__all__ = [
+    "preprocess",
+    "ArrayLike",
+    "CNFVectorField",
+    # C++ extension objects
+    "TangentVector2D",
+    "TangentVector3D",
+    "CotangentVector2D",
+    "CotangentVector3D",
+    "EuclideanMetric2D",
+    "EuclideanMetric3D",
+    "ParametrizedVectorField2D",
+    "ParametrizedVectorField3D",
+    "FlowResult2D",
+    "FlowResult3D",
+    "FlowIntegrator2D",
+    "FlowIntegrator3D",
+    "AdjointState2D",
+    "AdjointState3D",
+    "AdjointSolver2D",
+    "AdjointSolver3D",
+    "ScalarField2D",
+    "ScalarField3D",
+    "Divergence2D",
+    "Divergence3D",
+    "Gradient2D",
+    "Gradient3D",
+    "CovariantDerivative2D",
+    "CovariantDerivative3D",
+    # PyTorch objects
+    "AnalyticMetric",
+    "Atlas",
+    "Chart",
+    "EuclideanSpace",
+    "FlowResult",
+    "HyperbolicSpace",
+    "InducedMetric",
+    "IntrinsicAdjointFunction",
+    "ManifoldCNF",
+    "ManifoldVectorField",
+    "MultiChartVectorField",
+    "PoincareDisk",
+    "Sphere2DAtlas",
+    "SphereStereographicMetric",
+    "Torus2D",
+    "christoffel",
+    "cnf_nll",
+    "cnf_nll_multichart",
+    "covariant_derivative_tensor",
+    "divergence",
+    "gradient",
+    "integrate_multichart",
+    "integrate_rk4",
+    "lipschitz_regularizer",
+    "overlap_consistency_loss",
+    "pullback_covector",
+    "pushforward_vector",
+    "transform_metric",
+    "weight_decay_loss",
+]
