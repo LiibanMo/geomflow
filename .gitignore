@@ -84,6 +84,7 @@ login
 opencode.json
 uv.lock
 *__pycache__/
+dist/
 *.pt
 *.gif
 *.pdf

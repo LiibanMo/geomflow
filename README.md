@@ -10,7 +10,9 @@
 
 - **Purely Intrinsic Geometry**: All operations—metric tensor $g_{ij}$, Levi-Civita connection $\Gamma_{ij}^k$, divergence $\text{div}_g$, and adjoint gradients—are computed directly on intrinsic coordinate charts.
 - **The Intrinsic Adjoint ODE (Theorem 3.7)**: Memory-efficient backward adjoint ODE solver derived entirely from intrinsic manifold quantities:
-  $$\dot{\lambda}(t) + \langle \lambda(t), \nabla f_\theta \rangle = \nabla (\text{div}_g f_\theta)$$
+
+$$\dot{\lambda}(t) + \langle \lambda(t), \nabla f_\theta \rangle = \nabla (\text{div}_g f_\theta)$$
+
 - **High-Level PyTorch Fitter (`geomflow.torch.ManifoldCNF`)**: Intuitive, scikit-learn-style API with `.fit(data)`, `.log_prob(x)`, and `.sample(n)`.
 - **Multi-Chart Atlas Support**: Seamless dynamic chart-switching during flow integration across coordinate patches with overlap consistency loss.
 - **Built-in Manifold Presets**:
