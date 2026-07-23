@@ -144,7 +144,7 @@ For memory-efficient backpropagation without saving intermediate ODE trajectory 
 
 ```python
 import torch
-from geomflow.torch import EuclideanSpace, ManifoldVectorField, IntrinsicAdjointFunction
+from geomflow import EuclideanSpace, ManifoldVectorField, IntrinsicAdjointFunction
 
 metric = EuclideanSpace(dim=2)
 vf = ManifoldVectorField(dim=2, hidden_dim=32)
