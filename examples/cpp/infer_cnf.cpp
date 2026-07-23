@@ -115,8 +115,9 @@ void write_frame(const std::string& dir, size_t frame_idx, const std::vector<Poi
   }
 }
 
-void write_trajectories_csv(const std::string& path, size_t n_traj_points,
-                            const std::vector<std::pair<Scalar, std::vector<std::array<Scalar, 3>>>>& data) {
+void write_trajectories_csv(
+    const std::string& path, size_t n_traj_points,
+    const std::vector<std::pair<Scalar, std::vector<std::array<Scalar, 3>>>>& data) {
   std::ofstream f(path);
   // header: t, x0, y0, z0, x1, y1, z1, ...
   f << "t";
