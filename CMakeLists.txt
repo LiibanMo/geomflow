@@ -25,7 +25,7 @@ endif()
 # --- Python module (pybind11) ---
 option(BUILD_PYTHON "Build Python pybind11 module" OFF)
 if(BUILD_PYTHON)
-  find_package(Python COMPONENTS Interpreter Development REQUIRED)
+  find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
   find_package(pybind11 REQUIRED)
 
   pybind11_add_module(_geomflow

@@ -312,6 +312,19 @@ jobs:
           ref: 5d99302bbedf325ed95794155413bb60e9d69238
           persist-credentials: false
 
+      - name: Use Python extension development component
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path("CMakeLists.txt")
+          source = path.read_text()
+          old = "find_package(Python COMPONENTS Interpreter Development REQUIRED)"
+          new = "find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)"
+          assert source.count(old) == 1
+          path.write_text(source.replace(old, new))
+          PY
+
       - name: Build and test historical wheels
         uses: pypa/cibuildwheel@v4.1.0
         env:
