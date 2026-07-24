@@ -93,7 +93,7 @@ def test_integrator_batch_shapes():
         x0 = torch.randn(*shape)
         result = integrate_rk4(vf, metric, x0, t0=0.0, t1=0.2, dt=0.05)
         assert result.x_final.shape == shape
-        assert result.log_det.shape == shape[:-1]
+        assert result.divergence_integral.shape == shape[:-1]
     print("  integrator batch-shape broadcasting OK")
 
 

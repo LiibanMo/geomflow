@@ -60,12 +60,12 @@ flow_log_abs_det_jacobian   = divergence_integral
 log_density_change          = -divergence_integral.
 ```
 
-These names are not interchangeable. The existing Python `FlowResult.log_det`
-is intended by its accumulation to be `divergence_integral`, although its use
-of `abs(h)` currently destroys interval orientation. The existing C++
-`FlowResult::log_det_jacobian` accumulates the negative signed integral and is
-therefore `log_density_change`, not a flow log Jacobian. Both fields require
-the distinct Phase 3 names; a bare `log_det` is not an approved future API.
+These names are not interchangeable. Both backends now expose
+`divergence_integral`, `flow_log_abs_det_jacobian`, and
+`log_density_change`. Python's former `FlowResult.log_det` remains only as a
+migration alias for `divergence_integral`; new code must use the explicit
+name. C++ callers must replace the incorrectly named `log_det_jacobian` field
+with one of the three explicit fields according to the quantity they need.
 
 For fixed data endpoint `x(te)` and base time `0`, Mohamud's NLL is
 

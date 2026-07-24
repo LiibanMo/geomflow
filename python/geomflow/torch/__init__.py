@@ -21,7 +21,12 @@ from .integrator import FlowResult, integrate_rk4
 from .adjoint import IntrinsicAdjointFunction, cnf_nll
 from .atlas import Atlas, Chart
 from .multichart import MultiChartVectorField, overlap_consistency_loss
-from .multichart_integrator import cnf_nll_multichart, integrate_multichart
+from .multichart_integrator import (
+    ChartTransitionEvent,
+    MultiChartFlowResult,
+    cnf_nll_multichart,
+    integrate_multichart,
+)
 from .transforms import (
     pullback_covector,
     pushforward_vector,
@@ -63,6 +68,8 @@ __all__ = [
     "MultiChartVectorField",
     "overlap_consistency_loss",
     "integrate_multichart",
+    "MultiChartFlowResult",
+    "ChartTransitionEvent",
     "cnf_nll_multichart",
     "pushforward_vector",
     "pullback_covector",

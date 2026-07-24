@@ -1,7 +1,7 @@
 # Mathematical Correctness Remediation Plan
 
-> Status: Phase 0 execution authorized on July 24, 2026. The Phase 0 ledger is
-> awaiting review; later phases remain gated.
+> Status: Phases 0-3 completed on July 24, 2026. Phase 3's signed augmented
+> integration exit gate passes in Python and C++.
 
 ## Attribution And Source Of Truth
 
@@ -66,14 +66,14 @@ mandatory exit gates in this document pass.
 
 ### Density And Integration
 
-- [ ] [MATH-020] Correct Python reverse-time divergence accumulation, which currently uses `abs(h)` in `python/geomflow/torch/integrator.py`.
-- [ ] [MATH-021] Correct the corresponding `abs(h)` behavior in `python/geomflow/torch/multichart_integrator.py`.
-- [ ] [MATH-022] Reconcile the contradictory `integrate_rk4` docstrings that describe both negative and positive divergence integrals.
-- [ ] [MATH-023] Reconcile Python `log_det` semantics with C++ `log_det_jacobian` semantics.
-- [ ] [MATH-024] Replace first-order divergence accumulation paired with RK4 state integration.
-- [ ] [MATH-025] Correct Python single-chart divergence evaluations that pair the updated state with the old time.
-- [ ] [MATH-026] Correct C++ divergence quadrature that evaluates both temporal endpoints at the final spatial point.
-- [ ] [MATH-027] Reject or explicitly define zero-step behavior instead of permitting nontermination.
+- [x] [MATH-020] Correct Python reverse-time divergence accumulation, which currently uses `abs(h)` in `python/geomflow/torch/integrator.py`.
+- [x] [MATH-021] Correct the corresponding `abs(h)` behavior in `python/geomflow/torch/multichart_integrator.py`.
+- [x] [MATH-022] Reconcile the contradictory `integrate_rk4` docstrings that describe both negative and positive divergence integrals.
+- [x] [MATH-023] Reconcile Python `log_det` semantics with C++ `log_det_jacobian` semantics.
+- [x] [MATH-024] Replace first-order divergence accumulation paired with RK4 state integration.
+- [x] [MATH-025] Correct Python single-chart divergence evaluations that pair the updated state with the old time.
+- [x] [MATH-026] Correct C++ divergence quadrature that evaluates both temporal endpoints at the final spatial point.
+- [x] [MATH-027] Reject or explicitly define zero-step behavior instead of permitting nontermination.
 - [ ] [MATH-028] Correct final partial-step handling in C++ adjoint integration and parameter quadrature.
 
 ### Density Measure And Base Distribution
@@ -86,7 +86,7 @@ mandatory exit gates in this document pass.
 
 ### Autograd And Differential Geometry
 
-- [ ] [MATH-040] Remove divergence-state detachment that omits indirect input and parameter derivatives.
+- [x] [MATH-040] Remove divergence-state detachment that omits indirect input and parameter derivatives.
 - [ ] [MATH-041] Correct `covariant_derivative_tensor` Christoffel-index contraction.
 - [ ] [MATH-042] Preserve input dependence in `batched_jacobian` and `InducedMetric`.
 - [ ] [MATH-043] Preserve higher coordinate derivatives in fallback metric differentiation.
@@ -313,61 +313,61 @@ mandatory exit gates in this document pass.
 
 ### 3.1 Unified Mathematical State
 
-- [ ] [MATH-400] Represent state and log-density change as one augmented ODE state for solver purposes.
-- [ ] [MATH-401] Define `x_dot = f_theta(t, x)`.
-- [ ] [MATH-402] Define `ell_dot = -div_g f_theta(t, x)` when `ell` is transported log density.
-- [ ] [MATH-403] If storing the divergence integral instead, define its sign separately and name it accordingly.
-- [ ] [MATH-404] Select one representation and use it consistently in Python and C++.
-- [ ] [MATH-405] Evaluate divergence at every RK stage required by augmented RK4.
-- [ ] [MATH-406] Evaluate each divergence at the same stage time and stage state as its vector field.
-- [ ] [MATH-407] Use signed step `h` for both state and density updates.
-- [ ] [MATH-408] Handle a final remainder step using its exact signed length.
+- [x] [MATH-400] Represent state and log-density change as one augmented ODE state for solver purposes.
+- [x] [MATH-401] Define `x_dot = f_theta(t, x)`.
+- [x] [MATH-402] Define `ell_dot = -div_g f_theta(t, x)` when `ell` is transported log density.
+- [x] [MATH-403] If storing the divergence integral instead, define its sign separately and name it accordingly.
+- [x] [MATH-404] Select one representation and use it consistently in Python and C++.
+- [x] [MATH-405] Evaluate divergence at every RK stage required by augmented RK4.
+- [x] [MATH-406] Evaluate each divergence at the same stage time and stage state as its vector field.
+- [x] [MATH-407] Use signed step `h` for both state and density updates.
+- [x] [MATH-408] Handle a final remainder step using its exact signed length.
 
 ### 3.2 Python Single-Chart Integrator
 
-- [ ] [MATH-410] Add input validation for tensor rank, finite times, and valid nonzero step magnitude.
-- [ ] [MATH-411] Replace floating `while` termination with a bounded, endpoint-correct schedule.
-- [ ] [MATH-412] Remove `abs(h)` from mathematically oriented integrals.
-- [ ] [MATH-413] Remove the old-time/new-state divergence pairing.
-- [ ] [MATH-414] Remove divergence detachment in differentiable mode.
-- [ ] [MATH-415] Keep a graph-free inference path only when neither divergence gradients nor training gradients are required.
-- [ ] [MATH-416] Define trajectory entries as `(time, state, density_state)` or document why density is omitted.
-- [ ] [MATH-417] Verify forward and reverse integrations are inverse within solver error.
-- [ ] [MATH-418] Verify augmented RK4 convergence order.
+- [x] [MATH-410] Add input validation for tensor rank, finite times, and valid nonzero step magnitude.
+- [x] [MATH-411] Replace floating `while` termination with a bounded, endpoint-correct schedule.
+- [x] [MATH-412] Remove `abs(h)` from mathematically oriented integrals.
+- [x] [MATH-413] Remove the old-time/new-state divergence pairing.
+- [x] [MATH-414] Remove divergence detachment in differentiable mode.
+- [x] [MATH-415] Keep a graph-free inference path only when neither divergence gradients nor training gradients are required.
+- [x] [MATH-416] Define trajectory entries as `(time, state, density_state)` or document why density is omitted.
+- [x] [MATH-417] Verify forward and reverse integrations are inverse within solver error.
+- [x] [MATH-418] Verify augmented RK4 convergence order.
 
 ### 3.3 Python Multi-Chart Integrator
 
-- [ ] [MATH-420] Apply the same augmented-state and signed-step contract as single-chart integration.
-- [ ] [MATH-421] Evaluate stage divergence in the chart used for the corresponding stage vector field.
-- [ ] [MATH-422] Preserve scalar Riemannian log density at chart transitions.
-- [ ] [MATH-423] Do not apply a coordinate Jacobian jump to Riemannian density unless the Phase 0 derivation requires one for the represented quantity.
-- [ ] [MATH-424] Record transition events and exact event times in trajectories.
-- [ ] [MATH-425] Keep rejected steps from changing state or density.
-- [ ] [MATH-426] Verify chart-independent density on nonzero-divergence compatible fields.
+- [x] [MATH-420] Apply the same augmented-state and signed-step contract as single-chart integration.
+- [x] [MATH-421] Evaluate stage divergence in the chart used for the corresponding stage vector field.
+- [x] [MATH-422] Preserve scalar Riemannian log density at chart transitions.
+- [x] [MATH-423] Do not apply a coordinate Jacobian jump to Riemannian density unless the Phase 0 derivation requires one for the represented quantity.
+- [x] [MATH-424] Record transition events and exact event times in trajectories.
+- [x] [MATH-425] Keep rejected steps from changing state or density.
+- [x] [MATH-426] Verify chart-independent density on nonzero-divergence compatible fields.
 
 ### 3.4 C++ Integrator
 
-- [ ] [MATH-430] Define whether `FlowResult::log_det_jacobian` is truly a flow Jacobian or a log-density increment.
-- [ ] [MATH-431] Rename or add a correctly named field if current semantics are density change.
-- [ ] [MATH-432] Provide a reviewed migration path for pybind users.
-- [ ] [MATH-433] Store the pre-step state needed for valid endpoint or stage quadrature.
-- [ ] [MATH-434] Prefer augmented RK4 over the current post-step divergence approximation.
-- [ ] [MATH-435] Use exact signed remainder steps.
-- [ ] [MATH-436] Reject zero and non-finite step sizes.
-- [ ] [MATH-437] Store trajectory times with states so adjoint replay does not reconstruct them independently.
-- [ ] [MATH-438] Verify Python/C++ results on identical Euclidean analytic systems.
+- [x] [MATH-430] Define whether `FlowResult::log_det_jacobian` is truly a flow Jacobian or a log-density increment.
+- [x] [MATH-431] Rename or add a correctly named field if current semantics are density change.
+- [x] [MATH-432] Provide a reviewed migration path for pybind users.
+- [x] [MATH-433] Store the pre-step state needed for valid endpoint or stage quadrature.
+- [x] [MATH-434] Prefer augmented RK4 over the current post-step divergence approximation.
+- [x] [MATH-435] Use exact signed remainder steps.
+- [x] [MATH-436] Reject zero and non-finite step sizes.
+- [x] [MATH-437] Store trajectory times with states so adjoint replay does not reconstruct them independently.
+- [x] [MATH-438] Verify Python/C++ results on identical Euclidean analytic systems.
 
 ### 3.5 Result Naming And Documentation
 
-- [ ] [MATH-440] Define `flow_log_abs_det_jacobian` as `integral div_g f dt` only when referring to volume expansion of the flow.
-- [ ] [MATH-441] Define `log_density_change` as the negative signed divergence integral.
-- [ ] [MATH-442] Define `divergence_integral` if exposing the raw signed integral.
-- [ ] [MATH-443] Avoid using `log_det` without documenting which of these quantities it represents.
-- [ ] [MATH-444] Correct README examples and pybind field descriptions.
+- [x] [MATH-440] Define `flow_log_abs_det_jacobian` as `integral div_g f dt` only when referring to volume expansion of the flow.
+- [x] [MATH-441] Define `log_density_change` as the negative signed divergence integral.
+- [x] [MATH-442] Define `divergence_integral` if exposing the raw signed integral.
+- [x] [MATH-443] Avoid using `log_det` without documenting which of these quantities it represents.
+- [x] [MATH-444] Correct README examples and pybind field descriptions.
 
 ### Phase 3 Exit Gate
 
-- [ ] [MATH-459] Pass signed forward/reverse, analytic density, normalization, endpoint, and convergence tests in both Python and C++.
+- [x] [MATH-459] Pass signed forward/reverse, analytic density, normalization, endpoint, and convergence tests in both Python and C++.
 
 ## Phase 4: Correct Differentiable Geometry Operators
 

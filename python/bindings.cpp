@@ -82,11 +82,23 @@ void bind_dimension(py::module& m, const std::string& suffix) {
   using Metric = PEuclideanMetric<N>;
   using Field = PVectorField<N>;
   using Result = FlowResult<Traits, Metric, Field>;
+  using TrajectoryEntry = FlowTrajectoryEntry<Traits>;
+
+  py::class_<TrajectoryEntry>(m, (std::string("FlowTrajectoryEntry") + suffix).c_str())
+      .def(py::init<>())
+      .def_readwrite("time", &TrajectoryEntry::time)
+      .def_readwrite("state", &TrajectoryEntry::state)
+      .def_readwrite("divergence_integral", &TrajectoryEntry::divergence_integral);
 
   py::class_<Result>(m, (std::string("FlowResult") + suffix).c_str())
       .def(py::init<>())
       .def_readwrite("x_final", &Result::x_final)
-      .def_readwrite("log_det_jacobian", &Result::log_det_jacobian)
+      .def_readwrite("divergence_integral", &Result::divergence_integral,
+                     "Signed integral of the Riemannian divergence")
+      .def_readwrite("flow_log_abs_det_jacobian", &Result::flow_log_abs_det_jacobian,
+                     "Flow volume expansion; equal to divergence_integral")
+      .def_readwrite("log_density_change", &Result::log_density_change,
+                     "Transported log-density change; negative divergence_integral")
       .def_readwrite("trajectory", &Result::trajectory);
 
   py::class_<Tangent>(m, name_tv.c_str())

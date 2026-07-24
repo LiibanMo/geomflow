@@ -71,6 +71,11 @@ class TimeLinearField(nn.Module):
         return t.unsqueeze(-1) * x
 
 
+class TimeQuarticField(nn.Module):
+    def forward(self, t: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
+        return t.pow(4).unsqueeze(-1) * x
+
+
 class QuadraticField(nn.Module):
     def __init__(self, theta: float) -> None:
         super().__init__()
@@ -133,10 +138,6 @@ def test_scalar_linear_flow_state_divergence_and_density_identities() -> None:
     assert linear_log_density_change(a, ta, tb) == -expected_divergence
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="MATH-020: reverse divergence accumulation currently uses abs(h)",
-)
 def test_scalar_linear_reverse_interval_reverses_divergence_sign() -> None:
     """MATH-216: the oriented integral in Section 3.2.1 negates on reversal."""
     x = torch.tensor([[0.8]], dtype=DTYPE, device=DEVICE)
@@ -179,10 +180,6 @@ def test_rotation_has_zero_divergence_and_nontrivial_state() -> None:
     torch.testing.assert_close(result.log_det, torch.zeros_like(result.log_det))
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="MATH-024/MATH-025: divergence is not integrated at matching RK4 stages",
-)
 def test_time_linear_density_uses_matching_time_and_state() -> None:
     """MATH-220: x_dot=t*x exposes old-time/new-state divergence quadrature."""
     x = torch.tensor([[0.75]], dtype=DTYPE, device=DEVICE)
@@ -211,10 +208,6 @@ def test_quadratic_flow_state_parameter_derivative() -> None:
     )
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="MATH-040: detached divergence state omits state-mediated parameter variation",
-)
 def test_quadratic_flow_density_parameter_derivative() -> None:
     """MATH-217/MATH-221: density variation includes theta dependence through x(t)."""
     x = torch.tensor([[0.4]], dtype=DTYPE, device=DEVICE)
@@ -231,10 +224,6 @@ def test_quadratic_flow_density_parameter_derivative() -> None:
     )
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="MATH-020: reverse-time divergence sign corrupts complete NLL gradients",
-)
 def test_linear_flow_complete_nll_parameter_derivative() -> None:
     """MATH-217: fixed-data NLL derivative follows the Phase 0 analytic oracle."""
     data = torch.tensor([[0.8]], dtype=DTYPE, device=DEVICE)
@@ -263,18 +252,43 @@ def test_rk4_state_convergence_order_is_measured_from_refinements() -> None:
     assert min(orders) > 3.8, f"state RK order too low: errors={errors}, orders={orders}"
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="MATH-024: first-order divergence accumulation cannot attain RK4 order",
-)
 def test_density_convergence_order_is_measured_from_refinements() -> None:
     """MATH-271/MATH-272: augmented density integration must attain RK4 order."""
     x = torch.tensor([[0.9]], dtype=DTYPE, device=DEVICE)
-    exact = 0.5
+    exact = 0.2
     errors = []
     for step in (0.2, 0.1, 0.05):
-        result = _integrate(TimeLinearField(), x, 0.0, 1.0, step)
+        result = _integrate(TimeQuarticField(), x, 0.0, 1.0, step)
         errors.append(abs(result.log_det.item() - exact))
 
     orders = observed_order(errors)
     assert min(orders) > 3.8, f"density RK order too low: errors={errors}, orders={orders}"
+
+
+@pytest.mark.parametrize("dt", [0.0, -0.1, float("inf"), float("nan")])
+def test_integrator_rejects_invalid_step_magnitudes(dt: float) -> None:
+    """MATH-410: dt is a finite positive magnitude under the Phase 0 contract."""
+    x = torch.tensor([[0.5]], dtype=DTYPE)
+    with pytest.raises(ValueError, match="finite positive"):
+        _integrate(ZeroField(), x, 0.0, 1.0, dt)
+
+
+def test_zero_interval_and_trajectory_include_augmented_state() -> None:
+    """MATH-408/MATH-416: exact endpoints retain time, state, and integral."""
+    x = torch.tensor([[0.5]], dtype=DTYPE)
+    field = ScalarLinearField(0.4)
+    zero = integrate_rk4(field, EuclideanSpace(1), x, 0.3, 0.3, 0.1, True)
+    torch.testing.assert_close(zero.x_final, x)
+    torch.testing.assert_close(zero.divergence_integral, torch.zeros(1, dtype=DTYPE))
+    assert zero.trajectory[0][0] == 0.3
+
+    result = integrate_rk4(field, EuclideanSpace(1), x, 0.0, 1.0, 0.3, True)
+    assert [entry[0] for entry in result.trajectory] == pytest.approx(
+        [0.0, 0.3, 0.6, 0.9, 1.0]
+    )
+    torch.testing.assert_close(
+        result.trajectory[-1][2], result.divergence_integral
+    )
+    torch.testing.assert_close(
+        result.log_density_change, -result.flow_log_abs_det_jacobian
+    )

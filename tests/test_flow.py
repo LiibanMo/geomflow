@@ -190,7 +190,41 @@ class TestFlowIntegration:
         field = gf.ParametrizedVectorField3D(metric, fn)
         integrator = gf.FlowIntegrator3D(metric, field)
         result = integrator.integrate((0.0, 0.0, 0.0), 0.0, 1.0, 0.01)
-        assert result.log_det_jacobian == pytest.approx(0.0, abs=0.02)
+        assert result.divergence_integral == pytest.approx(0.0, abs=0.02)
+
+    def test_python_cpp_augmented_flow_parity(self):
+        """MATH-438: both backends implement the same signed augmented RK4."""
+        from geomflow.torch import EuclideanSpace, integrate_rk4
+
+        metric = gf.EuclideanMetric3D()
+
+        def cpp_fn(t, x, theta):
+            del theta
+            return gf.TangentVector3D([t * x[0], t * x[1], t * x[2]])
+
+        cpp_field = gf.ParametrizedVectorField3D(metric, cpp_fn)
+        cpp_result = gf.FlowIntegrator3D(metric, cpp_field).integrate(
+            (1.0, 1.0, 1.0), 0.0, 1.0, 0.2
+        )
+
+        class TorchField(torch.nn.Module):
+            def forward(self, t, x):
+                return t.unsqueeze(-1) * x
+
+        torch_result = integrate_rk4(
+            TorchField(),
+            EuclideanSpace(3),
+            torch.ones((1, 3), dtype=torch.float64),
+            0.0,
+            1.0,
+            0.2,
+        )
+        np.testing.assert_allclose(
+            cpp_result.x_final, torch_result.x_final[0].detach().numpy(), rtol=2e-6
+        )
+        assert cpp_result.divergence_integral == pytest.approx(
+            torch_result.divergence_integral.item(), abs=2e-6
+        )
 
     def test_backward_flow(self):
         metric = gf.EuclideanMetric3D()

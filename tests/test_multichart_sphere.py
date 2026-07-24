@@ -9,6 +9,7 @@ from geomflow.torch import (
     Atlas,
     Chart,
     MultiChartVectorField,
+    EuclideanSpace,
     batched_jacobian,
     cnf_nll_multichart,
     divergence,
@@ -17,6 +18,41 @@ from geomflow.torch import (
     pushforward_vector,
     transform_metric,
 )
+
+
+class _CompatibleLinearField(torch.nn.Module):
+    def forward(
+        self, t: torch.Tensor, x: torch.Tensor, chart_id: int
+    ) -> torch.Tensor:
+        del t, chart_id
+        return 0.5 * x
+
+
+class _ThresholdChart:
+    def __init__(self, upper_bound: float | None) -> None:
+        self.analytic_metric = EuclideanSpace(1)
+        self.upper_bound = upper_bound
+
+    def is_inside(self, x: torch.Tensor) -> torch.Tensor:
+        if self.upper_bound is None:
+            return torch.ones(x.shape[:-1], dtype=torch.bool, device=x.device)
+        return x[..., 0] <= self.upper_bound
+
+
+class _IdentityTransitionAtlas:
+    reference_chart_id = 0
+
+    def __init__(self) -> None:
+        self.charts = {0: _ThresholdChart(0.11), 1: _ThresholdChart(None)}
+
+    def __getitem__(self, chart_id: int) -> _ThresholdChart:
+        return self.charts[chart_id]
+
+    def best_chart(
+        self, x: torch.Tensor, current: int
+    ) -> tuple[int, torch.Tensor]:
+        assert current == 0
+        return 1, x
 
 
 def _stereographic_metric():
@@ -151,10 +187,40 @@ def test_multichart_integrator_density_independent_of_start_chart():
         )
 
     x_diff = (x_final_a - x_final_b).abs().max().item()
-    log_det_diff = (result_from_a.log_det - result_from_b.log_det).abs().max().item()
+    log_det_diff = (
+        result_from_a.divergence_integral - result_from_b.divergence_integral
+    ).abs().max().item()
     print("  final-x max diff:", x_diff, " log_det max diff:", log_det_diff)
     assert x_diff < 1e-2
     assert log_det_diff < 1e-2
+
+
+def test_nonzero_divergence_is_scalar_across_identity_transition():
+    """MATH-422/MATH-424/MATH-426: density has no chart Jacobian jump."""
+    atlas = _IdentityTransitionAtlas()
+    field = _CompatibleLinearField()
+    x0 = torch.tensor([[0.1]], dtype=torch.float64)
+
+    switched = integrate_multichart(
+        field, atlas, x0, start_chart=0, t0=0.0, t1=0.4, dt=0.2,
+        track_trajectory=True,
+    )
+    target_only = integrate_multichart(
+        field, atlas, x0, start_chart=1, t0=0.0, t1=0.4, dt=0.2,
+    )
+
+    torch.testing.assert_close(switched.x_final, target_only.x_final)
+    torch.testing.assert_close(
+        switched.divergence_integral, target_only.divergence_integral
+    )
+    torch.testing.assert_close(
+        switched.divergence_integral, torch.tensor([0.2], dtype=torch.float64)
+    )
+    assert switched.chart_final == 1
+    assert len(switched.transition_events) == 1
+    assert switched.transition_events[0].time == 0.2
+    assert switched.transition_events[0].source_chart == 0
+    assert switched.transition_events[0].target_chart == 1
 
 
 def test_multichart_sphere_training():

@@ -108,7 +108,7 @@ class ManifoldCNF(nn.Module):
             )
             return self.base_distribution.log_prob_volume(
                 res.x_final, self.atlas, res.chart_final
-            ) + res.log_det
+            ) + res.divergence_integral
         else:
             res = integrate_rk4(
                 self.vf,
@@ -120,7 +120,7 @@ class ManifoldCNF(nn.Module):
             )
             return self.base_distribution.log_prob_volume(
                 res.x_final, self.metric
-            ) + res.log_det
+            ) + res.divergence_integral
 
     def sample(
         self,

@@ -239,7 +239,8 @@ int main(int argc, char** argv) {
         auto result = integrator.integrate(initial_points[k], t0, t1, dt_traj, true);
         std::vector<std::array<Scalar, 3>> cart_traj;
         cart_traj.reserve(result.trajectory.size());
-        for (const auto& pt : result.trajectory) {
+        for (const auto& entry : result.trajectory) {
+          const auto& pt = entry.state;
           std::array<Scalar, 3> xyz;
           switch (mt) {
           case ManifoldType::Sphere:

@@ -95,7 +95,7 @@ public:
     for (size_t step = 0; step < n_steps - 1; ++step) {
       size_t idx = n_steps - 1 - step;
       Scalar t_back = times[idx];
-      const Point& x_back = trajectory[idx];
+      const Point& x_back = trajectory[idx].state;
 
       // RK4 backward step for λ
       Scalar half_h = h_back / Scalar(2);

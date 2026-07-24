@@ -68,7 +68,10 @@ def cnf_nll(
     )
     validate_base_distribution(base, metric.dim)
     result = integrate_rk4(vf, metric, x_data, t1, t0, dt, track_trajectory=False)
-    loss = -(base.log_prob_volume(result.x_final, metric) + result.log_det).mean()
+    loss = -(
+        base.log_prob_volume(result.x_final, metric)
+        + result.divergence_integral
+    ).mean()
 
     if lipschitz_weight > 0.0:
         loss = loss + lipschitz_weight * lipschitz_regularizer(
@@ -100,14 +103,17 @@ class IntrinsicAdjointFunction(torch.autograd.Function):
         with torch.no_grad():
             res = integrate_rk4(vf, metric, x_data, t0=t1, t1=t0, dt=dt, track_trajectory=True)
 
-        ctx.save_for_backward(x_data, res.x_final, res.log_det)
+        ctx.save_for_backward(x_data, res.x_final, res.divergence_integral)
         ctx.trajectory = res.trajectory
         base = StandardNormalCoordinateBase(metric.dim)
-        return -(base.log_prob_volume(res.x_final, metric) + res.log_det).mean()
+        return -(
+            base.log_prob_volume(res.x_final, metric)
+            + res.divergence_integral
+        ).mean()
 
     @staticmethod
     def backward(ctx, grad_output):
-        x_data, x_final, log_det = ctx.saved_tensors
+        x_data, x_final, divergence_integral = ctx.saved_tensors
         dt = ctx.dt
         vf = ctx.vf
         metric = ctx.metric
@@ -117,7 +123,7 @@ class IntrinsicAdjointFunction(torch.autograd.Function):
 
         trajectory = list(reversed(ctx.trajectory))
         for i in range(len(trajectory) - 1):
-            t_curr, x_t = trajectory[i][0], trajectory[i][2] if len(trajectory[i]) > 2 else trajectory[i][1]
+            t_curr, x_t = trajectory[i][0], trajectory[i][1]
             t_prev = trajectory[i + 1][0]
             h = t_prev - t_curr
 

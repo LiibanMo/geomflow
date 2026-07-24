@@ -2,22 +2,57 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+import math
+
 import torch
 
-from .analytic_metric import AnalyticMetric
 from .atlas import Atlas
+from .base_distribution import AtlasBaseDistribution, StandardNormalCoordinateBase
 from .multichart import MultiChartVectorField
 from .operators import divergence
-from .base_distribution import AtlasBaseDistribution, StandardNormalCoordinateBase
+
+
+@dataclass
+class ChartTransitionEvent:
+    """An accepted coordinate transition at an exact solver time."""
+
+    time: float
+    source_chart: int
+    target_chart: int
+    source_coordinates: torch.Tensor
+    target_coordinates: torch.Tensor
 
 
 class MultiChartFlowResult:
-    """Result of integrating a flow across an atlas of charts."""
+    """Result of augmented flow integration across an atlas."""
 
-    x_final: torch.Tensor
-    chart_final: int
-    log_det: torch.Tensor
-    trajectory: list  # of (t, chart_id, x)
+    def __init__(
+        self,
+        x_final: torch.Tensor,
+        chart_final: int,
+        divergence_integral: torch.Tensor,
+        trajectory: list[tuple[float, int, torch.Tensor, torch.Tensor]],
+        transition_events: list[ChartTransitionEvent],
+    ) -> None:
+        self.x_final = x_final
+        self.chart_final = chart_final
+        self.divergence_integral = divergence_integral
+        self.trajectory = trajectory
+        self.transition_events = transition_events
+
+    @property
+    def flow_log_abs_det_jacobian(self) -> torch.Tensor:
+        return self.divergence_integral
+
+    @property
+    def log_density_change(self) -> torch.Tensor:
+        return -self.divergence_integral
+
+    @property
+    def log_det(self) -> torch.Tensor:
+        """Deprecated migration alias for ``divergence_integral``."""
+        return self.divergence_integral
 
 
 def integrate_multichart(
@@ -31,146 +66,142 @@ def integrate_multichart(
     track_trajectory: bool = False,
     compute_divergence: bool = True,
 ) -> MultiChartFlowResult:
-    """Integrate with dynamic chart switching.
+    """Integrate ``x_dot=f`` and ``I_dot=div_g f`` with chart switching.
 
-    1. Start in ``start_chart`` at position ``x0`` (in that chart's coords).
-    2. At each accepted step, check if the proposed point still lies inside
-       the current chart's k‑NN validity ball.
-    3. If not, switch to the best valid overlapping chart via the user
-       transition map and continue.
-
-    Parameters
-    ----------
-    vf : MultiChartVectorField
-    atlas : Atlas
-    x0 : Tensor
-        ``(..., dim)`` in chart *start_chart* coordinates.
-    start_chart : int
-    t0, t1 : float
-        Integration times.
-    dt : float
-        Fixed step size (including sign if t1 < t0).
-    track_trajectory : bool
-    compute_divergence : bool
-
-    Returns
-    -------
-    MultiChartFlowResult
-
-    Notes
-    -----
-    Operates on one chart per *entire* batch at a time: if the batch is
-    split across multiple charts after a step, all proposed points must
-    be covered by a single chart (found via :meth:`Atlas.best_chart`)
-    before the step is accepted. This keeps chart-switch semantics
-    well-defined for batched integration.
+    All RK stages for an attempted step use its source chart. A rejected step
+    commits neither state nor divergence. Riemannian density is scalar, so an
+    accepted chart transition introduces no Jacobian jump in ``I``.
     """
     if x0.dim() < 2:
         raise ValueError(
             "integrate_multichart expects x0 of shape (batch, dim); "
             f"got shape {tuple(x0.shape)}"
         )
+    if not x0.is_floating_point():
+        raise TypeError("x0 must have a floating-point dtype")
+    if start_chart not in atlas.charts:
+        raise ValueError(f"unknown start chart {start_chart}")
+    if not math.isfinite(float(t0)) or not math.isfinite(float(t1)):
+        raise ValueError("t0 and t1 must be finite")
+    if not math.isfinite(float(dt)) or dt <= 0.0:
+        raise ValueError("dt must be a finite positive step magnitude")
 
     current_chart = start_chart
-    x = x0
-    log_det = torch.zeros(x0.shape[:-1], device=x0.device, dtype=x0.dtype)
-    trajectory: list[tuple[float, int, torch.Tensor]] = []
-    t = t0
-
-    forward = t1 > t0
-    sign = 1.0 if forward else -1.0
-    base_dt = abs(dt)
-    cur_dt = base_dt
-    min_dt = base_dt * 1e-4
-    max_steps = int(20 * abs(t1 - t0) / base_dt) + 10
-    n_steps = 0
-
+    x = x0.clone()
+    integral = torch.zeros(x0.shape[:-1], device=x0.device, dtype=x0.dtype)
+    trajectory: list[tuple[float, int, torch.Tensor, torch.Tensor]] = []
+    transition_events: list[ChartTransitionEvent] = []
+    t = float(t0)
     if track_trajectory:
-        trajectory.append((t, current_chart, x.clone()))
+        trajectory.append((t, current_chart, x.clone(), integral.clone()))
 
-    while (forward and t < t1) or (not forward and t > t1):
-        n_steps += 1
-        if n_steps > max_steps:
-            raise RuntimeError(
-                "integrate_multichart exceeded max_steps "
-                f"({max_steps}); check chart coverage/transitions for gaps."
+    duration = abs(float(t1) - float(t0))
+    if duration == 0.0:
+        return MultiChartFlowResult(
+            x, current_chart, integral, trajectory, transition_events
+        )
+
+    direction = 1.0 if t1 > t0 else -1.0
+    base_dt = float(dt)
+    current_dt = base_dt
+    min_dt = base_dt * 1e-4
+    max_attempts = 20 * math.ceil(duration / base_dt) + 10
+
+    def augmented_rhs(
+        time: float, state: torch.Tensor, chart_id: int
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        time_tensor = torch.full(
+            state.shape[:-1], time, device=state.device, dtype=state.dtype
+        )
+        field_value = vf(time_tensor, state, chart_id)
+        if not compute_divergence:
+            return field_value, torch.zeros(
+                state.shape[:-1], device=state.device, dtype=state.dtype
             )
 
-        h = sign * cur_dt
-        if forward and t + h > t1:
-            h = t1 - t
-        elif not forward and t + h < t1:
-            h = t1 - t
-        half_h = h / 2.0
+        with torch.enable_grad():
+            divergence_state = state
+            if not divergence_state.requires_grad:
+                divergence_state = divergence_state.requires_grad_(True)
 
-        def _f(t_: float, x_t_: torch.Tensor, cid: int) -> torch.Tensor:
-            return vf(
-                torch.full(x_t_.shape[:-1], t_, device=x_t_.device, dtype=x_t_.dtype),
-                x_t_,
-                cid,
-            )
-
-        # RK4 stages in current chart
-        k1 = _f(t, x, current_chart)
-        k2 = _f(t + half_h, x + half_h * k1, current_chart)
-        k3 = _f(t + half_h, x + half_h * k2, current_chart)
-        k4 = _f(t + h, x + h * k3, current_chart)
-        x_proposed = x + (h / 6.0) * (k1 + 2.0 * k2 + 2.0 * k3 + k4)
-
-        chart_obj = atlas[current_chart]
-
-        if chart_obj.is_inside(x_proposed).all():
-            # Accept step in current chart; restore step size on success.
-            x = x_proposed
-            t = t + h
-            cur_dt = base_dt
-            if compute_divergence:
-                x_grad = x.detach().requires_grad_(True)
-                div_val = divergence(
-                    lambda x_: _f(t, x_, current_chart),
-                    x_grad,
-                    chart_obj.analytic_metric,
+            def field_at_state(value: torch.Tensor) -> torch.Tensor:
+                stage_time = torch.full(
+                    value.shape[:-1], time, device=value.device, dtype=value.dtype
                 )
-                log_det = log_det + div_val * abs(h)
-        else:
-            # Try to switch the whole batch to a single overlapping chart.
+                return vf(stage_time, value, chart_id)
+
+            divergence_value = divergence(
+                field_at_state,
+                divergence_state,
+                atlas[chart_id].analytic_metric,
+            )
+        return field_value, divergence_value
+
+    for _ in range(max_attempts):
+        if t == float(t1):
+            break
+
+        remaining = abs(float(t1) - t)
+        h = direction * min(current_dt, remaining)
+        half_h = h / 2.0
+        source_chart = current_chart
+
+        k1_x, k1_i = augmented_rhs(t, x, source_chart)
+        k2_x, k2_i = augmented_rhs(
+            t + half_h, x + half_h * k1_x, source_chart
+        )
+        k3_x, k3_i = augmented_rhs(
+            t + half_h, x + half_h * k2_x, source_chart
+        )
+        k4_x, k4_i = augmented_rhs(t + h, x + h * k3_x, source_chart)
+        proposed_x = x + (h / 6.0) * (
+            k1_x + 2.0 * k2_x + 2.0 * k3_x + k4_x
+        )
+        proposed_integral = integral + (h / 6.0) * (
+            k1_i + 2.0 * k2_i + 2.0 * k3_i + k4_i
+        )
+
+        target_chart = source_chart
+        accepted_x = proposed_x
+        if not atlas[source_chart].is_inside(proposed_x).all():
             try:
-                new_cid, x_mapped = atlas.best_chart(x_proposed, current_chart)
+                target_chart, accepted_x = atlas.best_chart(proposed_x, source_chart)
             except ValueError:
-                # No single chart covers the proposed point(s): shrink the
-                # step and retry, down to a minimum step size.
-                cur_dt = cur_dt * 0.5
-                if cur_dt < min_dt:
+                current_dt *= 0.5
+                if current_dt < min_dt:
                     raise RuntimeError(
-                        "integrate_multichart: step size collapsed below "
-                        f"minimum ({min_dt}); no chart covers the "
-                        "trajectory near t={:.4f}. Check atlas coverage/"
-                        "transition maps for gaps.".format(t)
+                        "integrate_multichart: no chart covers the trajectory "
+                        f"near t={t:.6g}; step fell below {min_dt:.6g}"
                     )
                 continue
 
-            current_chart = new_cid
-            x = x_mapped
-            t = t + h
-            cur_dt = base_dt
-            if compute_divergence:
-                x_grad = x.detach().requires_grad_(True)
-                div_val = divergence(
-                    lambda x_: _f(t, x_, current_chart),
-                    x_grad,
-                    atlas[current_chart].analytic_metric,
+        next_t = float(t1) if remaining <= current_dt else t + h
+        x = accepted_x
+        integral = proposed_integral
+        t = next_t
+        current_chart = target_chart
+        current_dt = base_dt
+
+        if target_chart != source_chart:
+            transition_events.append(
+                ChartTransitionEvent(
+                    t,
+                    source_chart,
+                    target_chart,
+                    proposed_x.clone(),
+                    accepted_x.clone(),
                 )
-                log_det = log_det + div_val * abs(h)
-
+            )
         if track_trajectory:
-            trajectory.append((t, current_chart, x.clone()))
+            trajectory.append((t, current_chart, x.clone(), integral.clone()))
+    else:
+        raise RuntimeError(
+            f"integrate_multichart exceeded {max_attempts} bounded step attempts"
+        )
 
-    result = MultiChartFlowResult()
-    result.x_final = x
-    result.chart_final = current_chart
-    result.log_det = log_det
-    result.trajectory = trajectory
-    return result
+    return MultiChartFlowResult(
+        x, current_chart, integral, trajectory, transition_events
+    )
 
 
 def cnf_nll_multichart(
@@ -183,9 +214,15 @@ def cnf_nll_multichart(
     t1: float = 1.0,
     base_distribution: AtlasBaseDistribution | None = None,
 ) -> torch.Tensor:
-    """Mean NLL for data in an arbitrary chart, using standard autograd."""
+    """Mean NLL using Mohamud's signed Riemannian divergence integral."""
     result = integrate_multichart(
-        vf, atlas, x_data, start_chart, t1, t0, dt,
+        vf,
+        atlas,
+        x_data,
+        start_chart,
+        t1,
+        t0,
+        dt,
         track_trajectory=False,
         compute_divergence=True,
     )
@@ -195,5 +232,5 @@ def cnf_nll_multichart(
     )
     return -(
         base.log_prob_volume(result.x_final, atlas, result.chart_final)
-        + result.log_det
+        + result.divergence_integral
     ).mean()

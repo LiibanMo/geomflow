@@ -59,10 +59,6 @@ def _linear_nll(coefficient: float, data: torch.Tensor, duration: float) -> floa
     return values.mean().item()
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="MATH-020: reverse divergence orientation gives the wrong complete NLL gradient",
-)
 def test_complete_nll_parameter_gradient_matches_independent_finite_difference() -> None:
     """MATH-260: report the NLL quantity, reverse direction, step, and expected sign."""
     data = torch.tensor([[0.4], [1.1]], dtype=DTYPE)
@@ -111,10 +107,6 @@ def test_complete_nll_input_gradient_matches_analytic_cotangent() -> None:
     torch.testing.assert_close(actual, finite_difference, rtol=2e-8, atol=2e-10)
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="MATH-020: every diagonal parameter receives the wrong divergence sign",
-)
 def test_every_trainable_parameter_gradient_is_checked() -> None:
     """MATH-263/MATH-264: check active entries and an explicit mathematical zero."""
     data = torch.tensor([[0.4, 0.8], [1.1, -0.3]], dtype=DTYPE)
@@ -216,10 +208,6 @@ def test_cotangent_gradient_transforms_by_chart_pullback() -> None:
     torch.testing.assert_close(covector_y, expected_y, rtol=2e-14, atol=2e-14)
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="MATH-020: reverse density sign also fails for nonconstant metrics",
-)
 def test_complete_nll_parameter_gradient_under_nonconstant_metric() -> None:
     """MATH-267: g=exp(2x) gives div(theta)=theta for a constant field."""
     metric = AnalyticMetric(
@@ -234,5 +222,6 @@ def test_complete_nll_parameter_gradient_under_nonconstant_metric() -> None:
     loss = cnf_nll(field, metric, data, dt=0.03, t0=0.0, t1=duration)
     (actual,) = torch.autograd.grad(loss, (field.speed,))
     base = data - field.speed.detach() * duration
-    expected = duration * (1.0 - base).sum()
+    # log rho_base = log q_coord - x for sqrt(det g)=exp(x).
+    expected = -duration * base.sum()
     torch.testing.assert_close(actual, expected, rtol=2e-8, atol=2e-10)

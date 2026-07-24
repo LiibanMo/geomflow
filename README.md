@@ -193,7 +193,7 @@ int main() {
               << result.x_final[0] << ", " 
               << result.x_final[1] << ", " 
               << result.x_final[2] << "]\n";
-    std::cout << "Integrated log-det-Jacobian: " << result.log_det << "\n";
+    std::cout << "Divergence integral: " << result.divergence_integral << "\n";
 
     // Adjoint solver for parameter gradients (Theorem 3.7)
     geomflow::CotangentVector<Traits> initial_adj({result.x_final[0], result.x_final[1], result.x_final[2]});
@@ -219,7 +219,7 @@ geomflow/
 │       ├── connection.h   — Levi-Civita connection & Christoffel symbols
 │       ├── covariant.h    — Covariant derivative tensor
 │       ├── divergence.h   — Intrinsic divergence operator
-│       ├── integrator.h   — Flow integrator with log-det Jacobian
+│       ├── integrator.h   — Augmented state/divergence RK4 integrator
 │       ├── metric.h       — Riemannian metric protocol & Euclidean metric
 │       └── vector_field.h — Parameterized vector fields
 ├── python/
