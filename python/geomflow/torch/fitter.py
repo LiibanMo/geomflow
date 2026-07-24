@@ -19,9 +19,14 @@ from .base_distribution import (
     StandardNormalCoordinateBase,
     validate_base_distribution,
 )
+from .adjoint import cnf_log_prob
 from .integrator import integrate_rk4
 from .multichart import MultiChartVectorField, overlap_consistency_loss
-from .multichart_integrator import cnf_nll_multichart, integrate_multichart
+from .multichart_integrator import (
+    cnf_log_prob_multichart,
+    cnf_nll_multichart,
+    integrate_multichart,
+)
 from .vector_field import ManifoldVectorField, lipschitz_regularizer, weight_decay_loss
 
 
@@ -96,31 +101,22 @@ class ManifoldCNF(nn.Module):
             Log-likelihood values of shape ``(batch,)``.
         """
         if self.is_multichart:
-            res = integrate_multichart(
+            return cnf_log_prob_multichart(
                 self.vf,
                 self.atlas,
                 x_data,
-                start_chart=start_chart,
-                t0=1.0,
-                t1=0.0,
+                start_chart,
                 dt=self.dt,
-                compute_divergence=True,
+                base_distribution=self.base_distribution,
             )
-            return self.base_distribution.log_prob_volume(
-                res.x_final, self.atlas, res.chart_final
-            ) + res.divergence_integral
         else:
-            res = integrate_rk4(
+            return cnf_log_prob(
                 self.vf,
                 self.metric,
                 x_data,
-                t0=1.0,
-                t1=0.0,
-                dt=self.dt,
+                self.dt,
+                base_distribution=self.base_distribution,
             )
-            return self.base_distribution.log_prob_volume(
-                res.x_final, self.metric
-            ) + res.divergence_integral
 
     def sample(
         self,

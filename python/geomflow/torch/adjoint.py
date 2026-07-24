@@ -6,6 +6,8 @@ The custom intrinsic adjoint Function is experimental; the public
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 import torch
 
 from .analytic_metric import AnalyticMetric
@@ -17,6 +19,67 @@ from .base_distribution import (
 from .integrator import integrate_rk4
 from .operators import divergence
 from .vector_field import ManifoldVectorField, lipschitz_regularizer, weight_decay_loss
+
+
+def cnf_log_prob(
+    vf: ManifoldVectorField,
+    metric: AnalyticMetric,
+    x_data: torch.Tensor,
+    dt: float = 0.05,
+    t0: float = 0.0,
+    t1: float = 1.0,
+    base_distribution: BaseDistribution | None = None,
+) -> torch.Tensor:
+    """Per-sample Riemannian log density from the direct-autograd solver."""
+    base = base_distribution or getattr(
+        metric, "default_base_distribution", StandardNormalCoordinateBase(metric.dim)
+    )
+    validate_base_distribution(base, metric.dim)
+    result = integrate_rk4(vf, metric, x_data, t1, t0, dt, track_trajectory=False)
+    return (
+        base.log_prob_volume(result.x_final, metric)
+        + result.divergence_integral
+    )
+
+
+@dataclass(frozen=True)
+class CNFLossTerms:
+    """Separated mathematical NLL and weighted training penalties."""
+
+    nll: torch.Tensor
+    lipschitz_penalty: torch.Tensor
+    weight_decay_penalty: torch.Tensor
+
+    @property
+    def total(self) -> torch.Tensor:
+        return self.nll + self.lipschitz_penalty + self.weight_decay_penalty
+
+
+def cnf_loss_terms(
+    vf: ManifoldVectorField,
+    metric: AnalyticMetric,
+    x_data: torch.Tensor,
+    dt: float = 0.05,
+    t0: float = 0.0,
+    t1: float = 1.0,
+    lipschitz_weight: float = 0.0,
+    weight_decay_weight: float = 0.0,
+    base_distribution: BaseDistribution | None = None,
+) -> CNFLossTerms:
+    """Return mean NLL and regularizers as distinct diagnostic quantities."""
+    nll = -cnf_log_prob(
+        vf, metric, x_data, dt, t0, t1, base_distribution
+    ).mean()
+    zero = nll.new_zeros(())
+    lipschitz_penalty = zero
+    weight_decay_penalty = zero
+    if lipschitz_weight > 0.0:
+        lipschitz_penalty = lipschitz_weight * lipschitz_regularizer(
+            vf, x_data, t=(t0 + t1) / 2.0
+        )
+    if weight_decay_weight > 0.0:
+        weight_decay_penalty = weight_decay_weight * weight_decay_loss(vf)
+    return CNFLossTerms(nll, lipschitz_penalty, weight_decay_penalty)
 
 
 def cnf_nll(
@@ -63,23 +126,17 @@ def cnf_nll(
         Scalar loss (NLL plus any active regularizers); call ``.backward()``
         to fill vector-field parameter gradients.
     """
-    base = base_distribution or getattr(
-        metric, "default_base_distribution", StandardNormalCoordinateBase(metric.dim)
-    )
-    validate_base_distribution(base, metric.dim)
-    result = integrate_rk4(vf, metric, x_data, t1, t0, dt, track_trajectory=False)
-    loss = -(
-        base.log_prob_volume(result.x_final, metric)
-        + result.divergence_integral
-    ).mean()
-
-    if lipschitz_weight > 0.0:
-        loss = loss + lipschitz_weight * lipschitz_regularizer(
-            vf, x_data, t=(t0 + t1) / 2.0
-        )
-    if weight_decay_weight > 0.0:
-        loss = loss + weight_decay_weight * weight_decay_loss(vf)
-    return loss
+    return cnf_loss_terms(
+        vf,
+        metric,
+        x_data,
+        dt,
+        t0,
+        t1,
+        lipschitz_weight,
+        weight_decay_weight,
+        base_distribution,
+    ).total
 
 
 class IntrinsicAdjointFunction(torch.autograd.Function):
@@ -94,6 +151,11 @@ class IntrinsicAdjointFunction(torch.autograd.Function):
 
     @staticmethod
     def forward(ctx, x_data, vf, metric, dt=0.05, t0=0.0, t1=1.0):
+        if any(parameter.requires_grad for parameter in vf.parameters()):
+            raise RuntimeError(
+                "IntrinsicAdjointFunction is experimental and does not return "
+                "parameter gradients; use cnf_nll for parameter training"
+            )
         ctx.dt = dt
         ctx.t0 = t0
         ctx.t1 = t1

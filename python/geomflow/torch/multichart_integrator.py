@@ -122,7 +122,7 @@ def integrate_multichart(
         with torch.enable_grad():
             divergence_state = state
             if not divergence_state.requires_grad:
-                divergence_state = divergence_state.requires_grad_(True)
+                divergence_state = divergence_state.clone().requires_grad_(True)
 
             def field_at_state(value: torch.Tensor) -> torch.Tensor:
                 stage_time = torch.full(
@@ -204,7 +204,7 @@ def integrate_multichart(
     )
 
 
-def cnf_nll_multichart(
+def cnf_log_prob_multichart(
     vf: MultiChartVectorField,
     atlas: Atlas,
     x_data: torch.Tensor,
@@ -214,7 +214,7 @@ def cnf_nll_multichart(
     t1: float = 1.0,
     base_distribution: AtlasBaseDistribution | None = None,
 ) -> torch.Tensor:
-    """Mean NLL using Mohamud's signed Riemannian divergence integral."""
+    """Per-sample log density using Mohamud's signed divergence integral."""
     result = integrate_multichart(
         vf,
         atlas,
@@ -230,7 +230,23 @@ def cnf_nll_multichart(
         StandardNormalCoordinateBase(atlas[atlas.reference_chart_id].dim),
         atlas.reference_chart_id,
     )
-    return -(
+    return (
         base.log_prob_volume(result.x_final, atlas, result.chart_final)
         + result.divergence_integral
+    )
+
+
+def cnf_nll_multichart(
+    vf: MultiChartVectorField,
+    atlas: Atlas,
+    x_data: torch.Tensor,
+    start_chart: int,
+    dt: float = 0.05,
+    t0: float = 0.0,
+    t1: float = 1.0,
+    base_distribution: AtlasBaseDistribution | None = None,
+) -> torch.Tensor:
+    """Mean NLL using Mohamud's signed Riemannian divergence integral."""
+    return -cnf_log_prob_multichart(
+        vf, atlas, x_data, start_chart, dt, t0, t1, base_distribution
     ).mean()

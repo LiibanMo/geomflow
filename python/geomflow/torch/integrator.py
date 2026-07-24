@@ -97,7 +97,7 @@ def integrate_rk4(
         with torch.enable_grad():
             divergence_state = state
             if not divergence_state.requires_grad:
-                divergence_state = divergence_state.requires_grad_(True)
+                divergence_state = divergence_state.clone().requires_grad_(True)
 
             def field_at_state(value: torch.Tensor) -> torch.Tensor:
                 stage_time = torch.full(

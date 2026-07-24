@@ -1,7 +1,7 @@
 # Mathematical Correctness Remediation Plan
 
-> Status: Phases 0-3 completed on July 24, 2026. Phase 3's signed augmented
-> integration exit gate passes in Python and C++.
+> Status: Phases 0-5 completed on July 24, 2026. Phase 5's direct-autograd
+> loss and complete-gradient exit gate passes against independent references.
 
 ## Attribution And Source Of Truth
 
@@ -428,42 +428,42 @@ mandatory exit gates in this document pass.
 
 ### 5.1 Preserve The Complete Computation Graph
 
-- [ ] [MATH-600] Ensure integrated states remain connected to inputs and parameters.
-- [ ] [MATH-601] Compute spatial divergence derivatives without detaching the trajectory state.
-- [ ] [MATH-602] Preserve direct parameter dependence of divergence.
-- [ ] [MATH-603] Preserve indirect parameter dependence through `x(t; theta)`.
-- [ ] [MATH-604] Preserve input dependence of the divergence integral.
-- [ ] [MATH-605] Avoid in-place graph mutations that invalidate higher derivatives.
-- [ ] [MATH-606] Verify every parameter receives the expected finite gradient.
+- [x] [MATH-600] Ensure integrated states remain connected to inputs and parameters.
+- [x] [MATH-601] Compute spatial divergence derivatives without detaching the trajectory state.
+- [x] [MATH-602] Preserve direct parameter dependence of divergence.
+- [x] [MATH-603] Preserve indirect parameter dependence through `x(t; theta)`.
+- [x] [MATH-604] Preserve input dependence of the divergence integral.
+- [x] [MATH-605] Avoid in-place graph mutations that invalidate higher derivatives.
+- [x] [MATH-606] Verify every parameter receives the expected finite gradient.
 
 ### 5.2 Loss Assembly
 
-- [ ] [MATH-610] Assemble NLL from measure-correct base log density and signed density evolution.
-- [ ] [MATH-611] Make `cnf_nll` and `ManifoldCNF.log_prob` algebraically identical for the same configuration.
-- [ ] [MATH-612] Make `cnf_nll_multichart` follow the same convention.
-- [ ] [MATH-613] Verify mean-versus-sum reduction and batch scaling explicitly.
-- [ ] [MATH-614] Keep regularizer terms separate from mathematical NLL in diagnostics.
-- [ ] [MATH-615] Test loss values against analytic linear CNFs.
+- [x] [MATH-610] Assemble NLL from measure-correct base log density and signed density evolution.
+- [x] [MATH-611] Make `cnf_nll` and `ManifoldCNF.log_prob` algebraically identical for the same configuration.
+- [x] [MATH-612] Make `cnf_nll_multichart` follow the same convention.
+- [x] [MATH-613] Verify mean-versus-sum reduction and batch scaling explicitly.
+- [x] [MATH-614] Keep regularizer terms separate from mathematical NLL in diagnostics.
+- [x] [MATH-615] Test loss values against analytic linear CNFs.
 
 ### 5.3 Direct Gradient Validation
 
-- [ ] [MATH-620] Compare input gradients with independent finite differences.
-- [ ] [MATH-621] Compare each parameter gradient with independent finite differences.
-- [ ] [MATH-622] Include a field whose divergence depends directly on parameters.
-- [ ] [MATH-623] Include a field whose divergence depends on state so indirect derivatives matter.
-- [ ] [MATH-624] Include a nonconstant metric so metric-volume derivatives matter.
-- [ ] [MATH-625] Check gradient convergence as the ODE step is refined.
-- [ ] [MATH-626] Establish direct autograd as the reference implementation only after these tests pass.
+- [x] [MATH-620] Compare input gradients with independent finite differences.
+- [x] [MATH-621] Compare each parameter gradient with independent finite differences.
+- [x] [MATH-622] Include a field whose divergence depends directly on parameters.
+- [x] [MATH-623] Include a field whose divergence depends on state so indirect derivatives matter.
+- [x] [MATH-624] Include a nonconstant metric so metric-volume derivatives matter.
+- [x] [MATH-625] Check gradient convergence as the ODE step is refined.
+- [x] [MATH-626] Establish direct autograd as the reference implementation only after these tests pass.
 
 ### 5.4 Temporary Adjoint Safety
 
-- [ ] [MATH-630] Keep `IntrinsicAdjointFunction` clearly experimental or unavailable during direct-path correction.
-- [ ] [MATH-631] Prevent high-level APIs from selecting the intrinsic adjoint implicitly.
-- [ ] [MATH-632] Add a clear error if a user requests parameter training through an adjoint version that cannot return parameter gradients.
+- [x] [MATH-630] Keep `IntrinsicAdjointFunction` clearly experimental or unavailable during direct-path correction.
+- [x] [MATH-631] Prevent high-level APIs from selecting the intrinsic adjoint implicitly.
+- [x] [MATH-632] Add a clear error if a user requests parameter training through an adjoint version that cannot return parameter gradients.
 
 ### Phase 5 Exit Gate
 
-- [ ] [MATH-649] Demonstrate correct loss values and complete input/parameter gradients against analytic and finite-difference references.
+- [x] [MATH-649] Demonstrate correct loss values and complete input/parameter gradients against analytic and finite-difference references.
 
 ## Phase 6: Reimplement Mohamud's Python Intrinsic Adjoint
 

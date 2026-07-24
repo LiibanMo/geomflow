@@ -18,12 +18,19 @@ from .operators import (
     gradient,
 )
 from .integrator import FlowResult, integrate_rk4
-from .adjoint import IntrinsicAdjointFunction, cnf_nll
+from .adjoint import (
+    CNFLossTerms,
+    IntrinsicAdjointFunction,
+    cnf_log_prob,
+    cnf_loss_terms,
+    cnf_nll,
+)
 from .atlas import Atlas, Chart
 from .multichart import MultiChartVectorField, overlap_consistency_loss
 from .multichart_integrator import (
     ChartTransitionEvent,
     MultiChartFlowResult,
+    cnf_log_prob_multichart,
     cnf_nll_multichart,
     integrate_multichart,
 )
@@ -61,6 +68,9 @@ __all__ = [
     "covariant_derivative_tensor",
     "integrate_rk4",
     "FlowResult",
+    "CNFLossTerms",
+    "cnf_log_prob",
+    "cnf_loss_terms",
     "cnf_nll",
     "IntrinsicAdjointFunction",
     "Atlas",
@@ -70,6 +80,7 @@ __all__ = [
     "integrate_multichart",
     "MultiChartFlowResult",
     "ChartTransitionEvent",
+    "cnf_log_prob_multichart",
     "cnf_nll_multichart",
     "pushforward_vector",
     "pullback_covector",

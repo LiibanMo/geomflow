@@ -87,11 +87,13 @@ def lipschitz_regularizer(
     Penalises the Frobenius norm of the spatial Jacobian at a fixed time,
     encouraging smooth trajectories.
     """
-    x.requires_grad_(True)
+    x_for_grad = x if x.requires_grad else x.clone().requires_grad_(True)
     t_ten = torch.full(x.shape[:-1], t, device=x.device, dtype=x.dtype)
-    f = vf(t_ten, x)
-    jac_norm = torch.zeros_like(x[..., 0])
+    f = vf(t_ten, x_for_grad)
+    jac_norm = torch.zeros_like(x_for_grad[..., 0])
     for i in range(vf.dim):
-        (grad_i,) = torch.autograd.grad(f[..., i].sum(), x, retain_graph=True, create_graph=True)
+        (grad_i,) = torch.autograd.grad(
+            f[..., i].sum(), x_for_grad, retain_graph=True, create_graph=True
+        )
         jac_norm = jac_norm + (grad_i * grad_i).sum(dim=-1)
     return jac_norm.mean()

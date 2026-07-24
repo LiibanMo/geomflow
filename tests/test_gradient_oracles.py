@@ -167,7 +167,7 @@ def test_direct_state_gradient_has_fourth_order_convergence() -> None:
 
 @pytest.mark.xfail(
     strict=True,
-    reason="MATH-044: constant divergence gradient currently raises in adjoint backward",
+    reason="Phase 6 will replace the experimental adjoint and validate convergence",
 )
 def test_intrinsic_adjoint_input_gradient_convergence_is_measured_separately() -> None:
     """MATH-274: estimate adjoint input-gradient order independently of direct autograd."""
