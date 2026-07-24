@@ -9,7 +9,12 @@ from __future__ import annotations
 import torch
 
 from .analytic_metric import AnalyticMetric
-from .integrator import _sample_nll, integrate_rk4
+from .base_distribution import (
+    BaseDistribution,
+    StandardNormalCoordinateBase,
+    validate_base_distribution,
+)
+from .integrator import integrate_rk4
 from .operators import divergence
 from .vector_field import ManifoldVectorField, lipschitz_regularizer, weight_decay_loss
 
@@ -23,6 +28,7 @@ def cnf_nll(
     t1: float = 1.0,
     lipschitz_weight: float = 0.0,
     weight_decay_weight: float = 0.0,
+    base_distribution: BaseDistribution | None = None,
 ) -> torch.Tensor:
     """Negative log-likelihood for a CNF on a Riemannian manifold.
 
@@ -57,8 +63,12 @@ def cnf_nll(
         Scalar loss (NLL plus any active regularizers); call ``.backward()``
         to fill vector-field parameter gradients.
     """
+    base = base_distribution or getattr(
+        metric, "default_base_distribution", StandardNormalCoordinateBase(metric.dim)
+    )
+    validate_base_distribution(base, metric.dim)
     result = integrate_rk4(vf, metric, x_data, t1, t0, dt, track_trajectory=False)
-    loss = _sample_nll(result.x_final, result.log_det).mean()
+    loss = -(base.log_prob_volume(result.x_final, metric) + result.log_det).mean()
 
     if lipschitz_weight > 0.0:
         loss = loss + lipschitz_weight * lipschitz_regularizer(
@@ -92,7 +102,8 @@ class IntrinsicAdjointFunction(torch.autograd.Function):
 
         ctx.save_for_backward(x_data, res.x_final, res.log_det)
         ctx.trajectory = res.trajectory
-        return _sample_nll(res.x_final, res.log_det).mean()
+        base = StandardNormalCoordinateBase(metric.dim)
+        return -(base.log_prob_volume(res.x_final, metric) + res.log_det).mean()
 
     @staticmethod
     def backward(ctx, grad_output):

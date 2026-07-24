@@ -115,26 +115,3 @@ def integrate_rk4(
             trajectory.append((t, x.clone()))
 
     return FlowResult(x, log_det, trajectory)
-
-
-def _base_log_prob(x0: torch.Tensor) -> torch.Tensor:
-    """Log-probability of the standard Gaussian base density ``N(0, I)``."""
-    d = x0.shape[-1]
-    two_pi = torch.tensor(2.0 * 3.14159265359, device=x0.device, dtype=x0.dtype)
-    return -0.5 * (d * torch.log(two_pi) + (x0 * x0).sum(dim=-1))
-
-
-def _sample_nll(x0: torch.Tensor, log_det: torch.Tensor) -> torch.Tensor:
-    """Per-sample NLL: ``-log p_base(x0) - ∫ div f dt``."""
-    return -(_base_log_prob(x0) + log_det)
-
-
-def sample_nll_mean(
-    x0: torch.Tensor, log_det: torch.Tensor
-) -> torch.Tensor:
-    """Mean NLL: convenience, returns scalar."""
-    return _sample_nll(x0, log_det).mean()
-
-
-# Backward compatibility alias
-_sample_base_likelihood = sample_nll_mean

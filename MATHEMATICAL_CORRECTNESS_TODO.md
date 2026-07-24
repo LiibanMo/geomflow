@@ -259,55 +259,55 @@ mandatory exit gates in this document pass.
 
 ### Phase 1 Exit Gate
 
-- [ ] [MATH-289] Land failing regression tests for each confirmed blocker and verify their analytic expected values independently.
+- [x] [MATH-289] Land failing regression tests for each confirmed blocker and verify their analytic expected values independently.
 
 ## Phase 2: Base Measure And Distribution Semantics
 
 ### 2.1 Base Distribution Abstraction
 
-- [ ] [MATH-300] Introduce a clear base-distribution protocol shared by `log_prob` and `sample`.
-- [ ] [MATH-301] Define whether the protocol returns log density relative to `dV_g` or coordinate measure.
-- [ ] [MATH-302] Prefer a method explicitly named `log_prob_volume` if it returns density relative to `dV_g`.
-- [ ] [MATH-303] If accepting a coordinate distribution, centralize conversion through `log sqrt(det g)`.
-- [ ] [MATH-304] Require base samples to lie in the declared manifold/chart domain.
-- [ ] [MATH-305] Require base samples and base log density to represent the same normalized measure.
-- [ ] [MATH-306] Support batched points and arbitrary supported leading dimensions.
-- [ ] [MATH-307] Preserve device and dtype behavior without changing mathematical semantics.
-- [ ] [MATH-308] Make the reference-chart association explicit for atlas bases.
+- [x] [MATH-300] Introduce a clear base-distribution protocol shared by `log_prob` and `sample`.
+- [x] [MATH-301] Define whether the protocol returns log density relative to `dV_g` or coordinate measure.
+- [x] [MATH-302] Prefer a method explicitly named `log_prob_volume` if it returns density relative to `dV_g`.
+- [x] [MATH-303] If accepting a coordinate distribution, centralize conversion through `log sqrt(det g)`.
+- [x] [MATH-304] Require base samples to lie in the declared manifold/chart domain.
+- [x] [MATH-305] Require base samples and base log density to represent the same normalized measure.
+- [x] [MATH-306] Support batched points and arbitrary supported leading dimensions.
+- [x] [MATH-307] Preserve device and dtype behavior without changing mathematical semantics.
+- [x] [MATH-308] Make the reference-chart association explicit for atlas bases.
 
 ### 2.2 Euclidean Base
 
-- [ ] [MATH-310] Keep the standard coordinate Gaussian for Euclidean identity metric.
-- [ ] [MATH-311] Verify its coordinate and Riemannian densities coincide only because `sqrt(det g) = 1`.
-- [ ] [MATH-312] Test analytic NLL and samples under zero flow.
+- [x] [MATH-310] Keep the standard coordinate Gaussian for Euclidean identity metric.
+- [x] [MATH-311] Verify its coordinate and Riemannian densities coincide only because `sqrt(det g) = 1`.
+- [x] [MATH-312] Test analytic NLL and samples under zero flow.
 
 ### 2.3 General Single-Chart Base
 
-- [ ] [MATH-320] Define the default as a coordinate distribution plus exact volume conversion, or require users to provide a manifold-aware base explicitly.
-- [ ] [MATH-321] Avoid claiming a generic standard normal is intrinsic on an arbitrary chart.
-- [ ] [MATH-322] Validate that user-provided base log density declares its reference measure.
-- [ ] [MATH-323] Validate normalization on tractable one-dimensional examples.
-- [ ] [MATH-324] Document behavior when a chart does not cover the full support of a coordinate Gaussian.
+- [x] [MATH-320] Define the default as a coordinate distribution plus exact volume conversion, or require users to provide a manifold-aware base explicitly.
+- [x] [MATH-321] Avoid claiming a generic standard normal is intrinsic on an arbitrary chart.
+- [x] [MATH-322] Validate that user-provided base log density declares its reference measure.
+- [x] [MATH-323] Validate normalization on tractable one-dimensional examples.
+- [x] [MATH-324] Document behavior when a chart does not cover the full support of a coordinate Gaussian.
 
 ### 2.4 Atlas Base
 
-- [ ] [MATH-330] Define one reference chart or an explicit manifold distribution for the base.
-- [ ] [MATH-331] Require the reference-chart sampler to produce points covered by that chart.
-- [ ] [MATH-332] Convert coordinate base density to Riemannian density using the reference-chart metric.
-- [ ] [MATH-333] Verify equivalent log density after mapping a base point into another overlapping chart.
-- [ ] [MATH-334] Define behavior for base support outside the reference chart rather than silently extrapolating.
+- [x] [MATH-330] Define one reference chart or an explicit manifold distribution for the base.
+- [x] [MATH-331] Require the reference-chart sampler to produce points covered by that chart.
+- [x] [MATH-332] Convert coordinate base density to Riemannian density using the reference-chart metric.
+- [x] [MATH-333] Verify equivalent log density after mapping a base point into another overlapping chart.
+- [x] [MATH-334] Define behavior for base support outside the reference chart rather than silently extrapolating.
 
 ### 2.5 API Migration
 
-- [ ] [MATH-340] Audit all uses of `_base_log_prob` and `_sample_nll`.
-- [ ] [MATH-341] Replace private helpers with measure-explicit names.
-- [ ] [MATH-342] Update `cnf_nll`, `cnf_nll_multichart`, `ManifoldCNF.log_prob`, and `ManifoldCNF.sample` together.
-- [ ] [MATH-343] Add release notes for any change in non-Euclidean likelihood values.
-- [ ] [MATH-344] Do not silently preserve the old unnormalized likelihood as a compatibility mode.
+- [x] [MATH-340] Audit all uses of `_base_log_prob` and `_sample_nll`.
+- [x] [MATH-341] Replace private helpers with measure-explicit names.
+- [x] [MATH-342] Update `cnf_nll`, `cnf_nll_multichart`, `ManifoldCNF.log_prob`, and `ManifoldCNF.sample` together.
+- [x] [MATH-343] Add release notes for any change in non-Euclidean likelihood values.
+- [x] [MATH-344] Do not silently preserve the old unnormalized likelihood as a compatibility mode.
 
 ### Phase 2 Exit Gate
 
-- [ ] [MATH-359] Demonstrate normalized zero-flow distributions and sample/log-prob consistency for every supported built-in manifold.
+- [x] [MATH-359] Demonstrate normalized zero-flow distributions and sample/log-prob consistency for every supported built-in manifold.
 
 ## Phase 3: Correct Augmented Flow Integration
 

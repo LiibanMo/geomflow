@@ -8,7 +8,7 @@ from .analytic_metric import AnalyticMetric
 from .atlas import Atlas
 from .multichart import MultiChartVectorField
 from .operators import divergence
-from .integrator import _base_log_prob
+from .base_distribution import AtlasBaseDistribution, StandardNormalCoordinateBase
 
 
 class MultiChartFlowResult:
@@ -181,6 +181,7 @@ def cnf_nll_multichart(
     dt: float = 0.05,
     t0: float = 0.0,
     t1: float = 1.0,
+    base_distribution: AtlasBaseDistribution | None = None,
 ) -> torch.Tensor:
     """Mean NLL for data in an arbitrary chart, using standard autograd."""
     result = integrate_multichart(
@@ -188,10 +189,11 @@ def cnf_nll_multichart(
         track_trajectory=False,
         compute_divergence=True,
     )
-    # Base density is evaluated in the reference chart.
-    # If final chart != reference, transition the base point.
-    x0 = result.x_final
-    chart0 = result.chart_final
-    if chart0 != atlas.reference_chart_id:
-        x0 = atlas[chart0].transition_to(atlas.reference_chart_id, x0)
-    return -(_base_log_prob(x0) + result.log_det).mean()
+    base = base_distribution or AtlasBaseDistribution(
+        StandardNormalCoordinateBase(atlas[atlas.reference_chart_id].dim),
+        atlas.reference_chart_id,
+    )
+    return -(
+        base.log_prob_volume(result.x_final, atlas, result.chart_final)
+        + result.log_det
+    ).mean()

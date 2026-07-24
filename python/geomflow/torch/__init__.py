@@ -2,6 +2,14 @@
 
 from ._utils import batched_jacobian
 from .analytic_metric import AnalyticMetric
+from .base_distribution import (
+    AtlasBaseDistribution,
+    BaseDistribution,
+    CoordinateBaseDistribution,
+    PoincareDiskCoordinateBase,
+    StandardNormalCoordinateBase,
+    UniformAngleCoordinateBase,
+)
 from .vector_field import ManifoldVectorField, lipschitz_regularizer, weight_decay_loss
 from .operators import (
     christoffel,
@@ -33,6 +41,12 @@ from .fitter import ManifoldCNF
 __all__ = [
     "batched_jacobian",
     "AnalyticMetric",
+    "BaseDistribution",
+    "CoordinateBaseDistribution",
+    "StandardNormalCoordinateBase",
+    "UniformAngleCoordinateBase",
+    "PoincareDiskCoordinateBase",
+    "AtlasBaseDistribution",
     "ManifoldVectorField",
     "lipschitz_regularizer",
     "weight_decay_loss",

@@ -13,7 +13,13 @@ import torch.nn as nn
 
 from .analytic_metric import AnalyticMetric
 from .atlas import Atlas
-from .integrator import integrate_rk4, _base_log_prob
+from .base_distribution import (
+    AtlasBaseDistribution,
+    BaseDistribution,
+    StandardNormalCoordinateBase,
+    validate_base_distribution,
+)
+from .integrator import integrate_rk4
 from .multichart import MultiChartVectorField, overlap_consistency_loss
 from .multichart_integrator import cnf_nll_multichart, integrate_multichart
 from .vector_field import ManifoldVectorField, lipschitz_regularizer, weight_decay_loss
@@ -41,6 +47,7 @@ class ManifoldCNF(nn.Module):
         hidden_dim: int = 64,
         n_layers: int = 2,
         dt: float = 0.05,
+        base_distribution: BaseDistribution | AtlasBaseDistribution | None = None,
     ):
         super().__init__()
         self.manifold = manifold
@@ -51,10 +58,23 @@ class ManifoldCNF(nn.Module):
             self.atlas: Atlas = manifold
             self.vf = MultiChartVectorField(self.atlas, hidden_dim, n_layers)
             self.dim = self.atlas.charts[next(iter(self.atlas.charts))].dim
+            self.base_distribution = base_distribution or AtlasBaseDistribution(
+                StandardNormalCoordinateBase(self.dim), self.atlas.reference_chart_id
+            )
+            if not isinstance(self.base_distribution, AtlasBaseDistribution):
+                raise TypeError("an atlas requires AtlasBaseDistribution")
+            if self.base_distribution.reference_chart_id != self.atlas.reference_chart_id:
+                raise ValueError("base reference chart does not match atlas reference chart")
         else:
             self.metric: AnalyticMetric = manifold
             self.dim = self.metric.dim
             self.vf = ManifoldVectorField(self.dim, hidden_dim, n_layers)
+            self.base_distribution = base_distribution or getattr(
+                self.metric,
+                "default_base_distribution",
+                StandardNormalCoordinateBase(self.dim),
+            )
+            validate_base_distribution(self.base_distribution, self.dim)
 
     def log_prob(
         self,
@@ -86,12 +106,9 @@ class ManifoldCNF(nn.Module):
                 dt=self.dt,
                 compute_divergence=True,
             )
-            x0 = res.x_final
-            if res.chart_final != self.atlas.reference_chart_id:
-                x0 = self.atlas[res.chart_final].transition_to(
-                    self.atlas.reference_chart_id, x0
-                )
-            return _base_log_prob(x0) + res.log_det
+            return self.base_distribution.log_prob_volume(
+                res.x_final, self.atlas, res.chart_final
+            ) + res.log_det
         else:
             res = integrate_rk4(
                 self.vf,
@@ -101,7 +118,9 @@ class ManifoldCNF(nn.Module):
                 t1=0.0,
                 dt=self.dt,
             )
-            return _base_log_prob(res.x_final) + res.log_det
+            return self.base_distribution.log_prob_volume(
+                res.x_final, self.metric
+            ) + res.log_det
 
     def sample(
         self,
@@ -129,10 +148,23 @@ class ManifoldCNF(nn.Module):
         if device is None:
             device = next(self.parameters()).device
 
-        x0 = torch.randn(n_samples, self.dim, device=device)
+        dtype = next(self.parameters()).dtype
+        x0 = self.base_distribution.sample(
+            (n_samples,), device=device, dtype=dtype
+        )
+        if not self.base_distribution.contains(x0).all():
+            raise RuntimeError("base sampler produced a point outside its declared support")
 
         if self.is_multichart:
             cid = start_chart if start_chart is not None else self.atlas.reference_chart_id
+            if cid != self.atlas.reference_chart_id:
+                try:
+                    x0 = self.atlas[self.atlas.reference_chart_id].transition_to(cid, x0)
+                except KeyError as error:
+                    raise ValueError(
+                        "base samples cannot be mapped from the reference chart "
+                        f"to requested chart {cid}"
+                    ) from error
             res = integrate_multichart(
                 self.vf,
                 self.atlas,
@@ -152,6 +184,7 @@ class ManifoldCNF(nn.Module):
                 t0=0.0,
                 t1=1.0,
                 dt=self.dt,
+                compute_divergence=False,
             )
             return res.x_final, None
 
@@ -216,6 +249,7 @@ class ManifoldCNF(nn.Module):
                         x_batch,
                         start_chart=start_chart,
                         dt=self.dt,
+                        base_distribution=self.base_distribution,
                     )
                     loss = nll
                     if overlap_weight > 0.0 and len(self.atlas.charts) > 1:

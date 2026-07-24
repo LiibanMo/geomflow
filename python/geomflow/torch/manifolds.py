@@ -14,6 +14,10 @@ import torch
 
 from .analytic_metric import AnalyticMetric
 from .atlas import Atlas, Chart
+from .base_distribution import (
+    PoincareDiskCoordinateBase,
+    UniformAngleCoordinateBase,
+)
 
 
 def EuclideanSpace(dim: int = 2) -> AnalyticMetric:
@@ -120,7 +124,9 @@ def Torus2D(R: float = 2.0, r: float = 1.0) -> AnalyticMetric:
         phi = x[..., 1]
         return r * (R + r * torch.cos(phi))
 
-    return AnalyticMetric(2, metric_fn, inverse_fn, sqrt_det_fn)
+    metric = AnalyticMetric(2, metric_fn, inverse_fn, sqrt_det_fn)
+    metric.default_base_distribution = UniformAngleCoordinateBase(2)
+    return metric
 
 
 def PoincareDisk(dim: int = 2) -> AnalyticMetric:
@@ -145,7 +151,9 @@ def PoincareDisk(dim: int = 2) -> AnalyticMetric:
         r2 = (x * x).sum(dim=-1).clamp(max=0.9999)
         return (2.0 / (1.0 - r2)) ** dim
 
-    return AnalyticMetric(dim, metric_fn, inverse_fn, sqrt_det_fn)
+    metric = AnalyticMetric(dim, metric_fn, inverse_fn, sqrt_det_fn)
+    metric.default_base_distribution = PoincareDiskCoordinateBase(dim)
+    return metric
 
 
 # Alias
