@@ -16,6 +16,7 @@ public:
   using Scalar = typename Traits::ScalarType;
   static constexpr size_t N = Traits::dimension;
   using Point = typename Traits::Point;
+  // Component order: Christoffel3[k][i][j] = Gamma^k_ij.
   using Christoffel3 = std::array<std::array<std::array<Scalar, N>, N>, N>;
 
   explicit LeviCivitaConnection(const Metric& metric) : metric_(metric) {}

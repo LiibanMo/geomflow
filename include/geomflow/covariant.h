@@ -18,6 +18,7 @@ public:
   static constexpr size_t N = Traits::dimension;
   using Point = typename Traits::Point;
   using Tangent = TangentVector<Traits>;
+  // Component order: Matrix[i][j] = nabla_j W^i.
   using Matrix = std::array<std::array<Scalar, N>, N>;
 
   explicit CovariantDerivativeTensor(const Metric& metric) : connection_(metric) {}
@@ -46,7 +47,8 @@ public:
   }
 
   CotangentVector<Traits> contract_lambda(const CotangentVector<Traits>& lambda,
-                                          const Matrix& nabla_f) const {
+                                           const Matrix& nabla_f) const {
+    // result_j = lambda_i nabla_j f^i.
     CotangentVector<Traits> result{};
     for (size_t j = 0; j < N; ++j) {
       result.components[j] = Scalar(0);

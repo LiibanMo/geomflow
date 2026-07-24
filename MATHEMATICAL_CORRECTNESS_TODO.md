@@ -154,7 +154,7 @@ mandatory exit gates in this document pass.
 - [x] [MATH-130] Derive the coordinate-component adjoint equation from the intrinsic equation, including all connection cancellations or transport terms.
 - [x] [MATH-131] Prove that the selected coordinate update transforms as a cotangent under chart changes.
 - [x] [MATH-132] Define gradient-versus-differential conversion explicitly through metric raising and lowering.
-- [ ] [MATH-133] Add these conventions to docstrings and C++ comments only after review.
+- [x] [MATH-133] Add these conventions to docstrings and C++ comments only after review.
 
 ### 0.3 Density Quantity Contract
 
@@ -184,78 +184,78 @@ mandatory exit gates in this document pass.
 
 ### Phase 0 Exit Gate
 
-- [ ] [MATH-179] Review and approve one equation ledger covering Mohamud attribution, density measure, signs, boundaries, tensor layouts, and solver orientation.
+- [x] [MATH-179] Review and approve one equation ledger covering Mohamud attribution, density measure, signs, boundaries, tensor layouts, and solver orientation.
 
 ## Phase 1: Independent Mathematical Test Oracles
 
 ### 1.1 Test Infrastructure
 
-- [ ] [MATH-200] Create shared analytic reference helpers that do not call production integrators.
-- [ ] [MATH-201] Keep reference helpers small enough for formula review.
-- [ ] [MATH-202] Use CPU `float64` for primary numerical-reference tests.
-- [ ] [MATH-203] Separate exact identities from tolerance-based discretization tests.
-- [ ] [MATH-204] Record expected convergence order instead of selecting one loose tolerance.
-- [ ] [MATH-205] Add test comments citing the corresponding Mohamud equation or standard intrinsic identity.
-- [ ] [MATH-206] Ensure a failure reports the mathematical quantity, direction, step size, and expected sign.
-- [ ] [MATH-207] Do not compare two production paths when both implement the same disputed formula.
+- [x] [MATH-200] Create shared analytic reference helpers that do not call production integrators.
+- [x] [MATH-201] Keep reference helpers small enough for formula review.
+- [x] [MATH-202] Use CPU `float64` for primary numerical-reference tests.
+- [x] [MATH-203] Separate exact identities from tolerance-based discretization tests.
+- [x] [MATH-204] Record expected convergence order instead of selecting one loose tolerance.
+- [x] [MATH-205] Add test comments citing the corresponding Mohamud equation or standard intrinsic identity.
+- [x] [MATH-206] Ensure a failure reports the mathematical quantity, direction, step size, and expected sign.
+- [x] [MATH-207] Do not compare two production paths when both implement the same disputed formula.
 
 ### 1.2 Euclidean Analytic Flows
 
-- [ ] [MATH-210] Test a zero field for constant state, zero divergence, zero density change, and zero parameter gradient.
-- [ ] [MATH-211] Test a constant field for linear state, zero divergence, and analytic endpoint gradient.
-- [ ] [MATH-212] Test `f(x) = a x` in one dimension for exact state `x(t) = exp(a t) x(0)`.
-- [ ] [MATH-213] Test the same field for exact divergence `a`.
-- [ ] [MATH-214] Test its flow log Jacobian as `a (tb - ta)`.
-- [ ] [MATH-215] Test its log-density change as `-a (tb - ta)`.
-- [ ] [MATH-216] Test forward and reverse intervals and require exact sign reversal.
-- [ ] [MATH-217] Test parameter derivatives of state, density increment, and NLL independently.
-- [ ] [MATH-218] Test a diagonal `d`-dimensional linear field with divergence equal to the matrix trace.
-- [ ] [MATH-219] Test a rotational field with zero divergence but nontrivial state dynamics.
-- [ ] [MATH-220] Test `f(t, x) = t x` to expose old-time/new-state quadrature mismatches.
-- [ ] [MATH-221] Test `f(x) = theta x^2` to expose state-mediated divergence gradients.
+- [x] [MATH-210] Test a zero field for constant state, zero divergence, zero density change, and zero parameter gradient.
+- [x] [MATH-211] Test a constant field for linear state, zero divergence, and analytic endpoint gradient.
+- [x] [MATH-212] Test `f(x) = a x` in one dimension for exact state `x(t) = exp(a t) x(0)`.
+- [x] [MATH-213] Test the same field for exact divergence `a`.
+- [x] [MATH-214] Test its flow log Jacobian as `a (tb - ta)`.
+- [x] [MATH-215] Test its log-density change as `-a (tb - ta)`.
+- [x] [MATH-216] Test forward and reverse intervals and require exact sign reversal.
+- [x] [MATH-217] Test parameter derivatives of state, density increment, and NLL independently.
+- [x] [MATH-218] Test a diagonal `d`-dimensional linear field with divergence equal to the matrix trace.
+- [x] [MATH-219] Test a rotational field with zero divergence but nontrivial state dynamics.
+- [x] [MATH-220] Test `f(t, x) = t x` to expose old-time/new-state quadrature mismatches.
+- [x] [MATH-221] Test `f(x) = theta x^2` to expose state-mediated divergence gradients.
 
 ### 1.3 Non-Euclidean Analytic Geometry
 
-- [ ] [MATH-230] Add a one-dimensional metric `g(x) = exp(2x)` with closed-form volume density.
-- [ ] [MATH-231] Test divergence of a constant vector field under that metric.
-- [ ] [MATH-232] Test Christoffel symbols and covariant derivatives under that metric.
-- [ ] [MATH-233] Test cotangent adjoint transport under that metric to expose connection double counting.
-- [ ] [MATH-234] Add polar-coordinate Euclidean-plane metric `diag(1, r^2)` away from `r = 0`.
-- [ ] [MATH-235] Test nonzero Christoffel symbols in polar coordinates.
-- [ ] [MATH-236] Test `nabla_theta V^theta` for a radial constant-coordinate field.
-- [ ] [MATH-237] Test divergence invariance between Cartesian and polar coordinates for a field supported away from the singularity.
-- [ ] [MATH-238] Add stereographic sphere metric identities and transition invariance away from chart poles.
-- [ ] [MATH-239] Add a constant scaled metric to test density normalization under non-unit volume density.
+- [x] [MATH-230] Add a one-dimensional metric `g(x) = exp(2x)` with closed-form volume density.
+- [x] [MATH-231] Test divergence of a constant vector field under that metric.
+- [x] [MATH-232] Test Christoffel symbols and covariant derivatives under that metric.
+- [x] [MATH-233] Test cotangent adjoint transport under that metric to expose connection double counting.
+- [x] [MATH-234] Add polar-coordinate Euclidean-plane metric `diag(1, r^2)` away from `r = 0`.
+- [x] [MATH-235] Test nonzero Christoffel symbols in polar coordinates.
+- [x] [MATH-236] Test `nabla_theta V^theta` for a radial constant-coordinate field.
+- [x] [MATH-237] Test divergence invariance between Cartesian and polar coordinates for a field supported away from the singularity.
+- [x] [MATH-238] Add stereographic sphere metric identities and transition invariance away from chart poles.
+- [x] [MATH-239] Add a constant scaled metric to test density normalization under non-unit volume density.
 
 ### 1.4 Density Normalization Oracles
 
-- [ ] [MATH-250] For constant metric `g = c^2 I`, verify that a coordinate Gaussian corresponds to `rho = q_coord / c^d` relative to `dV_g`.
-- [ ] [MATH-251] Numerically integrate the corrected one-dimensional density against `dV_g` and require unit mass.
-- [ ] [MATH-252] Verify zero-flow `sample()` and `log_prob()` describe the same distribution.
-- [ ] [MATH-253] Verify the relation in both source and transitioned sphere charts.
-- [ ] [MATH-254] Test that Riemannian log density is unchanged by a pure chart-coordinate transition at the same manifold point.
-- [ ] [MATH-255] If coordinate log density is exposed, test its Jacobian transformation separately.
+- [x] [MATH-250] For constant metric `g = c^2 I`, verify that a coordinate Gaussian corresponds to `rho = q_coord / c^d` relative to `dV_g`.
+- [x] [MATH-251] Numerically integrate the corrected one-dimensional density against `dV_g` and require unit mass.
+- [x] [MATH-252] Verify zero-flow `sample()` and `log_prob()` describe the same distribution.
+- [x] [MATH-253] Verify the relation in both source and transitioned sphere charts.
+- [x] [MATH-254] Test that Riemannian log density is unchanged by a pure chart-coordinate transition at the same manifold point.
+- [x] [MATH-255] If coordinate log density is exposed, test its Jacobian transformation separately.
 
 ### 1.5 Gradient Oracles
 
-- [ ] [MATH-260] Add finite-difference parameter gradients for complete NLL, including the divergence integral.
-- [ ] [MATH-261] Add finite-difference input gradients for complete NLL.
+- [x] [MATH-260] Add finite-difference parameter gradients for complete NLL, including the divergence integral.
+- [x] [MATH-261] Add finite-difference input gradients for complete NLL.
 - [ ] [MATH-262] Add direct-autograd references only after direct-autograd graph correctness is independently established.
-- [ ] [MATH-263] Check every trainable parameter rather than one aggregate norm.
-- [ ] [MATH-264] Require zero tensors, not missing gradients, for parameters with zero mathematical contribution.
-- [ ] [MATH-265] Test gradients in forward and reverse time.
-- [ ] [MATH-266] Test gradients with a non-divisible final step.
-- [ ] [MATH-267] Test gradients under a nonconstant metric.
-- [ ] [MATH-268] Test gradient covariance under chart transitions where the same model field is represented consistently.
+- [x] [MATH-263] Check every trainable parameter rather than one aggregate norm.
+- [x] [MATH-264] Require zero tensors, not missing gradients, for parameters with zero mathematical contribution.
+- [x] [MATH-265] Test gradients in forward and reverse time.
+- [x] [MATH-266] Test gradients with a non-divisible final step.
+- [x] [MATH-267] Test gradients under a nonconstant metric.
+- [x] [MATH-268] Test gradient covariance under chart transitions where the same model field is represented consistently.
 
 ### 1.6 Convergence Oracles
 
-- [ ] [MATH-270] Measure state error for step sizes `h`, `h/2`, and `h/4`.
-- [ ] [MATH-271] Measure density-integral error under the same refinement.
-- [ ] [MATH-272] Require the approved RK order for the augmented state and density system.
-- [ ] [MATH-273] Measure direct-gradient convergence under step refinement.
-- [ ] [MATH-274] Measure adjoint-gradient convergence separately from forward-solver convergence.
-- [ ] [MATH-275] Reject a test named "fourth order" unless it estimates an order from multiple step sizes.
+- [x] [MATH-270] Measure state error for step sizes `h`, `h/2`, and `h/4`.
+- [x] [MATH-271] Measure density-integral error under the same refinement.
+- [x] [MATH-272] Require the approved RK order for the augmented state and density system.
+- [x] [MATH-273] Measure direct-gradient convergence under step refinement.
+- [x] [MATH-274] Measure adjoint-gradient convergence separately from forward-solver convergence.
+- [x] [MATH-275] Reject a test named "fourth order" unless it estimates an order from multiple step sizes.
 
 ### Phase 1 Exit Gate
 

@@ -2,6 +2,11 @@
 
 All functions assume the metric is an :class:`AnalyticMetric` and return
 tensors compatible with ``torch.autograd``.
+
+Points and contravariant tangent vectors use a final coordinate dimension.
+Metrics use ``g[..., i, j] = g_ij``, metric derivatives use
+``dg[..., i, j, k] = partial_k g_ij``, and Christoffel symbols use
+``Gamma[..., k, i, j] = Gamma^k_ij``.
 """
 
 from __future__ import annotations
