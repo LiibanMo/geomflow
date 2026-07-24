@@ -84,6 +84,7 @@ login
 opencode.json
 uv.lock
 *__pycache__/
+python/geomflow/_version.py
 dist/
 *.pt
 *.gif

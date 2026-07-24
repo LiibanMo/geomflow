@@ -3,11 +3,27 @@ name: CI
 on:
   push:
     branches: [main, master]
+    tags: ['v*']
   pull_request:
     branches: [main, master]
+  workflow_dispatch:
+    inputs:
+      backfill_0_1_0:
+        description: Build and stage the missing Linux 0.1.0 wheels
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name != 'push' || !startsWith(github.ref, 'refs/tags/') }}
 
 jobs:
   build-test:
+    if: github.event_name != 'workflow_dispatch'
     name: ${{ matrix.os }} / ${{ matrix.compiler }}
     runs-on: ${{ matrix.os }}
     strategy:
@@ -35,6 +51,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Install dependencies (Linux)
         if: runner.os == 'Linux'
@@ -49,7 +67,7 @@ jobs:
       - name: Configure
         run: |
           CC=${{ matrix.cc }} CXX=${{ matrix.cxx }} \
-          cmake -B build -DBUILD_TESTING=ON
+          cmake -B build -DBUILD_TESTS=ON -DBUILD_EXAMPLES=OFF
 
       - name: Build
         run: cmake --build build --target geomflow_tests -j $(nproc 2>/dev/null || sysctl -n hw.logicalcpu)
@@ -58,31 +76,315 @@ jobs:
         run: ./build/tests/geomflow_tests
 
   python-bindings:
+    if: github.event_name != 'workflow_dispatch'
     name: Python bindings
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
-      - name: Install system deps
+      - name: Install dependencies
+        run: python -m pip install --upgrade pip build pytest
+
+      - name: Build wheel
+        env:
+          SETUPTOOLS_SCM_PRETEND_VERSION: 0.0.dev0
+        run: python -m build --wheel
+
+      - name: Install wheel
+        run: python -m pip install dist/*.whl
+
+      - name: Run Python tests
+        run: python -m pytest
+
+  validate-release:
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+    name: Validate release tag
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Validate stable version tag
         run: |
-          sudo apt-get update
-          sudo apt-get install -y cmake build-essential
+          if [[ ! "${GITHUB_REF_NAME}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Release tag must match vX.Y.Z" >&2
+            exit 1
+          fi
 
-      - name: Install key modules
-        run: pip install pybind11 numpy torch
+      - name: Require release commit on main
+        run: |
+          git fetch --no-tags origin main:refs/remotes/origin/main
+          git merge-base --is-ancestor "${GITHUB_SHA}" origin/main
 
-      - name: Get pybind11 CMake dir
-        run: echo "PYBIND11_DIR=$(python -c 'import pybind11; print(pybind11.get_cmake_dir())')" >> $GITHUB_ENV
+  build-release-wheels:
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+    name: Wheel / ${{ matrix.platform }}
+    needs: [build-test, python-bindings, validate-release]
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux-x86_64
+            runner: ubuntu-24.04
+            arch: x86_64
+          - platform: linux-aarch64
+            runner: ubuntu-24.04-arm
+            arch: aarch64
+          - platform: macos-x86_64
+            runner: macos-15-intel
+            arch: x86_64
+          - platform: macos-arm64
+            runner: macos-15
+            arch: arm64
 
-      - name: Configure
-        run: cmake -B build -DBUILD_PYTHON=ON -Dpybind11_DIR=${{ env.PYBIND11_DIR }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
 
-      - name: Build
-        run: cmake --build build -j $(nproc)
+      - name: Build and test wheels
+        uses: pypa/cibuildwheel@v4.1.0
+        env:
+          CIBW_ARCHS: ${{ matrix.arch }}
 
-      - name: Import test
-        run: PYTHONPATH=python python -c "import geomflow; print(geomflow.EuclideanMetric3D())"
+      - name: Upload wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-wheels-${{ matrix.platform }}
+          path: wheelhouse/*.whl
+          if-no-files-found: error
+
+  build-release-sdist:
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+    name: Source distribution
+    needs: [build-test, python-bindings, validate-release]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Install build tools
+        run: python -m pip install --upgrade build twine
+
+      - name: Build source distribution
+        run: python -m build --sdist
+
+      - name: Check source distribution
+        run: python -m twine check dist/*
+
+      - name: Upload source distribution
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-sdist
+          path: dist/*.tar.gz
+          if-no-files-found: error
+
+  verify-release-artifacts:
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+    name: Verify release artifacts
+    needs: [build-release-wheels, build-release-sdist]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: release-*
+          path: dist
+          merge-multiple: true
+
+      - name: Verify artifact set
+        env:
+          EXPECTED_VERSION: ${{ github.ref_name }}
+        run: |
+          python - <<'PY'
+          import collections
+          import pathlib
+          import re
+          import os
+
+          dist = pathlib.Path("dist")
+          wheels = list(dist.glob("*.whl"))
+          sdists = list(dist.glob("*.tar.gz"))
+          expected = os.environ["EXPECTED_VERSION"].removeprefix("v")
+          assert len(wheels) == 12, f"expected 12 wheels, found {len(wheels)}"
+          assert len(sdists) == 1, f"expected one sdist, found {len(sdists)}"
+          versions = {p.name.split("-")[1] for p in wheels + sdists}
+          assert versions == {expected}, f"unexpected versions: {versions}"
+          interpreters = collections.Counter(
+              re.search(r"-(cp\d+)-", p.name).group(1) for p in wheels
+          )
+          assert interpreters == {"cp312": 4, "cp313": 4, "cp314": 4}
+          for arch in ("x86_64", "aarch64", "arm64"):
+              assert any(arch in p.name for p in wheels), f"missing {arch} wheel"
+          PY
+
+      - name: Check package metadata
+        run: |
+          python -m pip install --upgrade check-wheel-contents twine
+          check-wheel-contents dist/*.whl
+          python -m twine check dist/*
+
+  publish-release:
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+    name: Publish release to PyPI
+    needs: verify-release-artifacts
+    runs-on: ubuntu-24.04
+    environment:
+      name: pypi
+      url: https://pypi.org/p/geomflow
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: release-*
+          path: dist
+          merge-multiple: true
+
+      - name: Publish distributions
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          print-hash: true
+
+  validate-backfill:
+    if: github.event_name == 'workflow_dispatch' && inputs.backfill_0_1_0
+    name: Validate 0.1.0 backfill source
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 5d99302bbedf325ed95794155413bb60e9d69238
+          persist-credentials: false
+
+      - name: Verify historical source
+        run: |
+          test "$(git rev-parse HEAD)" = "5d99302bbedf325ed95794155413bb60e9d69238"
+          test "$(grep '^version = ' pyproject.toml)" = 'version = "0.1.0"'
+
+  build-backfill-wheels:
+    if: github.event_name == 'workflow_dispatch' && inputs.backfill_0_1_0
+    name: Backfill / ${{ matrix.platform }}
+    needs: validate-backfill
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: cp312-linux-x86_64
+            runner: ubuntu-24.04
+            arch: x86_64
+            build: cp312
+          - platform: cp313-linux-x86_64
+            runner: ubuntu-24.04
+            arch: x86_64
+            build: cp313
+          - platform: cp314-linux-x86_64
+            runner: ubuntu-24.04
+            arch: x86_64
+            build: cp314
+          - platform: cp312-linux-aarch64
+            runner: ubuntu-24.04-arm
+            arch: aarch64
+            build: cp312
+          - platform: cp313-linux-aarch64
+            runner: ubuntu-24.04-arm
+            arch: aarch64
+            build: cp313
+          - platform: cp314-linux-aarch64
+            runner: ubuntu-24.04-arm
+            arch: aarch64
+            build: cp314
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 5d99302bbedf325ed95794155413bb60e9d69238
+          persist-credentials: false
+
+      - name: Build and test historical wheels
+        uses: pypa/cibuildwheel@v4.1.0
+        env:
+          CIBW_ARCHS: ${{ matrix.arch }}
+          CIBW_BUILD: ${{ matrix.build }}-manylinux_*
+          CIBW_TEST_COMMAND: python -c "import geomflow; print(geomflow.EuclideanMetric3D())"
+
+      - name: Upload backfill wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: backfill-wheels-${{ matrix.platform }}
+          path: wheelhouse/*.whl
+          if-no-files-found: error
+
+  verify-backfill-artifacts:
+    if: github.event_name == 'workflow_dispatch' && inputs.backfill_0_1_0
+    name: Verify 0.1.0 backfill artifacts
+    needs: build-backfill-wheels
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: backfill-wheels-*
+          path: dist
+          merge-multiple: true
+
+      - name: Verify artifact set and PyPI uniqueness
+        run: |
+          python - <<'PY'
+          import collections
+          import json
+          import pathlib
+          import re
+          import urllib.request
+
+          wheels = list(pathlib.Path("dist").glob("*.whl"))
+          assert len(wheels) == 6, f"expected six wheels, found {len(wheels)}"
+          assert all(p.name.startswith("geomflow-0.1.0-") for p in wheels)
+          assert all("manylinux" in p.name for p in wheels)
+          interpreters = collections.Counter(
+              re.search(r"-(cp\d+)-", p.name).group(1) for p in wheels
+          )
+          assert interpreters == {"cp312": 2, "cp313": 2, "cp314": 2}
+          with urllib.request.urlopen("https://pypi.org/pypi/geomflow/0.1.0/json") as response:
+              existing = {item["filename"] for item in json.load(response)["urls"]}
+          collisions = existing & {p.name for p in wheels}
+          assert not collisions, f"PyPI filename collisions: {sorted(collisions)}"
+          PY
+
+      - name: Check package metadata
+        run: |
+          python -m pip install --upgrade check-wheel-contents twine
+          check-wheel-contents dist/*.whl
+          python -m twine check dist/*
+
+  publish-backfill:
+    if: github.event_name == 'workflow_dispatch' && inputs.backfill_0_1_0
+    name: Publish 0.1.0 Linux backfill
+    needs: verify-backfill-artifacts
+    runs-on: ubuntu-24.04
+    environment:
+      name: pypi
+      url: https://pypi.org/p/geomflow/0.1.0
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: backfill-wheels-*
+          path: dist
+          merge-multiple: true
+
+      - name: Publish missing Linux wheels
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          print-hash: true

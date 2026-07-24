@@ -41,7 +41,9 @@ if(BUILD_PYTHON)
     ${Python_INCLUDE_DIRS}
   )
 
-  set_target_properties(_geomflow PROPERTIES
-    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/python/geomflow"
+  install(TARGETS _geomflow
+    LIBRARY DESTINATION geomflow
+    RUNTIME DESTINATION geomflow
+    ARCHIVE DESTINATION geomflow
   )
 endif()
