@@ -87,11 +87,11 @@ mandatory exit gates in this document pass.
 ### Autograd And Differential Geometry
 
 - [x] [MATH-040] Remove divergence-state detachment that omits indirect input and parameter derivatives.
-- [ ] [MATH-041] Correct `covariant_derivative_tensor` Christoffel-index contraction.
-- [ ] [MATH-042] Preserve input dependence in `batched_jacobian` and `InducedMetric`.
-- [ ] [MATH-043] Preserve higher coordinate derivatives in fallback metric differentiation.
-- [ ] [MATH-044] Return mathematical zeros for constant scalar and vector functions instead of raising autograd errors.
-- [ ] [MATH-045] State and enforce the batch-separability assumption used by summed-output autograd formulas.
+- [x] [MATH-041] Correct `covariant_derivative_tensor` Christoffel-index contraction.
+- [x] [MATH-042] Preserve input dependence in `batched_jacobian` and `InducedMetric`.
+- [x] [MATH-043] Preserve higher coordinate derivatives in fallback metric differentiation.
+- [x] [MATH-044] Return mathematical zeros for constant scalar and vector functions instead of raising autograd errors.
+- [x] [MATH-045] State and enforce the batch-separability assumption used by summed-output autograd formulas.
 
 ### Intrinsic Adjoint
 
@@ -373,56 +373,56 @@ mandatory exit gates in this document pass.
 
 ### 4.1 Graph-Preserving Jacobians
 
-- [ ] [MATH-500] Remove unconditional `detach().clone()` from the differentiable Jacobian path.
-- [ ] [MATH-501] Preserve a graph from returned Jacobian entries to the caller's original coordinate tensor.
-- [ ] [MATH-502] Define a separate detached numerical-Jacobian helper only if a caller explicitly requests it.
-- [ ] [MATH-503] Test first derivatives of an immersion.
-- [ ] [MATH-504] Test second derivatives needed for induced metric derivatives and Christoffel symbols.
-- [ ] [MATH-505] Test Jacobians for input and output dimensions that differ.
-- [ ] [MATH-506] Test arbitrary supported leading batch shapes.
-- [ ] [MATH-507] State that public callbacks must be pointwise across batch samples unless a full coupled-batch Jacobian is requested.
+- [x] [MATH-500] Remove unconditional `detach().clone()` from the differentiable Jacobian path.
+- [x] [MATH-501] Preserve a graph from returned Jacobian entries to the caller's original coordinate tensor.
+- [x] [MATH-502] Define a separate detached numerical-Jacobian helper only if a caller explicitly requests it.
+- [x] [MATH-503] Test first derivatives of an immersion.
+- [x] [MATH-504] Test second derivatives needed for induced metric derivatives and Christoffel symbols.
+- [x] [MATH-505] Test Jacobians for input and output dimensions that differ.
+- [x] [MATH-506] Test arbitrary supported leading batch shapes.
+- [x] [MATH-507] State that public callbacks must be pointwise across batch samples unless a full coupled-batch Jacobian is requested.
 
 ### 4.2 Analytic Metric Fallback Derivatives
 
-- [ ] [MATH-510] Preserve dependence on the original point when deriving metric components with autograd.
-- [ ] [MATH-511] Avoid silently replacing the caller's point with an unrelated leaf.
-- [ ] [MATH-512] Return exact zeros when a metric component is independent of coordinates.
-- [ ] [MATH-513] Handle partially constant metrics where only some components depend on coordinates.
-- [ ] [MATH-514] Preserve higher derivatives when `create_graph=True` is required downstream.
-- [ ] [MATH-515] Test `g(x) = 1 + x^2` and the derivative of its Christoffel symbol.
-- [ ] [MATH-516] Compare analytic `derivative_fn` and fallback derivatives.
+- [x] [MATH-510] Preserve dependence on the original point when deriving metric components with autograd.
+- [x] [MATH-511] Avoid silently replacing the caller's point with an unrelated leaf.
+- [x] [MATH-512] Return exact zeros when a metric component is independent of coordinates.
+- [x] [MATH-513] Handle partially constant metrics where only some components depend on coordinates.
+- [x] [MATH-514] Preserve higher derivatives when `create_graph=True` is required downstream.
+- [x] [MATH-515] Test `g(x) = 1 + x^2` and the derivative of its Christoffel symbol.
+- [x] [MATH-516] Compare analytic `derivative_fn` and fallback derivatives.
 
 ### 4.3 Christoffel And Covariant Derivative
 
-- [ ] [MATH-520] Retain the existing Christoffel value formula after index-layout tests confirm it.
-- [ ] [MATH-521] Replace Python's contraction `Gamma^k_ij V^k` with the required `Gamma^i_kj V^k` contraction.
-- [ ] [MATH-522] Add a polar-coordinate counterexample that fails under the old contraction.
-- [ ] [MATH-523] Verify lower-index Christoffel symmetry for Levi-Civita connections.
-- [ ] [MATH-524] Verify covariant derivative transformation under a chart change.
-- [ ] [MATH-525] Verify C++ and Python index layouts agree.
+- [x] [MATH-520] Retain the existing Christoffel value formula after index-layout tests confirm it.
+- [x] [MATH-521] Replace Python's contraction `Gamma^k_ij V^k` with the required `Gamma^i_kj V^k` contraction.
+- [x] [MATH-522] Add a polar-coordinate counterexample that fails under the old contraction.
+- [x] [MATH-523] Verify lower-index Christoffel symmetry for Levi-Civita connections.
+- [x] [MATH-524] Verify covariant derivative transformation under a chart change.
+- [x] [MATH-525] Verify C++ and Python index layouts agree.
 
 ### 4.4 Divergence And Gradient Edge Cases
 
-- [ ] [MATH-530] Return zero divergence for a genuinely constant vector field.
-- [ ] [MATH-531] Return zero gradient for a genuinely constant scalar field.
-- [ ] [MATH-532] Return the connection contribution for a coordinate-constant vector field on a nonconstant metric.
-- [ ] [MATH-533] Distinguish an output independent of `x` from an output disconnected because of a user bug.
-- [ ] [MATH-534] Use `allow_unused` or explicit graph checks without hiding invalid callback shapes.
-- [ ] [MATH-535] Test zero, constant, partially dependent, and fully dependent callables.
-- [ ] [MATH-536] Verify `div_g V = (1 / sqrt(det g)) partial_i(sqrt(det g) V^i)` against `trace(nabla V)`.
+- [x] [MATH-530] Return zero divergence for a genuinely constant vector field.
+- [x] [MATH-531] Return zero gradient for a genuinely constant scalar field.
+- [x] [MATH-532] Return the connection contribution for a coordinate-constant vector field on a nonconstant metric.
+- [x] [MATH-533] Distinguish an output independent of `x` from an output disconnected because of a user bug.
+- [x] [MATH-534] Use `allow_unused` or explicit graph checks without hiding invalid callback shapes.
+- [x] [MATH-535] Test zero, constant, partially dependent, and fully dependent callables.
+- [x] [MATH-536] Verify `div_g V = (1 / sqrt(det g)) partial_i(sqrt(det g) V^i)` against `trace(nabla V)`.
 
 ### 4.5 Induced Metric
 
-- [ ] [MATH-540] Require the immersion Jacobian to retain coordinate dependence.
-- [ ] [MATH-541] Compute `g = J_phi^T J_phi` without severing the graph.
-- [ ] [MATH-542] Validate full column rank for a regular immersion in debug mode.
-- [ ] [MATH-543] Test the curve `phi(x) = (x, x^2)` with `g = 1 + 4x^2`.
-- [ ] [MATH-544] Test its exact volume derivative and divergence of a constant coordinate field.
-- [ ] [MATH-545] Test a paraboloid immersion through metric, derivative, Christoffel, divergence, and second derivatives.
+- [x] [MATH-540] Require the immersion Jacobian to retain coordinate dependence.
+- [x] [MATH-541] Compute `g = J_phi^T J_phi` without severing the graph.
+- [x] [MATH-542] Validate full column rank for a regular immersion in debug mode.
+- [x] [MATH-543] Test the curve `phi(x) = (x, x^2)` with `g = 1 + 4x^2`.
+- [x] [MATH-544] Test its exact volume derivative and divergence of a constant coordinate field.
+- [x] [MATH-545] Test a paraboloid immersion through metric, derivative, Christoffel, divergence, and second derivatives.
 
 ### Phase 4 Exit Gate
 
-- [ ] [MATH-559] Pass value, first-derivative, second-derivative, index, constant-function, and coordinate-invariance tests for all public geometry operators.
+- [x] [MATH-559] Pass value, first-derivative, second-derivative, index, constant-function, and coordinate-invariance tests for all public geometry operators.
 
 ## Phase 5: Correct Direct-Autograd CNF Training
 

@@ -107,10 +107,6 @@ def test_polar_christoffel_symbols() -> None:
     torch.testing.assert_close(gamma, expected)
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="MATH-041: Python contracts the upper Christoffel index with V",
-)
 def test_polar_radial_field_covariant_theta_component() -> None:
     """MATH-236: nabla_theta V^theta=c/r for V=(c,0)."""
     metric = _polar_metric()

@@ -76,37 +76,33 @@ class AnalyticMetric:
 
         Robust to metrics that do not depend on ``x`` (e.g. constant
         Euclidean metric): returns zeros in that case instead of raising.
-        Does not require the caller's ``x`` to already have
-        ``requires_grad=True`` — a fresh differentiable copy is used
-        internally for the probe/derivative computation.
+        If ``x`` requires gradients, the result remains connected to that
+        exact tensor so higher coordinate derivatives are available. For a
+        non-differentiable input, a differentiable clone is used only to
+        evaluate the numerical derivative value.
         """
         if self._derivative_fn is not None:
             return self._derivative_fn(x)
 
-        zeros = torch.zeros(
-            *x.shape[:-1], self.dim, self.dim, self.dim, device=x.device, dtype=x.dtype
-        )
-
-        # Always probe with a fresh leaf tensor so we don't depend on the
-        # caller having set requires_grad, and so repeated calls are safe.
-        x_grad = x.detach().clone().requires_grad_(True)
-        G = self.metric(x_grad)  # (..., dim, dim)
-
-        if G.grad_fn is None:
-            # metric_fn does not depend on x at all -> zero derivative.
-            return zeros
-
-        x = x_grad
+        x_grad = x if x.requires_grad else x.clone().requires_grad_(True)
+        G = self.metric(x_grad)
         dG: list[torch.Tensor] = []
         for i in range(self.dim):
             dG_row: list[torch.Tensor] = []
             for j in range(self.dim):
-                (g,) = torch.autograd.grad(
-                    G[..., i, j].sum(),
-                    x,
-                    create_graph=True,
-                    retain_graph=True,
-                )  # (..., dim)  ← ∂g_ij / ∂x_k
+                component = G[..., i, j]
+                if component.requires_grad:
+                    (g,) = torch.autograd.grad(
+                        component.sum(),
+                        x_grad,
+                        create_graph=True,
+                        retain_graph=True,
+                        allow_unused=True,
+                    )
+                else:
+                    g = None
+                if g is None:
+                    g = torch.zeros_like(x_grad)
                 dG_row.append(g)
-            dG.append(torch.stack(dG_row, dim=-2))  # (..., dim, dim) → [j, k]
-        return torch.stack(dG, dim=-3)  # (..., dim, dim, dim) → [i, j, k]
+            dG.append(torch.stack(dG_row, dim=-2))
+        return torch.stack(dG, dim=-3)

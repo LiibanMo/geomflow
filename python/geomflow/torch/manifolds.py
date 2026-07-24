@@ -163,15 +163,20 @@ HyperbolicSpace = PoincareDisk
 def InducedMetric(
     dim: int,
     immersion_fn: callable,
+    debug: bool = False,
 ) -> AnalyticMetric:
     """Analytic metric induced by an immersion map phi: R^d -> R^N.
 
-    G(x) = J_phi(x)^T * J_phi(x)
+    G(x) = J_phi(x)^T * J_phi(x). The immersion must act pointwise over
+    leading batch dimensions. If ``debug`` is true, rank-deficient Jacobians
+    raise ``ValueError``.
     """
     from ._utils import batched_jacobian
 
     def metric_fn(x: torch.Tensor) -> torch.Tensor:
         J = batched_jacobian(immersion_fn, x)  # (..., N, d)
+        if debug and torch.any(torch.linalg.matrix_rank(J) < dim):
+            raise ValueError("immersion Jacobian must have full column rank")
         return torch.matmul(J.transpose(-1, -2), J)  # (..., d, d)
 
     return AnalyticMetric(dim, metric_fn)
