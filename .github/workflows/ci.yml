@@ -322,6 +322,16 @@ jobs:
           old = "find_package(Python COMPONENTS Interpreter Development REQUIRED)"
           new = "find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)"
           assert source.count(old) == 1
+          source = source.replace(old, new)
+          old = '''  set_target_properties(_geomflow PROPERTIES
+            LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/python/geomflow"
+          )'''
+          new = '''  install(TARGETS _geomflow
+            LIBRARY DESTINATION geomflow
+            RUNTIME DESTINATION geomflow
+            ARCHIVE DESTINATION geomflow
+          )'''
+          assert source.count(old) == 1
           path.write_text(source.replace(old, new))
           PY
 
