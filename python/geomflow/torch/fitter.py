@@ -249,19 +249,34 @@ class ManifoldCNF(nn.Module):
                     )
                     loss = nll
                     if overlap_weight > 0.0 and len(self.atlas.charts) > 1:
-                        # Compute overlap loss across connected chart pairs
+                        pair_losses = []
+                        seen_pairs: set[frozenset[int]] = set()
                         for cid_a, chart_a in self.atlas.charts.items():
                             for cid_b in chart_a.transitions:
-                                t_rand = torch.rand(x_batch.shape[0], device=x_batch.device)
-                                overlap = overlap_consistency_loss(
-                                    self.vf,
-                                    self.atlas,
-                                    x_batch,
-                                    chart_alpha=cid_a,
-                                    chart_beta=cid_b,
-                                    t=t_rand,
+                                pair = frozenset((cid_a, cid_b))
+                                if pair in seen_pairs:
+                                    continue
+                                seen_pairs.add(pair)
+                                t_rand = torch.rand(
+                                    x_batch.shape[0],
+                                    device=x_batch.device,
+                                    dtype=x_batch.dtype,
                                 )
-                                loss = loss + overlap_weight * overlap
+                                pair_losses.append(
+                                    overlap_consistency_loss(
+                                        self.vf,
+                                        self.atlas,
+                                        x_batch,
+                                        chart_alpha=cid_a,
+                                        chart_beta=cid_b,
+                                        t=t_rand,
+                                        coordinate_chart=start_chart,
+                                    )
+                                )
+                        if pair_losses:
+                            loss = loss + overlap_weight * torch.stack(
+                                pair_losses
+                            ).mean()
                 else:
                     log_p = self.log_prob(x_batch)
                     nll = -log_p.mean()

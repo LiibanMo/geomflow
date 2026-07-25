@@ -73,7 +73,7 @@ def _stereographic_metric():
 # A -> B : inversion (u, v) -> (u, v) / (u^2 + v^2)
 def _transition_A_to_B(x: torch.Tensor) -> torch.Tensor:
     r2 = (x * x).sum(dim=-1, keepdim=True)
-    return x / r2.clamp_min(1e-8)
+    return x / r2
 
 
 def _transition_B_to_A(x: torch.Tensor) -> torch.Tensor:
@@ -218,7 +218,12 @@ def test_nonzero_divergence_is_scalar_across_identity_transition():
     )
     assert switched.chart_final == 1
     assert len(switched.transition_events) == 1
-    assert switched.transition_events[0].time == 0.2
+    expected_event_time = float(torch.log(torch.tensor(1.1)) / 0.5)
+    assert abs(switched.transition_events[0].time - expected_event_time) < 2e-4
+    assert torch.allclose(
+        switched.transition_events[0].transition_jacobian,
+        torch.ones(1, 1, 1, dtype=torch.float64),
+    )
     assert switched.transition_events[0].source_chart == 0
     assert switched.transition_events[0].target_chart == 1
 

@@ -13,7 +13,7 @@ from __future__ import annotations
 import torch
 
 from .analytic_metric import AnalyticMetric
-from .atlas import Atlas, Chart
+from .atlas import Atlas, Chart, Transition
 from .base_distribution import (
     PoincareDiskCoordinateBase,
     UniformAngleCoordinateBase,
@@ -69,25 +69,38 @@ def Sphere2DAtlas(n_samples: int = 500, seed: int = 42) -> Atlas:
     Chart 1: Stereographic projection from South pole.
     Transition: x_B = x_A / ||x_A||^2
     """
-    torch.manual_seed(seed)
+    del n_samples, seed
     metric_a = SphereStereographicMetric(2)
     metric_b = SphereStereographicMetric(2)
 
     def transition_a_to_b(x: torch.Tensor) -> torch.Tensor:
         r2 = (x * x).sum(dim=-1, keepdim=True)
-        return x / r2.clamp_min(1e-8)
+        return x / r2
 
     def transition_b_to_a(x: torch.Tensor) -> torch.Tensor:
         return transition_a_to_b(x)
 
-    samples_a = torch.randn(n_samples, 2) * 1.5
-    samples_b = torch.randn(n_samples, 2) * 1.5
+    def chart_domain(x: torch.Tensor) -> torch.Tensor:
+        return torch.isfinite(x).all(dim=-1)
+
+    def overlap_domain(x: torch.Tensor) -> torch.Tensor:
+        return chart_domain(x) & ((x * x).sum(dim=-1) > 0.0)
 
     chart_a = Chart(
-        0, 2, samples_a, metric_a, transitions={1: transition_a_to_b}
+        0,
+        2,
+        None,
+        metric_a,
+        transitions={1: Transition(transition_a_to_b, overlap_domain)},
+        domain=chart_domain,
     )
     chart_b = Chart(
-        1, 2, samples_b, metric_b, transitions={0: transition_b_to_a}
+        1,
+        2,
+        None,
+        metric_b,
+        transitions={0: Transition(transition_b_to_a, overlap_domain)},
+        domain=chart_domain,
     )
 
     return Atlas([chart_a, chart_b], reference_chart_id=0)

@@ -594,56 +594,56 @@ mandatory exit gates in this document pass.
 
 ### 8.1 Mathematical Chart Domains
 
-- [ ] [MATH-900] Separate a mathematical chart domain from a sample-based coverage heuristic.
-- [ ] [MATH-901] Allow built-in charts to define exact or conservative domain predicates.
-- [ ] [MATH-902] Label k-nearest-neighbor coverage as a heuristic when used for learned/user atlases.
-- [ ] [MATH-903] Detect uncovered gaps and ambiguous overlaps explicitly.
-- [ ] [MATH-904] Require transition maps only on declared overlaps.
-- [ ] [MATH-905] Remove denominator clamps that change a transition map into a different function.
-- [ ] [MATH-906] Reject or reroute points outside a transition's domain.
+- [x] [MATH-900] Separate a mathematical chart domain from a sample-based coverage heuristic.
+- [x] [MATH-901] Allow built-in charts to define exact or conservative domain predicates.
+- [x] [MATH-902] Label k-nearest-neighbor coverage as a heuristic when used for learned/user atlases.
+- [x] [MATH-903] Detect uncovered gaps and ambiguous overlaps explicitly.
+- [x] [MATH-904] Require transition maps only on declared overlaps.
+- [x] [MATH-905] Remove denominator clamps that change a transition map into a different function.
+- [x] [MATH-906] Reject or reroute points outside a transition's domain.
 
 ### 8.2 Transition Timing
 
-- [ ] [MATH-910] Check all RK stage states for source-chart validity.
-- [ ] [MATH-911] Bracket a chart-boundary crossing when a proposed stage leaves the source chart.
-- [ ] [MATH-912] Reduce the step or locate a transition event while both charts are valid.
-- [ ] [MATH-913] Transition state only inside an overlap.
-- [ ] [MATH-914] Continue remaining substep dynamics in the target chart where required.
-- [ ] [MATH-915] Record event time, source chart, target chart, source coordinates, target coordinates, and transition Jacobian.
-- [ ] [MATH-916] Replay the exact event sequence in adjoint calculations.
+- [x] [MATH-910] Check all RK stage states for source-chart validity.
+- [x] [MATH-911] Bracket a chart-boundary crossing when a proposed stage leaves the source chart.
+- [x] [MATH-912] Reduce the step or locate a transition event while both charts are valid.
+- [x] [MATH-913] Transition state only inside an overlap.
+- [x] [MATH-914] Continue remaining substep dynamics in the target chart where required.
+- [x] [MATH-915] Record event time, source chart, target chart, source coordinates, target coordinates, and transition Jacobian.
+- [x] [MATH-916] Replay the exact event sequence in adjoint calculations.
 
 ### 8.3 Vector-Field Compatibility
 
-- [ ] [MATH-920] Require `f_beta(psi_ba(x)) = D psi_ba(x) f_alpha(x)` for a true global vector field.
-- [ ] [MATH-921] Decide whether chart heads enforce this identity architecturally or approximate it through a penalty.
-- [ ] [MATH-922] If using a penalty, document that the model is only approximately global during training.
-- [ ] [MATH-923] Map training points into `chart_alpha` before evaluating each chart-pair overlap term.
-- [ ] [MATH-924] Restrict overlap loss to points valid in both charts.
-- [ ] [MATH-925] Replace coordinate Euclidean error norm with a target-chart metric norm where appropriate.
-- [ ] [MATH-926] Avoid double-counting directed chart pairs unless explicitly intended.
-- [ ] [MATH-927] Test compatible analytic fields with nonzero divergence across transitions.
+- [x] [MATH-920] Require `f_beta(psi_ba(x)) = D psi_ba(x) f_alpha(x)` for a true global vector field.
+- [x] [MATH-921] Decide whether chart heads enforce this identity architecturally or approximate it through a penalty.
+- [x] [MATH-922] If using a penalty, document that the model is only approximately global during training.
+- [x] [MATH-923] Map training points into `chart_alpha` before evaluating each chart-pair overlap term.
+- [x] [MATH-924] Restrict overlap loss to points valid in both charts.
+- [x] [MATH-925] Replace coordinate Euclidean error norm with a target-chart metric norm where appropriate.
+- [x] [MATH-926] Avoid double-counting directed chart pairs unless explicitly intended.
+- [x] [MATH-927] Test compatible analytic fields with nonzero divergence across transitions.
 
 ### 8.4 Atlas Queries
 
-- [ ] [MATH-930] Require `Atlas.find_chart` to know the coordinate system of its input.
-- [ ] [MATH-931] Apply a valid transition before testing membership in another chart.
-- [ ] [MATH-932] Define deterministic behavior when multiple charts cover a point.
-- [ ] [MATH-933] Define failure behavior when no chart covers a point.
-- [ ] [MATH-934] Decide whether batches may contain per-sample chart identifiers.
-- [ ] [MATH-935] Keep the current whole-batch chart restriction explicitly documented until redesigned.
+- [x] [MATH-930] Require `Atlas.find_chart` to know the coordinate system of its input.
+- [x] [MATH-931] Apply a valid transition before testing membership in another chart.
+- [x] [MATH-932] Define deterministic behavior when multiple charts cover a point.
+- [x] [MATH-933] Define failure behavior when no chart covers a point.
+- [x] [MATH-934] Decide whether batches may contain per-sample chart identifiers.
+- [x] [MATH-935] Keep the current whole-batch chart restriction explicitly documented until redesigned.
 
 ### 8.5 Density And Cotangent Transitions
 
-- [ ] [MATH-940] Verify Riemannian log density remains scalar under a chart transition.
-- [ ] [MATH-941] Verify tangent vectors use transition pushforward.
-- [ ] [MATH-942] Verify cotangent adjoints use transition pullback.
-- [ ] [MATH-943] Verify metric components use inverse-Jacobian pullback transformation.
-- [ ] [MATH-944] Test all transformations on the stereographic sphere.
-- [ ] [MATH-945] Test likelihood and gradients independent of a valid switching schedule for an exactly compatible field.
+- [x] [MATH-940] Verify Riemannian log density remains scalar under a chart transition.
+- [x] [MATH-941] Verify tangent vectors use transition pushforward.
+- [x] [MATH-942] Verify cotangent adjoints use transition pullback.
+- [x] [MATH-943] Verify metric components use inverse-Jacobian pullback transformation.
+- [x] [MATH-944] Test all transformations on the stereographic sphere.
+- [x] [MATH-945] Test likelihood and gradients independent of a valid switching schedule for an exactly compatible field.
 
 ### Phase 8 Exit Gate
 
-- [ ] [MATH-959] Pass nonzero-field chart invariance, overlap-domain, event timing, density, and cotangent replay tests.
+- [x] [MATH-959] Pass nonzero-field chart invariance, overlap-domain, event timing, density, and cotangent replay tests.
 
 ## Phase 9: Built-In Manifold Validity
 

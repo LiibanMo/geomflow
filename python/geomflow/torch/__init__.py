@@ -26,14 +26,16 @@ from .adjoint import (
     cnf_nll,
     intrinsic_adjoint_nll,
 )
-from .atlas import Atlas, Chart
+from .atlas import Atlas, Chart, ChartDomainError, ChartSelection, Transition
 from .multichart import MultiChartVectorField, overlap_consistency_loss
 from .multichart_integrator import (
+    AcceptedChartSegment,
     ChartTransitionEvent,
     MultiChartFlowResult,
     cnf_log_prob_multichart,
     cnf_nll_multichart,
     integrate_multichart,
+    replay_transition_pullbacks,
 )
 from .transforms import (
     pullback_covector,
@@ -77,11 +79,16 @@ __all__ = [
     "intrinsic_adjoint_nll",
     "Atlas",
     "Chart",
+    "ChartDomainError",
+    "ChartSelection",
+    "Transition",
     "MultiChartVectorField",
     "overlap_consistency_loss",
     "integrate_multichart",
+    "replay_transition_pullbacks",
     "MultiChartFlowResult",
     "ChartTransitionEvent",
+    "AcceptedChartSegment",
     "cnf_log_prob_multichart",
     "cnf_nll_multichart",
     "pushforward_vector",

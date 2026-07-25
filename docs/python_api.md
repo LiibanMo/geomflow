@@ -210,11 +210,25 @@ in the [Mathematical Contract](mathematical_contract.md).
 transition changes coordinates but does not add a Jacobian jump to
 Riemannian log density because `rho` is scalar relative to `dV_g`.
 
-The atlas API assigns one chart identifier to the whole batch and
-uses atlas coverage information to select transitions. Applications must
-provide compatible chartwise vector fields and ensure trajectories remain in
-valid chart domains. Exact boundary-event localization and per-sample chart
-identifiers are not part of this API.
+The atlas API assigns one chart identifier to the whole batch; batches whose
+samples require different charts must be split by the caller. Each `Chart`
+has an exact or conservative `domain` predicate. Sample-based k-nearest-
+neighbour coverage is exposed separately as a heuristic for learned atlases.
+Every transition declares its source overlap, rejects points outside that
+overlap, and is applied before target-chart membership is tested.
+
+The multichart RK4 solver validates every stage before evaluation. When a
+nominal step would leave its source chart, it bisects to a source-valid point
+in an overlap, records the event coordinates and transition Jacobian, and
+integrates the remainder in the target chart. Its ordered operation tape and
+`replay_transition_pullbacks` preserve the accepted event sequence and apply
+the cotangent rule `lambda_source = J.T @ lambda_target`.
+
+`MultiChartVectorField` uses independent chart heads. The overlap loss enforces
+`f_beta(psi(x)) = D psi(x) f_alpha(x)` only approximately: it maps points into
+the source chart, restricts them to the declared overlap, and measures the
+residual with the target-chart metric. A finite penalty does not make the
+learned field exactly global, so likelihoods can retain chart-schedule error.
 
 ## High-Level Model
 

@@ -1,4 +1,4 @@
-"""Multi-chart vector field — one head per chart, with overlap consistency."""
+"""Chartwise vector fields with an intrinsic overlap compatibility penalty."""
 
 from __future__ import annotations
 
@@ -12,8 +12,9 @@ from .vector_field import ManifoldVectorField
 class MultiChartVectorField(nn.Module):
     """Vector-field module parametrised per chart.
 
-    Each chart gets its own ``ManifoldVectorField`` head.  Only the
-    vector-field parameters are trained; the manifold metric is fixed.
+    Each chart gets an independent head. These heads represent only an
+    approximately global field during penalty-based training; exact globality
+    requires transition compatibility.
 
     Parameters
     ----------
@@ -69,6 +70,7 @@ def overlap_consistency_loss(
     chart_alpha: int,
     chart_beta: int,
     t: torch.Tensor,
+    coordinate_chart: int | None = None,
 ) -> torch.Tensor:
     r"""Penalise disagreement between vector-field heads in an overlap region.
 
@@ -89,9 +91,44 @@ def overlap_consistency_loss(
     """
     from .transforms import pushforward_vector
 
+    def zero_loss() -> torch.Tensor:
+        return sum((parameter.sum() * 0.0) for parameter in vf.parameters())
+
+    coordinate_chart = chart_alpha if coordinate_chart is None else coordinate_chart
+    if coordinate_chart != chart_alpha:
+        source = atlas[coordinate_chart]
+        if chart_alpha not in source.transitions:
+            raise ValueError(
+                f"no direct transition {coordinate_chart}->{chart_alpha} for overlap data"
+            )
+        source_mask = source.can_transition_to(chart_alpha, x_alpha)
+        x_alpha = x_alpha[source_mask]
+        if t.dim() > 0:
+            t = t[source_mask]
+        if x_alpha.shape[0] == 0:
+            return zero_loss()
+        x_alpha = source.transition_to(chart_alpha, x_alpha)
+
+    chart = atlas[chart_alpha]
+    valid = chart.can_transition_to(chart_beta, x_alpha)
+    x_alpha = x_alpha[valid]
+    if t.dim() > 0:
+        t = t[valid]
+    if x_alpha.shape[0] == 0:
+        return zero_loss()
+    x_beta = chart.transition_to(chart_beta, x_alpha)
+    target_valid = atlas[chart_beta].contains(x_beta)
+    x_alpha = x_alpha[target_valid]
+    x_beta = x_beta[target_valid]
+    if t.dim() > 0:
+        t = t[target_valid]
+    if x_alpha.shape[0] == 0:
+        return zero_loss()
+
     f_a = vf(t, x_alpha, chart_alpha)
-    x_beta = atlas[chart_alpha].transition_to(chart_beta, x_alpha)
-    J = atlas[chart_alpha].jacobian(chart_beta, x_alpha)
+    J = chart.jacobian(chart_beta, x_alpha)
     f_a_pushed = pushforward_vector(f_a, J)
     f_b = vf(t, x_beta, chart_beta)
-    return ((f_b - f_a_pushed) ** 2).sum(dim=-1).mean()
+    residual = f_b - f_a_pushed
+    metric = atlas[chart_beta].analytic_metric.metric(x_beta)
+    return torch.einsum("...i,...ij,...j->...", residual, metric, residual).mean()
