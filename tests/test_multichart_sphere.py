@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 import torch
 
 from geomflow.torch import (
@@ -26,6 +27,16 @@ class _CompatibleLinearField(torch.nn.Module):
     ) -> torch.Tensor:
         del t, chart_id
         return 0.5 * x
+
+
+class _CompatibleStereographicRadialField(torch.nn.Module):
+    """One global radial field represented through stereographic inversion."""
+
+    def forward(
+        self, t: torch.Tensor, x: torch.Tensor, chart_id: int
+    ) -> torch.Tensor:
+        del t
+        return (0.1 if chart_id == 0 else -0.1) * x
 
 
 class _ThresholdChart:
@@ -158,10 +169,8 @@ def test_divergence_invariant():
 
 
 def test_multichart_integrator_density_independent_of_start_chart():
-    atlas, vf = _make_atlas(hidden_dim=32, seed=2)
-    # Zero out vector field so both chart heads represent the same zero vector field.
-    for p in vf.parameters():
-        torch.nn.init.zeros_(p)
+    atlas, _ = _make_atlas(hidden_dim=32, seed=2)
+    vf = _CompatibleStereographicRadialField()
 
     x0_a = torch.randn(8, 2) * 0.4 + 1.2  # a point well inside chart 0's ball
     x0_b = _transition_A_to_B(x0_a)  # the same manifold points, in chart 1
@@ -228,6 +237,7 @@ def test_nonzero_divergence_is_scalar_across_identity_transition():
     assert switched.transition_events[0].target_chart == 1
 
 
+@pytest.mark.slow
 def test_multichart_sphere_training():
     torch.manual_seed(3)
     atlas, vf = _make_atlas(hidden_dim=32, seed=3)

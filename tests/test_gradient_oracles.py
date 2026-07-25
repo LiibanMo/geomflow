@@ -147,6 +147,8 @@ def test_state_parameter_gradient_in_forward_and_reverse_time(ta: float, tb: flo
     torch.testing.assert_close(actual, expected, rtol=8e-5, atol=2e-7)
 
 
+@pytest.mark.slow
+@pytest.mark.convergence
 def test_direct_state_gradient_has_fourth_order_convergence() -> None:
     """MATH-273: measure direct parameter-gradient order at h, h/2, h/4."""
     x = torch.tensor([[0.9]], dtype=DTYPE)
@@ -165,6 +167,8 @@ def test_direct_state_gradient_has_fourth_order_convergence() -> None:
     assert min(orders) > 3.7, f"direct state-gradient order: errors={errors}, orders={orders}"
 
 
+@pytest.mark.slow
+@pytest.mark.convergence
 def test_intrinsic_adjoint_input_gradient_convergence_is_measured_separately() -> None:
     """MATH-274: estimate adjoint input-gradient order independently of direct autograd."""
     data_value, coefficient = 0.9, 0.7

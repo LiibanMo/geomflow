@@ -19,8 +19,8 @@ using Point = Traits3::Point;
 TEST_CASE("FlowIntegration — constant field produces correct position", "[cnf]") {
   Metric metric;
   auto fn = [](double t, const Point& x, const std::vector<double>& theta) {
-    (void) t;
-    (void) x;
+    (void)t;
+    (void)x;
     return Tangent({theta[0], theta[1], theta[2]});
   };
 
@@ -39,9 +39,9 @@ TEST_CASE("FlowIntegration — constant field produces correct position", "[cnf]
 TEST_CASE("FlowIntegration — constant field has zero divergence integral", "[cnf]") {
   Metric metric;
   auto fn = [](double t, const Point& x, const std::vector<double>& theta) {
-    (void) t;
-    (void) x;
-    (void) theta;
+    (void)t;
+    (void)x;
+    (void)theta;
     return Tangent({1.0, 0.0, 0.0});
   };
 
@@ -66,8 +66,8 @@ TEST_CASE("FlowIntegration — RK4 is 4th-order for scalar ODE", "[cnf]") {
   // dx/dt = x, x(0)=1, t in [0,0.5] → x = e^0.5 ≈ 1.648721
   Metric metric;
   auto fn = [](double t, const Point& x, const std::vector<double>& theta) {
-    (void) t;
-    (void) theta;
+    (void)t;
+    (void)theta;
     return Tangent({x[0], 0.0, 0.0});
   };
 
@@ -83,8 +83,8 @@ TEST_CASE("FlowIntegration — RK4 is 4th-order for scalar ODE", "[cnf]") {
 TEST_CASE("FlowIntegration — negative-time backward flow", "[cnf][edge]") {
   Metric metric;
   auto fn = [](double t, const Point& x, const std::vector<double>& theta) {
-    (void) t;
-    (void) x;
+    (void)t;
+    (void)x;
     return Tangent({theta[0], theta[1], theta[2]});
   };
 
@@ -104,9 +104,9 @@ TEST_CASE("FlowIntegration — negative-time backward flow", "[cnf][edge]") {
 TEST_CASE("FlowIntegration — track_trajectory=false produces no trajectory", "[cnf][edge]") {
   Metric metric;
   auto fn = [](double t, const Point& x, const std::vector<double>& theta) {
-    (void) t;
-    (void) x;
-    (void) theta;
+    (void)t;
+    (void)x;
+    (void)theta;
     return Tangent({1.0, 0.0, 0.0});
   };
 
@@ -120,11 +120,11 @@ TEST_CASE("FlowIntegration — track_trajectory=false produces no trajectory", "
   REQUIRE_THAT(result.x_final[0], Catch::Matchers::WithinRel(1.0, 1e-4));
 }
 
-TEST_CASE("FlowIntegration — 10000-step constant drift stays accurate", "[cnf][edge]") {
+TEST_CASE("FlowIntegration — 10000-step constant drift stays accurate", "[cnf][edge][slow]") {
   Metric metric;
   auto fn = [](double t, const Point& x, const std::vector<double>& theta) {
-    (void) t;
-    (void) x;
+    (void)t;
+    (void)x;
     return Tangent({theta[0], theta[1], theta[2]});
   };
 
@@ -144,8 +144,8 @@ TEST_CASE("FlowIntegration — exponentially diverging field stays bounded short
           "[cnf][edge]") {
   Metric metric;
   auto fn = [](double t, const Point& x, const std::vector<double>& theta) {
-    (void) t;
-    (void) theta;
+    (void)t;
+    (void)theta;
     return Tangent({std::exp(x[0]), 0.0, 0.0});
   };
 
@@ -162,7 +162,7 @@ TEST_CASE("FlowIntegration — exponentially diverging field stays bounded short
 TEST_CASE("FlowIntegration — augmented RK4 uses signed matching stages", "[cnf][math]") {
   Metric metric;
   auto fn = [](double t, const Point& x, const std::vector<double>& theta) {
-    (void) theta;
+    (void)theta;
     return Tangent({t * x[0], t * x[1], t * x[2]});
   };
   geomflow::ParametrizedVectorField<Traits3, Metric> field(metric, fn);
@@ -189,9 +189,9 @@ TEST_CASE("FlowIntegration — augmented RK4 uses signed matching stages", "[cnf
 TEST_CASE("FlowIntegration — validates step and zero interval", "[cnf][edge]") {
   Metric metric;
   auto fn = [](double t, const Point& x, const std::vector<double>& theta) {
-    (void) t;
-    (void) x;
-    (void) theta;
+    (void)t;
+    (void)x;
+    (void)theta;
     return Tangent({1.0, 0.0, 0.0});
   };
   geomflow::ParametrizedVectorField<Traits3, Metric> field(metric, fn);
@@ -199,8 +199,7 @@ TEST_CASE("FlowIntegration — validates step and zero interval", "[cnf][edge]")
   Point x0{1.0, 2.0, 3.0};
 
   REQUIRE_THROWS_AS(integrator.integrate(x0, 0.0, 1.0, 0.0), std::invalid_argument);
-  REQUIRE_THROWS_AS(integrator.integrate(
-                        x0, 0.0, 1.0, std::numeric_limits<double>::infinity()),
+  REQUIRE_THROWS_AS(integrator.integrate(x0, 0.0, 1.0, std::numeric_limits<double>::infinity()),
                     std::invalid_argument);
   auto result = integrator.integrate(x0, 0.4, 0.4, 0.1, true);
   REQUIRE(result.x_final == x0);

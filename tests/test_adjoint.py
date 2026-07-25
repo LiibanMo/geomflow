@@ -320,6 +320,8 @@ def test_adjoint_cotangent_obeys_chart_pullback() -> None:
     torch.testing.assert_close(y_parameter, x_parameter, rtol=2e-12, atol=2e-12)
 
 
+@pytest.mark.slow
+@pytest.mark.convergence
 def test_nonlinear_chart_cotangent_covariance_converges_at_rk4_order() -> None:
     """MATH-737: nonlinear-chart covariance holds to the solver's error order."""
     y_metric = AnalyticMetric(
@@ -328,7 +330,9 @@ def test_nonlinear_chart_cotangent_covariance_converges_at_rk4_order() -> None:
         inverse_fn=lambda y: y.square().unsqueeze(-1),
         sqrt_det_fn=lambda y: y[..., 0].reciprocal(),
     )
-    errors: list[float] = []
+    loss_errors: list[float] = []
+    cotangent_errors: list[float] = []
+    parameter_errors: list[float] = []
     for step in (0.2, 0.1, 0.05):
         x_data = torch.tensor([[0.3], [0.7]], dtype=DTYPE, requires_grad=True)
         y_data = torch.exp(x_data.detach()).requires_grad_(True)
@@ -355,10 +359,17 @@ def test_nonlinear_chart_cotangent_covariance_converges_at_rk4_order() -> None:
         cotangent_error = (y_covector - x_covector / y_data).abs().max()
         parameter_error = (y_parameter - x_parameter).abs()
         loss_error = (y_loss - x_loss).abs()
-        errors.append(max(cotangent_error, parameter_error, loss_error).item())
+        loss_errors.append(loss_error.item())
+        cotangent_errors.append(cotangent_error.item())
+        parameter_errors.append(parameter_error.item())
 
-    orders = observed_order(errors)
-    assert min(orders) > 3.5, f"chart covariance: errors={errors}, orders={orders}"
+    for quantity, errors in (
+        ("loss", loss_errors),
+        ("cotangent", cotangent_errors),
+        ("parameter gradient", parameter_errors),
+    ):
+        orders = observed_order(errors)
+        assert min(orders) > 3.5, f"{quantity}: errors={errors}, orders={orders}"
 
 
 @pytest.mark.parametrize("t0,t1", [(0.0, 1.0), (1.0, 0.0)])

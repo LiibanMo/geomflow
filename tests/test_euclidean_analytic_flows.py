@@ -138,6 +138,35 @@ def test_scalar_linear_flow_state_divergence_and_density_identities() -> None:
     assert linear_log_density_change(a, ta, tb) == -expected_divergence
 
 
+def test_cross_backend_linear_flow_and_full_objective_fixture() -> None:
+    """MATH-1214/MATH-1215: shared Python/C++ state, density, and gradient fixture."""
+    x = torch.tensor([[0.8]], dtype=DTYPE, device=DEVICE)
+    a, ta, tb, dt = 0.7, -0.25, 0.9, 0.3
+    field = ScalarLinearField(a)
+
+    result = _integrate(field, x, ta, tb, dt)
+    duration = tb - ta
+    expected_state = x * math.exp(a * duration)
+    expected_divergence = a * duration
+    expected_gradient = duration * expected_state.square().sum() + duration
+
+    torch.testing.assert_close(result.x_final, expected_state, rtol=2e-4, atol=2e-6)
+    torch.testing.assert_close(
+        result.divergence_integral,
+        torch.full_like(result.divergence_integral, expected_divergence),
+        rtol=2e-14,
+        atol=2e-14,
+    )
+    torch.testing.assert_close(
+        result.flow_log_abs_det_jacobian, result.divergence_integral
+    )
+    torch.testing.assert_close(result.log_density_change, -result.divergence_integral)
+
+    objective = 0.5 * result.x_final.square().sum() + result.divergence_integral.sum()
+    (gradient,) = torch.autograd.grad(objective, (field.coefficient,))
+    torch.testing.assert_close(gradient, expected_gradient, rtol=3e-4, atol=3e-6)
+
+
 def test_scalar_linear_reverse_interval_reverses_divergence_sign() -> None:
     """MATH-216: the oriented integral in Section 3.2.1 negates on reversal."""
     x = torch.tensor([[0.8]], dtype=DTYPE, device=DEVICE)
@@ -238,6 +267,8 @@ def test_linear_flow_complete_nll_parameter_derivative() -> None:
     torch.testing.assert_close(derivative, expected, rtol=2e-8, atol=2e-10)
 
 
+@pytest.mark.slow
+@pytest.mark.convergence
 def test_rk4_state_convergence_order_is_measured_from_refinements() -> None:
     """MATH-270/MATH-272/MATH-275: estimate state order from h, h/2, h/4."""
     x = torch.tensor([[0.9]], dtype=DTYPE, device=DEVICE)
@@ -252,6 +283,8 @@ def test_rk4_state_convergence_order_is_measured_from_refinements() -> None:
     assert min(orders) > 3.8, f"state RK order too low: errors={errors}, orders={orders}"
 
 
+@pytest.mark.slow
+@pytest.mark.convergence
 def test_density_convergence_order_is_measured_from_refinements() -> None:
     """MATH-271/MATH-272: augmented density integration must attain RK4 order."""
     x = torch.tensor([[0.9]], dtype=DTYPE, device=DEVICE)

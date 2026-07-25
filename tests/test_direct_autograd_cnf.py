@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import math
 
+import pytest
 import torch
 from torch import nn
 
@@ -170,6 +171,8 @@ def test_linear_cnf_loss_matches_closed_form() -> None:
     torch.testing.assert_close(loss, expected, rtol=2e-8, atol=2e-10)
 
 
+@pytest.mark.slow
+@pytest.mark.convergence
 def test_complete_nll_gradient_converges_under_step_refinement() -> None:
     """MATH-625--626: establish fourth-order direct-gradient convergence."""
     data = torch.tensor([[0.8]], dtype=DTYPE)

@@ -94,6 +94,8 @@ def test_unrestricted_single_chart_presets_convert_coordinate_base(
     )
 
 
+@pytest.mark.slow
+@pytest.mark.normalization
 def test_poincare_base_is_normalized_and_strictly_inside_disk() -> None:
     """MATH-304--305/MATH-323/MATH-359: normalized disk-supported base."""
     metric = PoincareDisk(2)
@@ -120,6 +122,8 @@ def test_poincare_base_is_normalized_and_strictly_inside_disk() -> None:
     )
 
 
+@pytest.mark.slow
+@pytest.mark.normalization
 def test_torus_base_normalizes_over_canonical_angle_cell() -> None:
     """MATH-305/MATH-323/MATH-359: rho*dV recovers uniform angle measure."""
     metric = Torus2D(R=2.0, r=0.75)

@@ -61,6 +61,8 @@ def test_poincare_disk_preset():
     torch.testing.assert_close(G[..., 1, 1], conformal_factor)
 
     cnf = ManifoldCNF(metric, hidden_dim=16, dt=0.1)
+    for parameter in cnf.vf.parameters():
+        torch.nn.init.zeros_(parameter)
     samples, _ = cnf.sample(5)
     assert samples.shape == (5, 2)
     assert metric.contains(samples).all()

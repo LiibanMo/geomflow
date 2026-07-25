@@ -24,4 +24,6 @@ target_include_directories(geomflow_tests PRIVATE
 )
 
 include(Catch)
-catch_discover_tests(geomflow_tests)
+catch_discover_tests(geomflow_tests TEST_SPEC "~[slow]")
+add_test(NAME geomflow_slow COMMAND geomflow_tests "[slow]")
+set_tests_properties(geomflow_slow PROPERTIES LABELS slow)

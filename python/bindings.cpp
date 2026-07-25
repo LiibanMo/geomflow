@@ -16,55 +16,43 @@ namespace py = pybind11;
 
 namespace geomflow {
 
-template <size_t N>
-using PTraits = ManifoldTraits<N>;
-template <size_t N>
-using PScalar = typename PTraits<N>::ScalarType;
-template <size_t N>
-using PPoint = typename PTraits<N>::Point;
-template <size_t N>
-using PTangent = TangentVector<PTraits<N>>;
-template <size_t N>
-using PCotangent = CotangentVector<PTraits<N>>;
-template <size_t N>
-using PEuclideanMetric = EuclideanMetric<PTraits<N>>;
-template <size_t N>
-using PVectorField = ParametrizedVectorField<PTraits<N>, PEuclideanMetric<N>>;
+template <size_t N> using PTraits = ManifoldTraits<N>;
+template <size_t N> using PScalar = typename PTraits<N>::ScalarType;
+template <size_t N> using PPoint = typename PTraits<N>::Point;
+template <size_t N> using PTangent = TangentVector<PTraits<N>>;
+template <size_t N> using PCotangent = CotangentVector<PTraits<N>>;
+template <size_t N> using PEuclideanMetric = EuclideanMetric<PTraits<N>>;
+template <size_t N> using PVectorField = ParametrizedVectorField<PTraits<N>, PEuclideanMetric<N>>;
 
-template <size_t N>
-py::list tangent_to_list(const PTangent<N>& v) {
+template <size_t N> py::list tangent_to_list(const PTangent<N>& v) {
   py::list lst;
   for (size_t i = 0; i < N; ++i)
     lst.append(v.components[i]);
   return lst;
 }
 
-template <size_t N>
-py::list cotangent_to_list(const PCotangent<N>& v) {
+template <size_t N> py::list cotangent_to_list(const PCotangent<N>& v) {
   py::list lst;
   for (size_t i = 0; i < N; ++i)
     lst.append(v.components[i]);
   return lst;
 }
 
-template <size_t N>
-PTangent<N> list_to_tangent(const py::list& lst) {
+template <size_t N> PTangent<N> list_to_tangent(const py::list& lst) {
   PTangent<N> v;
   for (size_t i = 0; i < N; ++i)
     v.components[i] = lst[i].cast<double>();
   return v;
 }
 
-template <size_t N>
-PCotangent<N> list_to_cotangent(const py::list& lst) {
+template <size_t N> PCotangent<N> list_to_cotangent(const py::list& lst) {
   PCotangent<N> v;
   for (size_t i = 0; i < N; ++i)
     v.components[i] = lst[i].cast<double>();
   return v;
 }
 
-template <size_t N>
-void bind_dimension(py::module& m, const std::string& suffix) {
+template <size_t N> void bind_dimension(py::module& m, const std::string& suffix) {
   std::string name_tv = "TangentVector" + suffix;
   std::string name_ctv = "CotangentVector" + suffix;
   std::string name_metric = "EuclideanMetric" + suffix;
@@ -160,13 +148,13 @@ void bind_dimension(py::module& m, const std::string& suffix) {
   py::class_<AdjointState<Traits>>(m, (std::string("AdjointState") + suffix).c_str())
       .def(py::init<>())
       .def_readwrite("lambda", &AdjointState<Traits>::lambda)
-      .def_readwrite("mu", &AdjointState<Traits>::mu);
+      .def_readwrite("density_adjoint", &AdjointState<Traits>::density_adjoint);
 
   py::class_<AdjointSolver<Traits, Metric, Field>>(m, name_adjoint.c_str())
       .def(py::init<const Metric&, const Field&>())
       .def("compute_gradient", &AdjointSolver<Traits, Metric, Field>::compute_gradient,
            py::arg("x0"), py::arg("t0"), py::arg("t1"), py::arg("dt"), py::arg("aT"),
-           py::arg("param_eps") = 1e-4);
+           py::arg("param_eps") = 1e-4, py::arg("density_adjoint") = 1.0);
 }
 
 } // namespace geomflow

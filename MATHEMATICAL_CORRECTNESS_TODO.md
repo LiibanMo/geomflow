@@ -728,38 +728,38 @@ mandatory exit gates in this document pass.
 
 ### 11.1 Remove Misleading Tests
 
-- [ ] [MATH-1200] Replace Python adjoint comparison against the old flawed direct-autograd path.
-- [ ] [MATH-1201] Require Python adjoint parameter-gradient assertions.
-- [ ] [MATH-1202] Replace the loose single maximum-difference assertion with per-quantity tolerances.
-- [ ] [MATH-1203] Correct C++ reverse-time adjoint expected signs.
-- [ ] [MATH-1204] Make C++ finite-difference tests include the same density objective as the solver under test.
-- [ ] [MATH-1205] Correct inaccurate analytic comments in C++ adjoint tests.
-- [ ] [MATH-1206] Replace zero-field-only multichart invariance tests with nonzero compatible fields.
-- [ ] [MATH-1207] Replace Poincare and torus shape-only tests with domain and topology tests.
-- [ ] [MATH-1208] Add non-Euclidean C++ geometry and adjoint tests.
+- [x] [MATH-1200] Replace Python adjoint comparison against the old flawed direct-autograd path.
+- [x] [MATH-1201] Require Python adjoint parameter-gradient assertions.
+- [x] [MATH-1202] Replace the loose single maximum-difference assertion with per-quantity tolerances.
+- [x] [MATH-1203] Correct C++ reverse-time adjoint expected signs.
+- [x] [MATH-1204] Make C++ finite-difference tests include the same density objective as the solver under test.
+- [x] [MATH-1205] Correct inaccurate analytic comments in C++ adjoint tests.
+- [x] [MATH-1206] Replace zero-field-only multichart invariance tests with nonzero compatible fields.
+- [x] [MATH-1207] Replace Poincare and torus shape-only tests with domain and topology tests.
+- [x] [MATH-1208] Add non-Euclidean C++ geometry and adjoint tests.
 
 ### 11.2 Python/C++ Contract Parity
 
-- [ ] [MATH-1210] Use the same sign convention in Python and C++.
-- [ ] [MATH-1211] Use the same definitions for divergence integral, flow Jacobian, and density change.
-- [ ] [MATH-1212] Use the same endpoint and `dt` conventions.
-- [ ] [MATH-1213] Use the same tensor/index conventions where APIs overlap.
-- [ ] [MATH-1214] Compare state and density results on identical analytic Euclidean flows.
-- [ ] [MATH-1215] Compare parameter gradients where both backends support equivalent objectives.
-- [ ] [MATH-1216] Document deliberate differences caused by finite differences versus autograd.
+- [x] [MATH-1210] Use the same sign convention in Python and C++.
+- [x] [MATH-1211] Use the same definitions for divergence integral, flow Jacobian, and density change.
+- [x] [MATH-1212] Use the same endpoint and `dt` conventions.
+- [x] [MATH-1213] Use the same tensor/index conventions where APIs overlap.
+- [x] [MATH-1214] Compare state and density results on identical analytic Euclidean flows.
+- [x] [MATH-1215] Compare parameter gradients where both backends support equivalent objectives.
+- [x] [MATH-1216] Document deliberate differences caused by finite differences versus autograd.
 
 ### 11.3 Regression Suite Structure
 
-- [ ] [MATH-1220] Add focused suites for volume measure, integration signs, differential operators, direct gradients, adjoints, charts, and presets.
-- [ ] [MATH-1221] Mark long convergence and normalization tests separately from fast unit tests.
-- [ ] [MATH-1222] Run fast mathematical tests in every CI job.
-- [ ] [MATH-1223] Run slower finite-difference and convergence tests in a required or scheduled job.
-- [ ] [MATH-1224] Fail when a mandatory mathematical test is unexpectedly skipped.
-- [ ] [MATH-1225] Keep tests deterministic and independent of GPU availability.
+- [x] [MATH-1220] Add focused suites for volume measure, integration signs, differential operators, direct gradients, adjoints, charts, and presets.
+- [x] [MATH-1221] Mark long convergence and normalization tests separately from fast unit tests.
+- [x] [MATH-1222] Run fast mathematical tests in every CI job.
+- [x] [MATH-1223] Run slower finite-difference and convergence tests in a required or scheduled job.
+- [x] [MATH-1224] Fail when a mandatory mathematical test is unexpectedly skipped.
+- [x] [MATH-1225] Keep tests deterministic and independent of GPU availability.
 
 ### Phase 11 Exit Gate
 
-- [ ] [MATH-1239] Pass the repaired mathematical regression suite in both source and built-wheel environments.
+- [x] [MATH-1239] Pass the repaired mathematical regression suite in both source and built-wheel environments.
 
 ## Phase 12: Documentation, Attribution, And GPU Handoff
 

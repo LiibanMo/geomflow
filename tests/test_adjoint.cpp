@@ -65,11 +65,8 @@ TEST_CASE("Adjoint — 3D constant flow gradient matches analytical", "[adjoint]
 }
 
 TEST_CASE("Adjoint — gradient w.r.t. parameters via finite difference check", "[adjoint]") {
-  // dx/dt = theta[0]*x, x(0)=1 → x(T) = exp(theta[0]*T)
-  // L = (x(T) - target)^2/2, target = e
-  // dL/dtheta[0] = (x(T)-target) * T * exp(theta[0]*T) = (exp(1)-e) * e = 0
-  // With theta[0]=0.5: x(1)=exp(0.5) ≈ 1.649, target=2.0
-  // dL/dtheta = (1.649-2) * 1 * 1.649 ≈ -0.579
+  // For x(T)=exp(theta*T) and L=(x(T)-target)^2/2,
+  // dL/dtheta=(x(T)-target)*T*x(T). Here theta=T=0.5 and target=2.
   Point1 x0{1.0};
   Metric1 metric;
 
@@ -166,6 +163,35 @@ TEST_CASE("Adjoint — endpoint-only and full objectives remain distinct", "[adj
   REQUIRE_THAT(full[0], Catch::Matchers::WithinRel(duration * endpoint + duration, 2e-4));
 }
 
+TEST_CASE("Adjoint — shared Python/C++ full-objective fixture", "[adjoint][parity]") {
+  Metric1 metric;
+  auto fn = [](double, const Point1& x, const std::vector<double>& theta) {
+    return Tangent1({theta[0] * x[0]});
+  };
+  geomflow::ParametrizedVectorField<Traits1, Metric1> field(metric, fn);
+  field.set_params({0.7});
+
+  constexpr double t0 = -0.25;
+  constexpr double t1 = 0.9;
+  constexpr double duration = t1 - t0;
+  const Point1 x0{0.8};
+  const double endpoint = x0[0] * std::exp(0.7 * duration);
+  const double expected_gradient = duration * endpoint * endpoint + duration;
+
+  geomflow::FlowIntegrator<Traits1, Metric1, decltype(field)> integrator(metric, field);
+  const auto flow = integrator.integrate(x0, t0, t1, 0.3);
+  REQUIRE_THAT(flow.x_final[0], Catch::Matchers::WithinRel(endpoint, 2e-4));
+  REQUIRE_THAT(flow.divergence_integral, Catch::Matchers::WithinAbs(0.7 * duration, 2e-8));
+  REQUIRE_THAT(flow.flow_log_abs_det_jacobian,
+               Catch::Matchers::WithinAbs(flow.divergence_integral, 1e-12));
+  REQUIRE_THAT(flow.log_density_change,
+               Catch::Matchers::WithinAbs(-flow.divergence_integral, 1e-12));
+
+  geomflow::AdjointSolver<Traits1, Metric1, decltype(field)> adjoint(metric, field);
+  const auto gradient = adjoint.compute_gradient(x0, t0, t1, 0.3, Cotangent1({flow.x_final[0]}));
+  REQUIRE_THAT(gradient[0], Catch::Matchers::WithinRel(expected_gradient, 3e-4));
+}
+
 TEST_CASE("Adjoint — full nonlinear objective matches independent finite difference", "[adjoint]") {
   Metric1 metric;
   auto fn = [](double, const Point1& x, const std::vector<double>& theta) {
@@ -247,7 +273,8 @@ TEST_CASE("Adjoint — rejects invalid finite-difference perturbations", "[adjoi
                     std::invalid_argument);
 }
 
-TEST_CASE("Adjoint — parameter gradient converges at fourth order", "[adjoint][convergence]") {
+TEST_CASE("Adjoint — parameter gradient converges at fourth order",
+          "[adjoint][convergence][slow]") {
   Metric1 metric;
   auto fn = [](double, const Point1& x, const std::vector<double>& theta) {
     return Tangent1({theta[0] * x[0]});
