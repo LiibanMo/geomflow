@@ -69,7 +69,7 @@ def integrate_rk4(
     if not math.isfinite(float(dt)) or dt <= 0.0:
         raise ValueError("dt must be a finite positive step magnitude")
 
-    x = x0.clone()
+    x = metric.canonicalize(x0.clone())
     integral = torch.zeros(x0.shape[:-1], device=x0.device, dtype=x0.dtype)
     trajectory: list[tuple[float, torch.Tensor, torch.Tensor]] = []
     if track_trajectory:
@@ -87,6 +87,7 @@ def integrate_rk4(
     def augmented_rhs(
         time: float, state: torch.Tensor
     ) -> tuple[torch.Tensor, torch.Tensor]:
+        metric.validate_points(state)
         if stage_callback is not None:
             stage_callback(time, state)
         time_tensor = torch.full(
@@ -126,7 +127,9 @@ def integrate_rk4(
         k3_x, k3_i = augmented_rhs(t + half_h, x + half_h * k2_x)
         k4_x, k4_i = augmented_rhs(t + h, x + h * k3_x)
 
-        x = x + (h / 6.0) * (k1_x + 2.0 * k2_x + 2.0 * k3_x + k4_x)
+        x = metric.canonicalize(
+            x + (h / 6.0) * (k1_x + 2.0 * k2_x + 2.0 * k3_x + k4_x)
+        )
         integral = integral + (h / 6.0) * (
             k1_i + 2.0 * k2_i + 2.0 * k3_i + k4_i
         )

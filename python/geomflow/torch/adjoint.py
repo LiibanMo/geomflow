@@ -15,7 +15,11 @@ from .base_distribution import (
     validate_base_distribution,
 )
 from .integrator import integrate_rk4
-from .vector_field import ManifoldVectorField, lipschitz_regularizer, weight_decay_loss
+from .vector_field import (
+    ManifoldVectorField,
+    coordinate_jacobian_regularizer,
+    weight_decay_loss,
+)
 
 
 def cnf_log_prob(
@@ -71,7 +75,7 @@ def cnf_loss_terms(
     lipschitz_penalty = zero
     weight_decay_penalty = zero
     if lipschitz_weight > 0.0:
-        lipschitz_penalty = lipschitz_weight * lipschitz_regularizer(
+        lipschitz_penalty = lipschitz_weight * coordinate_jacobian_regularizer(
             vf, x_data, t=(t0 + t1) / 2.0
         )
     if weight_decay_weight > 0.0:

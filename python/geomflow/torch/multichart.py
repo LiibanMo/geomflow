@@ -26,13 +26,21 @@ class MultiChartVectorField(nn.Module):
         Number of hidden layers per chart.
     """
 
-    def __init__(self, atlas: Atlas, hidden_dim: int = 64, n_layers: int = 2):
+    def __init__(
+        self,
+        atlas: Atlas,
+        hidden_dim: int = 64,
+        n_layers: int = 2,
+        activation: type[nn.Module] = nn.SiLU,
+    ):
         super().__init__()
         dim = atlas.charts[next(iter(atlas.charts))].dim
         self.dim = dim
         self._heads = nn.ModuleDict()
         for cid in atlas.charts:
-            self._heads[str(cid)] = ManifoldVectorField(dim, hidden_dim, n_layers)
+            self._heads[str(cid)] = ManifoldVectorField(
+                dim, hidden_dim, n_layers, activation=activation
+            )
 
     def forward(
         self, t: torch.Tensor, x: torch.Tensor, chart_id: int

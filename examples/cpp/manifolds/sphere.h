@@ -6,6 +6,7 @@
 
 #include <geomflow/manifold.h>
 #include <geomflow/tangent.h>
+#include <stdexcept>
 
 namespace geomflow {
 
@@ -18,7 +19,10 @@ public:
   using Point = typename Traits::Point;
   using Matrix = std::array<std::array<Scalar, N>, N>;
 
-  explicit SphereMetric(Scalar R = Scalar(1)) : R_(R) {}
+  explicit SphereMetric(Scalar R = Scalar(1)) : R_(R) {
+    if (!std::isfinite(R_) || R_ <= Scalar(0))
+      throw std::invalid_argument("sphere radius must be finite and positive");
+  }
 
   Scalar radius() const { return R_; }
 
@@ -26,27 +30,27 @@ public:
     Scalar theta = p[0];
     Scalar s2 = std::sin(theta);
     Matrix g{};
-    g[0][0] = Scalar(1);
-    g[1][1] = s2 * s2;
+    g[0][0] = R_ * R_;
+    g[1][1] = R_ * R_ * s2 * s2;
     return g;
   }
 
   Scalar determinant(const Point& p) const {
     Scalar s = std::sin(p[0]);
-    return s * s;
+    return R_ * R_ * R_ * R_ * s * s;
   }
 
   Scalar sqrt_determinant(const Point& p) const {
-    return std::abs(std::sin(p[0]));
+    return R_ * R_ * std::abs(std::sin(p[0]));
   }
 
   Matrix inverse_matrix(const Point& p) const {
     Scalar theta = p[0];
     Scalar s2 = std::sin(theta);
     Matrix g_inv{};
-    g_inv[0][0] = Scalar(1);
+    g_inv[0][0] = Scalar(1) / (R_ * R_);
     Scalar denom = s2 * s2;
-    g_inv[1][1] = Scalar(1) / denom;
+    g_inv[1][1] = Scalar(1) / (R_ * R_ * denom);
     return g_inv;
   }
 
@@ -56,7 +60,7 @@ public:
     (void)j;
     (void)k;
     if (i == 1 && j == 1 && k == 0)
-      return Scalar(2) * std::sin(p[0]) * std::cos(p[0]);
+      return Scalar(2) * R_ * R_ * std::sin(p[0]) * std::cos(p[0]);
     return Scalar(0);
   }
 

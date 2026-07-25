@@ -20,6 +20,7 @@ target_link_libraries(geomflow_tests PRIVATE
 
 target_include_directories(geomflow_tests PRIVATE
   ${CMAKE_SOURCE_DIR}/include
+  ${CMAKE_SOURCE_DIR}/examples/cpp
 )
 
 include(Catch)

@@ -649,80 +649,80 @@ mandatory exit gates in this document pass.
 
 ### 9.1 Poincare Disk
 
-- [ ] [MATH-1000] Enforce the domain `||x|| < 1`.
-- [ ] [MATH-1001] Remove metric clamping that defines an artificial constant metric outside the disk.
-- [ ] [MATH-1002] Raise an actionable domain error or use an explicitly approved boundary-safe parameterization.
-- [ ] [MATH-1003] Replace unrestricted coordinate-Gaussian sampling with a distribution supported inside the disk.
-- [ ] [MATH-1004] Define that distribution's normalized density relative to hyperbolic volume.
-- [ ] [MATH-1005] Ensure vector-field integration cannot silently leave the valid domain.
-- [ ] [MATH-1006] Test points near, on, and outside the boundary.
-- [ ] [MATH-1007] Test sample validity and density normalization.
+- [x] [MATH-1000] Enforce the domain `||x|| < 1`.
+- [x] [MATH-1001] Remove metric clamping that defines an artificial constant metric outside the disk.
+- [x] [MATH-1002] Raise an actionable domain error or use an explicitly approved boundary-safe parameterization.
+- [x] [MATH-1003] Replace unrestricted coordinate-Gaussian sampling with a distribution supported inside the disk.
+- [x] [MATH-1004] Define that distribution's normalized density relative to hyperbolic volume.
+- [x] [MATH-1005] Ensure vector-field integration cannot silently leave the valid domain.
+- [x] [MATH-1006] Test points near, on, and outside the boundary.
+- [x] [MATH-1007] Test sample validity and density normalization.
 
 ### 9.2 Torus
 
-- [ ] [MATH-1010] Enforce `R > r > 0` for the standard embedded ring-torus metric.
-- [ ] [MATH-1011] Use positive `sqrt(det g)` for all valid parameters.
-- [ ] [MATH-1012] Represent angular coordinates modulo `2 pi` or use a valid atlas.
-- [ ] [MATH-1013] Require vector fields to be periodic across identified seams.
-- [ ] [MATH-1014] Use a wrapped or otherwise torus-valid base distribution.
-- [ ] [MATH-1015] Test equality of manifold quantities at coordinates differing by `2 pi`.
-- [ ] [MATH-1016] Test trajectories crossing both angular seams.
-- [ ] [MATH-1017] Test density normalization on the compact torus.
+- [x] [MATH-1010] Enforce `R > r > 0` for the standard embedded ring-torus metric.
+- [x] [MATH-1011] Use positive `sqrt(det g)` for all valid parameters.
+- [x] [MATH-1012] Represent angular coordinates modulo `2 pi` or use a valid atlas.
+- [x] [MATH-1013] Require vector fields to be periodic across identified seams.
+- [x] [MATH-1014] Use a wrapped or otherwise torus-valid base distribution.
+- [x] [MATH-1015] Test equality of manifold quantities at coordinates differing by `2 pi`.
+- [x] [MATH-1016] Test trajectories crossing both angular seams.
+- [x] [MATH-1017] Test density normalization on the compact torus.
 
 ### 9.3 Sphere
 
-- [ ] [MATH-1020] Define exact stereographic chart domains and overlaps.
-- [ ] [MATH-1021] Remove transition-map clamping at points outside the overlap.
-- [ ] [MATH-1022] Verify north/south transition maps and Jacobians analytically.
-- [ ] [MATH-1023] Verify metric transformation under transition.
-- [ ] [MATH-1024] Ensure base support and chart coverage are compatible.
-- [ ] [MATH-1025] Apply `R^2` scaling to the C++ spherical metric matrix.
-- [ ] [MATH-1026] Apply `R^4` scaling to its determinant and `R^2` scaling to its volume density.
-- [ ] [MATH-1027] Apply reciprocal radius scaling to the inverse metric.
-- [ ] [MATH-1028] Verify radius-dependent inner products, gradients, and volume.
+- [x] [MATH-1020] Define exact stereographic chart domains and overlaps.
+- [x] [MATH-1021] Remove transition-map clamping at points outside the overlap.
+- [x] [MATH-1022] Verify north/south transition maps and Jacobians analytically.
+- [x] [MATH-1023] Verify metric transformation under transition.
+- [x] [MATH-1024] Ensure base support and chart coverage are compatible.
+- [x] [MATH-1025] Apply `R^2` scaling to the C++ spherical metric matrix.
+- [x] [MATH-1026] Apply `R^4` scaling to its determinant and `R^2` scaling to its volume density.
+- [x] [MATH-1027] Apply reciprocal radius scaling to the inverse metric.
+- [x] [MATH-1028] Verify radius-dependent inner products, gradients, and volume.
 
 ### 9.4 General Preset Contract
 
-- [ ] [MATH-1030] Document domain, topology, coordinate singularities, base measure, and transition behavior for every preset.
-- [ ] [MATH-1031] Replace shape-only tests with mathematical identity tests.
-- [ ] [MATH-1032] Reject invalid manifold parameters at construction.
-- [ ] [MATH-1033] Avoid presenting a local chart metric as a complete global manifold model without domain handling.
+- [x] [MATH-1030] Document domain, topology, coordinate singularities, base measure, and transition behavior for every preset.
+- [x] [MATH-1031] Replace shape-only tests with mathematical identity tests.
+- [x] [MATH-1032] Reject invalid manifold parameters at construction.
+- [x] [MATH-1033] Avoid presenting a local chart metric as a complete global manifold model without domain handling.
 
 ### Phase 9 Exit Gate
 
-- [ ] [MATH-1049] Demonstrate domain-valid sampling, normalized density, topology behavior, and metric identities for every advertised preset.
+- [x] [MATH-1049] Demonstrate domain-valid sampling, normalized density, topology behavior, and metric identities for every advertised preset.
 
 ## Phase 10: Assumptions, Regularizers, And Model Architecture
 
 ### 10.1 Smoothness And Existence Assumptions
 
-- [ ] [MATH-1100] Document Mohamud's smoothness requirement for the vector field.
-- [ ] [MATH-1101] Document the global Lipschitz requirement used for existence and uniqueness over the integration interval.
-- [ ] [MATH-1102] Verify built-in activation defaults are differentiable to the order required by divergence gradients and adjoints.
-- [ ] [MATH-1103] Reject or warn about nonsmooth activations where second derivatives are required.
-- [ ] [MATH-1104] Distinguish Euclidean coordinate Lipschitz estimates from intrinsic metric Lipschitz behavior.
-- [ ] [MATH-1105] Document assumptions on metric smoothness and positive definiteness.
-- [ ] [MATH-1106] Document assumptions on chart transitions and overlap smoothness.
+- [x] [MATH-1100] Document Mohamud's smoothness requirement for the vector field.
+- [x] [MATH-1101] Document the global Lipschitz requirement used for existence and uniqueness over the integration interval.
+- [x] [MATH-1102] Verify built-in activation defaults are differentiable to the order required by divergence gradients and adjoints.
+- [x] [MATH-1103] Reject or warn about nonsmooth activations where second derivatives are required.
+- [x] [MATH-1104] Distinguish Euclidean coordinate Lipschitz estimates from intrinsic metric Lipschitz behavior.
+- [x] [MATH-1105] Document assumptions on metric smoothness and positive definiteness.
+- [x] [MATH-1106] Document assumptions on chart transitions and overlap smoothness.
 
 ### 10.2 Regularizer Semantics
 
-- [ ] [MATH-1110] Rename the current coordinate-Jacobian penalty if it is not an intrinsic Lipschitz norm.
-- [ ] [MATH-1111] Derive an optional metric-aware norm for `nabla f`.
-- [ ] [MATH-1112] Verify that any intrinsic regularizer is invariant under chart transitions.
-- [ ] [MATH-1113] Keep approximate engineering regularizers clearly separated from theorem requirements.
-- [ ] [MATH-1114] Apply documented Lipschitz and weight-decay options consistently in single-chart and multi-chart fitting.
-- [ ] [MATH-1115] Test that overlap regularization receives only valid overlap points.
+- [x] [MATH-1110] Rename the current coordinate-Jacobian penalty if it is not an intrinsic Lipschitz norm.
+- [x] [MATH-1111] Derive an optional metric-aware norm for `nabla f`.
+- [x] [MATH-1112] Verify that any intrinsic regularizer is invariant under chart transitions.
+- [x] [MATH-1113] Keep approximate engineering regularizers clearly separated from theorem requirements.
+- [x] [MATH-1114] Apply documented Lipschitz and weight-decay options consistently in single-chart and multi-chart fitting.
+- [x] [MATH-1115] Test that overlap regularization receives only valid overlap points.
 
 ### 10.3 Global Vector Field Design
 
-- [ ] [MATH-1120] Decide whether multi-chart heads are independent approximations or coordinate representations of one shared field.
-- [ ] [MATH-1121] If they represent one field, enforce transition compatibility by construction where feasible.
-- [ ] [MATH-1122] If compatibility remains penalized, quantify residual chart dependence.
-- [ ] [MATH-1123] Include chart-consistency diagnostics in training results.
+- [x] [MATH-1120] Decide whether multi-chart heads are independent approximations or coordinate representations of one shared field.
+- [x] [MATH-1121] If they represent one field, enforce transition compatibility by construction where feasible.
+- [x] [MATH-1122] If compatibility remains penalized, quantify residual chart dependence.
+- [x] [MATH-1123] Include chart-consistency diagnostics in training results.
 
 ### Phase 10 Exit Gate
 
-- [ ] [MATH-1139] Publish precise smoothness, existence, regularizer, and global-field assumptions with tests for enforced constraints.
+- [x] [MATH-1139] Publish precise smoothness, existence, regularizer, and global-field assumptions with tests for enforced constraints.
 
 ## Phase 11: Cross-Backend Equivalence And Test Repair
 

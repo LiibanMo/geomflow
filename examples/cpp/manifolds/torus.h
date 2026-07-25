@@ -6,6 +6,7 @@
 
 #include <geomflow/manifold.h>
 #include <geomflow/tangent.h>
+#include <stdexcept>
 
 namespace geomflow {
 
@@ -19,7 +20,10 @@ public:
   using Matrix = std::array<std::array<Scalar, N>, N>;
 
   explicit TorusMetric(Scalar R = Scalar(2), Scalar r = Scalar(1))
-      : R_(R), r_(r) {}
+      : R_(R), r_(r) {
+    if (!std::isfinite(R_) || !std::isfinite(r_) || !(R_ > r_ && r_ > Scalar(0)))
+      throw std::invalid_argument("torus radii must satisfy finite R > r > 0");
+  }
 
   Scalar major_radius() const { return R_; }
   Scalar minor_radius() const { return r_; }
@@ -42,7 +46,7 @@ public:
 
   Scalar sqrt_determinant(const Point& p) const {
     Scalar phi = p[1];
-    Scalar a = std::abs(R_ + r_ * std::cos(phi));
+    Scalar a = R_ + r_ * std::cos(phi);
     return a * r_;
   }
 

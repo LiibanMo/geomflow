@@ -73,6 +73,37 @@ L = -log rho_0(x(0)) + integral_0^te div_g f_theta(t, x(t)) dt.
 Mixing `q_coord` at the base with Riemannian divergence is invalid unless the
 base term is first converted to `rho_0` using the metric-volume factor.
 
+## Analytic Assumptions
+
+Mohamud's intrinsic first variation requires a vector field smooth enough for
+its divergence and the spatial differential of that divergence to exist.
+Built-in fields therefore require twice-differentiable activations. Known
+piecewise-linear activations are rejected; unrecognised custom activations
+produce a warning because their smoothness cannot be verified automatically.
+
+Existence and uniqueness over an integration interval require a vector field
+that is globally Lipschitz on the traversed manifold region, uniformly in
+time. A coordinate-Jacobian bound in one chart is not an intrinsic global
+Lipschitz bound. The metric must remain smooth and positive definite, and
+chart transitions must be smooth diffeomorphisms on their declared overlaps.
+
+`coordinate_jacobian_regularizer` is a chart-dependent engineering penalty,
+not a theorem assumption. `intrinsic_covariant_regularizer` instead computes
+
+```text
+||nabla f||_g^2 = g_ij g^kl (nabla_k f^i) (nabla_l f^j),
+```
+
+which is chart invariant for compatible field and metric representations.
+Weight decay is a parameter-space penalty without intrinsic geometric
+meaning. All regularizers remain separate from the mathematical NLL.
+
+Multichart models currently use independent chart heads and therefore only
+approximate one global field. Training penalises the metric norm of
+`f_beta - D psi_beta,alpha f_alpha` on valid overlaps.
+`ManifoldCNF.fit_diagnostics` reports the unweighted mean overlap residual per
+epoch; exact transition compatibility requires a zero residual.
+
 ## Tensor And Index Conventions
 
 The following layouts are normative:

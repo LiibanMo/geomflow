@@ -27,7 +27,11 @@ from .multichart_integrator import (
     cnf_nll_multichart,
     integrate_multichart,
 )
-from .vector_field import ManifoldVectorField, lipschitz_regularizer, weight_decay_loss
+from .vector_field import (
+    ManifoldVectorField,
+    coordinate_jacobian_regularizer,
+    weight_decay_loss,
+)
 
 
 class ManifoldCNF(nn.Module):
@@ -53,6 +57,7 @@ class ManifoldCNF(nn.Module):
         n_layers: int = 2,
         dt: float = 0.05,
         base_distribution: BaseDistribution | AtlasBaseDistribution | None = None,
+        activation: type[nn.Module] = nn.SiLU,
     ):
         super().__init__()
         self.manifold = manifold
@@ -61,7 +66,9 @@ class ManifoldCNF(nn.Module):
 
         if self.is_multichart:
             self.atlas: Atlas = manifold
-            self.vf = MultiChartVectorField(self.atlas, hidden_dim, n_layers)
+            self.vf = MultiChartVectorField(
+                self.atlas, hidden_dim, n_layers, activation=activation
+            )
             self.dim = self.atlas.charts[next(iter(self.atlas.charts))].dim
             self.base_distribution = base_distribution or AtlasBaseDistribution(
                 StandardNormalCoordinateBase(self.dim), self.atlas.reference_chart_id
@@ -73,13 +80,21 @@ class ManifoldCNF(nn.Module):
         else:
             self.metric: AnalyticMetric = manifold
             self.dim = self.metric.dim
-            self.vf = ManifoldVectorField(self.dim, hidden_dim, n_layers)
+            self.vf = ManifoldVectorField(
+                self.dim,
+                hidden_dim,
+                n_layers,
+                activation=activation,
+                periodic=getattr(self.metric, "coordinate_topology", None)
+                == "angles modulo 2*pi",
+            )
             self.base_distribution = base_distribution or getattr(
                 self.metric,
                 "default_base_distribution",
                 StandardNormalCoordinateBase(self.dim),
             )
             validate_base_distribution(self.base_distribution, self.dim)
+        self.fit_diagnostics: list[dict[str, float]] = []
 
     def log_prob(
         self,
@@ -209,7 +224,8 @@ class ManifoldCNF(nn.Module):
         lr : float
             Learning rate.
         lipschitz_weight : float
-            Lipschitz regularization weight.
+            Coordinate-Jacobian engineering regularization weight. This is not
+            an intrinsic Lipschitz bound or a theorem assumption.
         weight_decay_weight : float
             L2 weight decay regularization weight.
         overlap_weight : float
@@ -226,11 +242,13 @@ class ManifoldCNF(nn.Module):
         optimizer = torch.optim.Adam(self.vf.parameters(), lr=lr)
         N = x_data.shape[0]
         loss_history: list[float] = []
+        self.fit_diagnostics = []
 
         for epoch in range(epochs):
             perm = torch.randperm(N, device=x_data.device)
             epoch_loss = 0.0
             num_batches = 0
+            epoch_overlap = 0.0
 
             for i in range(0, N, batch_size):
                 batch_indices = perm[i : i + batch_size]
@@ -248,6 +266,7 @@ class ManifoldCNF(nn.Module):
                         base_distribution=self.base_distribution,
                     )
                     loss = nll
+                    overlap_penalty = nll.new_zeros(())
                     if overlap_weight > 0.0 and len(self.atlas.charts) > 1:
                         pair_losses = []
                         seen_pairs: set[frozenset[int]] = set()
@@ -274,15 +293,27 @@ class ManifoldCNF(nn.Module):
                                     )
                                 )
                         if pair_losses:
-                            loss = loss + overlap_weight * torch.stack(
-                                pair_losses
-                            ).mean()
+                            overlap_penalty = torch.stack(pair_losses).mean()
+                            loss = loss + overlap_weight * overlap_penalty
+                    if lipschitz_weight > 0.0:
+                        coordinate_penalties = [
+                            coordinate_jacobian_regularizer(
+                                self.vf.head(cid), x_batch, t=0.5
+                            )
+                            for cid in self.atlas.charts
+                        ]
+                        loss = loss + lipschitz_weight * torch.stack(
+                            coordinate_penalties
+                        ).mean()
+                    if weight_decay_weight > 0.0:
+                        loss = loss + weight_decay_weight * weight_decay_loss(self.vf)
+                    epoch_overlap += overlap_penalty.detach().item()
                 else:
                     log_p = self.log_prob(x_batch)
                     nll = -log_p.mean()
                     loss = nll
                     if lipschitz_weight > 0.0:
-                        loss = loss + lipschitz_weight * lipschitz_regularizer(
+                        loss = loss + lipschitz_weight * coordinate_jacobian_regularizer(
                             self.vf, x_batch, t=0.5
                         )
                     if weight_decay_weight > 0.0:
@@ -297,6 +328,12 @@ class ManifoldCNF(nn.Module):
 
             avg_loss = epoch_loss / max(num_batches, 1)
             loss_history.append(avg_loss)
+            self.fit_diagnostics.append(
+                {
+                    "loss": avg_loss,
+                    "overlap_residual": epoch_overlap / max(num_batches, 1),
+                }
+            )
 
             if verbose and (epoch % max(1, epochs // 5) == 0 or epoch == epochs - 1):
                 print(f"[Epoch {epoch:3d}/{epochs:3d}] Loss: {avg_loss:.4f}")

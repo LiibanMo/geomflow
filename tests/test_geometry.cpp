@@ -10,12 +10,38 @@
 #include <geomflow/manifold.h>
 #include <geomflow/metric.h>
 #include <geomflow/tangent.h>
+#include <manifolds/sphere.h>
+#include <manifolds/torus.h>
 
 using Traits3 = geomflow::ManifoldTraits<3>;
 using Tangent = geomflow::TangentVector<Traits3>;
 using Cotangent = geomflow::CotangentVector<Traits3>;
 using Metric = geomflow::EuclideanMetric<Traits3>;
 using Point = Traits3::Point;
+
+using Traits2 = geomflow::ManifoldTraits<2>;
+
+TEST_CASE("SphereMetric applies radius scaling", "[geometry][preset]") {
+  geomflow::SphereMetric<Traits2> metric(3.0);
+  Traits2::Point p{0.7, 1.2};
+  auto g = metric.matrix(p);
+  auto inverse = metric.inverse_matrix(p);
+  REQUIRE_THAT(g[0][0], Catch::Matchers::WithinRel(9.0, 1e-12));
+  REQUIRE_THAT(metric.determinant(p),
+               Catch::Matchers::WithinRel(81.0 * std::sin(0.7) * std::sin(0.7), 1e-12));
+  REQUIRE_THAT(metric.sqrt_determinant(p),
+               Catch::Matchers::WithinRel(9.0 * std::sin(0.7), 1e-12));
+  REQUIRE_THAT(inverse[0][0], Catch::Matchers::WithinRel(1.0 / 9.0, 1e-12));
+  REQUIRE_THROWS_AS(geomflow::SphereMetric<Traits2>(0.0), std::invalid_argument);
+}
+
+TEST_CASE("TorusMetric validates radii and has positive volume", "[geometry][preset]") {
+  geomflow::TorusMetric<Traits2> metric(2.0, 0.75);
+  Traits2::Point p{0.4, 3.14159265358979323846};
+  REQUIRE(metric.sqrt_determinant(p) > 0.0);
+  REQUIRE_THROWS_AS((geomflow::TorusMetric<Traits2>(1.0, 1.0)), std::invalid_argument);
+  REQUIRE_THROWS_AS((geomflow::TorusMetric<Traits2>(2.0, 0.0)), std::invalid_argument);
+}
 
 TEST_CASE("EuclideanMetric — inner_product is dot product", "[geometry]") {
   Metric metric;

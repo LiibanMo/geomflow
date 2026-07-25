@@ -10,6 +10,8 @@ Provides ready-to-use AnalyticMetric instances and Atlas multi-chart setups for:
 
 from __future__ import annotations
 
+import math
+
 import torch
 
 from .analytic_metric import AnalyticMetric
@@ -37,27 +39,32 @@ def EuclideanSpace(dim: int = 2) -> AnalyticMetric:
     return AnalyticMetric(dim, metric_fn, inverse_fn, sqrt_det_fn)
 
 
-def SphereStereographicMetric(dim: int = 2) -> AnalyticMetric:
+def SphereStereographicMetric(dim: int = 2, radius: float = 1.0) -> AnalyticMetric:
     """Stereographic coordinate metric on the sphere S^d.
 
     g_ij(x) = [4 / (1 + ||x||^2)^2] * delta_ij
     """
 
+    if dim < 1:
+        raise ValueError("sphere dimension must be positive")
+    if not math.isfinite(radius) or radius <= 0.0:
+        raise ValueError("sphere radius must be finite and positive")
+
     def metric_fn(x: torch.Tensor) -> torch.Tensor:
         r2 = (x * x).sum(dim=-1, keepdim=True)
-        lam = 4.0 / ((1.0 + r2) ** 2)
+        lam = 4.0 * radius**2 / ((1.0 + r2) ** 2)
         eye = torch.eye(dim, device=x.device, dtype=x.dtype)
         return lam.unsqueeze(-1) * eye
 
     def inverse_fn(x: torch.Tensor) -> torch.Tensor:
         r2 = (x * x).sum(dim=-1, keepdim=True)
-        lam_inv = ((1.0 + r2) ** 2) / 4.0
+        lam_inv = ((1.0 + r2) ** 2) / (4.0 * radius**2)
         eye = torch.eye(dim, device=x.device, dtype=x.dtype)
         return lam_inv.unsqueeze(-1) * eye
 
     def sqrt_det_fn(x: torch.Tensor) -> torch.Tensor:
         r2 = (x * x).sum(dim=-1)
-        return (2.0 / (1.0 + r2)) ** dim
+        return (2.0 * radius / (1.0 + r2)) ** dim
 
     return AnalyticMetric(dim, metric_fn, inverse_fn, sqrt_det_fn)
 
@@ -113,6 +120,9 @@ def Torus2D(R: float = 2.0, r: float = 1.0) -> AnalyticMetric:
     G = diag((R + r * cos(phi))^2, r^2)
     """
 
+    if not math.isfinite(R) or not math.isfinite(r) or not R > r > 0.0:
+        raise ValueError("torus radii must satisfy finite R > r > 0")
+
     def metric_fn(x: torch.Tensor) -> torch.Tensor:
         phi = x[..., 1]
         g11 = (R + r * torch.cos(phi)) ** 2
@@ -125,7 +135,7 @@ def Torus2D(R: float = 2.0, r: float = 1.0) -> AnalyticMetric:
 
     def inverse_fn(x: torch.Tensor) -> torch.Tensor:
         phi = x[..., 1]
-        inv_g11 = 1.0 / ((R + r * torch.cos(phi)) ** 2).clamp_min(1e-8)
+        inv_g11 = 1.0 / ((R + r * torch.cos(phi)) ** 2)
         inv_g22 = torch.full_like(phi, 1.0 / (r**2))
         zero = torch.zeros_like(phi)
 
@@ -137,7 +147,13 @@ def Torus2D(R: float = 2.0, r: float = 1.0) -> AnalyticMetric:
         phi = x[..., 1]
         return r * (R + r * torch.cos(phi))
 
-    metric = AnalyticMetric(2, metric_fn, inverse_fn, sqrt_det_fn)
+    def canonicalize_fn(x: torch.Tensor) -> torch.Tensor:
+        return torch.remainder(x + math.pi, 2.0 * math.pi) - math.pi
+
+    metric = AnalyticMetric(
+        2, metric_fn, inverse_fn, sqrt_det_fn, canonicalize_fn=canonicalize_fn
+    )
+    metric.coordinate_topology = "angles modulo 2*pi"
     metric.default_base_distribution = UniformAngleCoordinateBase(2)
     return metric
 
@@ -148,23 +164,31 @@ def PoincareDisk(dim: int = 2) -> AnalyticMetric:
     g_ij(x) = [4 / (1 - ||x||^2)^2] * delta_ij
     """
 
+    if dim < 1:
+        raise ValueError("Poincare disk dimension must be positive")
+
     def metric_fn(x: torch.Tensor) -> torch.Tensor:
-        r2 = (x * x).sum(dim=-1, keepdim=True).clamp(max=0.9999)
+        r2 = (x * x).sum(dim=-1, keepdim=True)
         lam = 4.0 / ((1.0 - r2) ** 2)
         eye = torch.eye(dim, device=x.device, dtype=x.dtype)
         return lam.unsqueeze(-1) * eye
 
     def inverse_fn(x: torch.Tensor) -> torch.Tensor:
-        r2 = (x * x).sum(dim=-1, keepdim=True).clamp(max=0.9999)
+        r2 = (x * x).sum(dim=-1, keepdim=True)
         lam_inv = ((1.0 - r2) ** 2) / 4.0
         eye = torch.eye(dim, device=x.device, dtype=x.dtype)
         return lam_inv.unsqueeze(-1) * eye
 
     def sqrt_det_fn(x: torch.Tensor) -> torch.Tensor:
-        r2 = (x * x).sum(dim=-1).clamp(max=0.9999)
+        r2 = (x * x).sum(dim=-1)
         return (2.0 / (1.0 - r2)) ** dim
 
-    metric = AnalyticMetric(dim, metric_fn, inverse_fn, sqrt_det_fn)
+    def domain_fn(x: torch.Tensor) -> torch.Tensor:
+        return x.square().sum(dim=-1) < 1.0
+
+    metric = AnalyticMetric(
+        dim, metric_fn, inverse_fn, sqrt_det_fn, domain_fn=domain_fn
+    )
     metric.default_base_distribution = PoincareDiskCoordinateBase(dim)
     return metric
 

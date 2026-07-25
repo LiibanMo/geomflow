@@ -10,7 +10,13 @@ from .base_distribution import (
     StandardNormalCoordinateBase,
     UniformAngleCoordinateBase,
 )
-from .vector_field import ManifoldVectorField, lipschitz_regularizer, weight_decay_loss
+from .vector_field import (
+    ManifoldVectorField,
+    coordinate_jacobian_regularizer,
+    intrinsic_covariant_regularizer,
+    lipschitz_regularizer,
+    weight_decay_loss,
+)
 from .operators import (
     christoffel,
     covariant_derivative_tensor,
@@ -64,6 +70,8 @@ __all__ = [
     "AtlasBaseDistribution",
     "ManifoldVectorField",
     "lipschitz_regularizer",
+    "coordinate_jacobian_regularizer",
+    "intrinsic_covariant_regularizer",
     "weight_decay_loss",
     "christoffel",
     "divergence",
