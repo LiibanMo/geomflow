@@ -253,6 +253,31 @@ by the PyTorch frontend.
 
 ---
 
+## CUDA Training Reliability
+
+`ManifoldCNF.fit` is a single-process convenience API. For distributed
+training, wrap the complete `ManifoldCNF` in
+`torch.nn.parallel.DistributedDataParallel`, call the wrapped model to compute
+log likelihoods, and own the optimizer loop. DDP scales independent batches;
+it does not divide one ODE trajectory between GPUs. Multi-chart jobs must use
+`find_unused_parameters=True` because different ranks may route through
+different chart heads.
+
+Pass explicit device-local `torch.Generator` objects to `fit` and `sample` for
+repeatable random permutations, overlap times, and base samples. A repeated
+seed on one device is expected to reproduce results within that supported
+PyTorch/CUDA environment; bitwise identity across devices, PyTorch releases,
+or CUDA releases is not promised. Supported paths run with
+`torch.use_deterministic_algorithms(True)` in the tested version matrix, but
+future user callbacks may introduce operations with stricter backend limits.
+
+CUDA out-of-memory errors are reported without automatic batch-size changes or
+CPU fallback. Standard `state_dict` checkpoints can be loaded across CPU and
+CUDA with `torch.load(..., map_location=...)`; pass an optimizer to `fit` when
+its state must also be checkpointed for resumable training.
+
+---
+
 ## Repository Structure
 
 ```

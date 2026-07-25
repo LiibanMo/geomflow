@@ -24,6 +24,7 @@ class BaseDistribution(Protocol):
         *,
         device: torch.device,
         dtype: torch.dtype,
+        generator: torch.Generator | None = None,
     ) -> torch.Tensor: ...
 
     def log_prob_volume(
@@ -69,9 +70,12 @@ class StandardNormalCoordinateBase(CoordinateBaseDistribution):
         *,
         device: torch.device,
         dtype: torch.dtype,
+        generator: torch.Generator | None = None,
     ) -> torch.Tensor:
         validate_supported_dtype(dtype, "base samples")
-        return torch.randn(*sample_shape, self.dim, device=device, dtype=dtype)
+        return torch.randn(
+            *sample_shape, self.dim, device=device, dtype=dtype, generator=generator
+        )
 
     def log_prob_coordinate(self, x: torch.Tensor) -> torch.Tensor:
         return -0.5 * (
@@ -91,10 +95,13 @@ class UniformAngleCoordinateBase(CoordinateBaseDistribution):
         *,
         device: torch.device,
         dtype: torch.dtype,
+        generator: torch.Generator | None = None,
     ) -> torch.Tensor:
         validate_supported_dtype(dtype, "base samples")
         shape = (*sample_shape, self.dim)
-        return (2.0 * math.pi) * torch.rand(shape, device=device, dtype=dtype) - math.pi
+        return (2.0 * math.pi) * torch.rand(
+            shape, device=device, dtype=dtype, generator=generator
+        ) - math.pi
 
     def log_prob_coordinate(self, x: torch.Tensor) -> torch.Tensor:
         return torch.full(
@@ -117,9 +124,12 @@ class PoincareDiskCoordinateBase(CoordinateBaseDistribution):
         *,
         device: torch.device,
         dtype: torch.dtype,
+        generator: torch.Generator | None = None,
     ) -> torch.Tensor:
         validate_supported_dtype(dtype, "base samples")
-        u = torch.randn(*sample_shape, self.dim, device=device, dtype=dtype)
+        u = torch.randn(
+            *sample_shape, self.dim, device=device, dtype=dtype, generator=generator
+        )
         return u / torch.sqrt(1.0 + u.square().sum(dim=-1, keepdim=True))
 
     def log_prob_coordinate(self, x: torch.Tensor) -> torch.Tensor:
@@ -151,8 +161,11 @@ class AtlasBaseDistribution:
         *,
         device: torch.device,
         dtype: torch.dtype,
+        generator: torch.Generator | None = None,
     ) -> torch.Tensor:
-        return self.coordinate_base.sample(sample_shape, device=device, dtype=dtype)
+        return self.coordinate_base.sample(
+            sample_shape, device=device, dtype=dtype, generator=generator
+        )
 
     def contains(self, x: torch.Tensor) -> torch.Tensor:
         return self.coordinate_base.contains(x)

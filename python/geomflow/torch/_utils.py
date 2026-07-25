@@ -82,6 +82,35 @@ def validate_tensor_module_compatibility(
         )
 
 
+def validate_points(
+    x: torch.Tensor, dim: int, op: str, *, nonempty: bool = False
+) -> None:
+    """Validate a coordinate tensor before entering geometry or solver code."""
+    if x.ndim < 2 or x.shape[-1] != dim:
+        raise ValueError(
+            f"{op}: expected points with shape (..., {dim}); got {tuple(x.shape)}"
+        )
+    if nonempty and x.shape[0] == 0:
+        raise ValueError(f"{op}: expected a non-empty dataset")
+
+
+def validate_generator_device(
+    generator: torch.Generator | None, device: torch.device, op: str
+) -> None:
+    """Reject random generators that cannot drive allocations on ``device``."""
+    if generator is None:
+        return
+    generator_device = torch.device(generator.device)
+    if generator_device.type != device.type or (
+        device.type == "cuda"
+        and generator_device.index not in (None, device.index)
+    ):
+        raise ValueError(
+            f"{op}: expected generator on device={device}; "
+            f"got device={generator_device}"
+        )
+
+
 def batched_jacobian(
     fn: callable, x: torch.Tensor
 ) -> torch.Tensor:

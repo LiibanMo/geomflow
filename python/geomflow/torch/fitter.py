@@ -12,7 +12,12 @@ import torch
 import torch.nn as nn
 
 from .analytic_metric import AnalyticMetric
-from ._utils import module_device_dtype, validate_tensor_module_compatibility
+from ._utils import (
+    module_device_dtype,
+    validate_generator_device,
+    validate_points,
+    validate_tensor_module_compatibility,
+)
 from .atlas import Atlas
 from .base_distribution import (
     AtlasBaseDistribution,
@@ -138,7 +143,12 @@ class ManifoldCNF(nn.Module):
             Log-likelihood values of shape ``(batch,)``.
         """
         validate_tensor_module_compatibility(x_data, self, "ManifoldCNF.log_prob")
+        validate_points(x_data, self.dim, "ManifoldCNF.log_prob")
         if self.is_multichart:
+            if start_chart not in self.atlas.charts:
+                raise ValueError(
+                    f"ManifoldCNF.log_prob: unknown start chart {start_chart}"
+                )
             return cnf_log_prob_multichart(
                 self.vf,
                 self.atlas,
@@ -147,20 +157,34 @@ class ManifoldCNF(nn.Module):
                 dt=self.dt,
                 base_distribution=self.base_distribution,
             )
-        else:
-            return cnf_log_prob(
-                self.vf,
-                self.metric,
-                x_data,
-                self.dt,
-                base_distribution=self.base_distribution,
-            )
+        return cnf_log_prob(
+            self.vf,
+            self.metric,
+            x_data,
+            self.dt,
+            base_distribution=self.base_distribution,
+        )
+
+    def forward(self, x_data: torch.Tensor, start_chart: int = 0) -> torch.Tensor:
+        """Return log likelihoods through the standard ``nn.Module`` boundary.
+
+        DistributedDataParallel users should call the wrapped module rather
+        than invoking :meth:`fit` on ``ddp.module``.
+        """
+        return self.log_prob(x_data, start_chart=start_chart)
+
+    def training_loss(
+        self, x_data: torch.Tensor, start_chart: int = 0
+    ) -> torch.Tensor:
+        """Return the unregularized mean NLL for external optimizer loops."""
+        return -self(x_data, start_chart=start_chart).mean()
 
     def sample(
         self,
         n_samples: int,
         start_chart: Optional[int] = None,
         device: Optional[torch.device | str] = None,
+        generator: torch.Generator | None = None,
     ) -> tuple[torch.Tensor, Optional[int]]:
         """Sample from the learned manifold CNF by integrating t = 0 -> 1.
 
@@ -187,14 +211,19 @@ class ManifoldCNF(nn.Module):
                 f"dtype={dtype}"
             )
         device = model_device
+        if n_samples < 1:
+            raise ValueError("ManifoldCNF.sample: n_samples must be positive")
+        validate_generator_device(generator, device, "ManifoldCNF.sample")
         x0 = self.base_distribution.sample(
-            (n_samples,), device=device, dtype=dtype
+            (n_samples,), device=device, dtype=dtype, generator=generator
         )
         if not self.base_distribution.contains(x0).all():
             raise RuntimeError("base sampler produced a point outside its declared support")
 
         if self.is_multichart:
             cid = start_chart if start_chart is not None else self.atlas.reference_chart_id
+            if cid not in self.atlas.charts:
+                raise ValueError(f"ManifoldCNF.sample: unknown start chart {cid}")
             if cid != self.atlas.reference_chart_id:
                 try:
                     x0 = self.atlas[self.atlas.reference_chart_id].transition_to(cid, x0)
@@ -238,6 +267,11 @@ class ManifoldCNF(nn.Module):
         start_chart: int = 0,
         verbose: bool = True,
         gradient_mode: str = "direct",
+        log_every: int | None = None,
+        max_grad_norm: float | None = 1.0,
+        error_if_nonfinite: bool = True,
+        generator: torch.Generator | None = None,
+        optimizer: torch.optim.Optimizer | None = None,
     ) -> list[float]:
         """Fit the manifold CNF to target data using Adam optimizer.
 
@@ -280,16 +314,26 @@ class ManifoldCNF(nn.Module):
                 "intrinsic_adjoint is not supported for multi-chart training"
             )
         validate_tensor_module_compatibility(x_data, self, "ManifoldCNF.fit")
-        optimizer = torch.optim.Adam(self.vf.parameters(), lr=lr)
+        validate_points(x_data, self.dim, "ManifoldCNF.fit", nonempty=True)
+        model_device, _ = module_device_dtype(self, "ManifoldCNF.fit")
+        validate_generator_device(generator, model_device, "ManifoldCNF.fit")
+        if self.is_multichart and start_chart not in self.atlas.charts:
+            raise ValueError(f"ManifoldCNF.fit: unknown start chart {start_chart}")
+        if epochs < 1 or batch_size < 1:
+            raise ValueError("ManifoldCNF.fit: epochs and batch_size must be positive")
+        if log_every is not None and log_every < 1:
+            raise ValueError("ManifoldCNF.fit: log_every must be positive or None")
+        optimizer = optimizer or torch.optim.Adam(self.vf.parameters(), lr=lr)
         N = x_data.shape[0]
-        loss_history: list[float] = []
+        epoch_losses: list[torch.Tensor] = []
+        epoch_overlaps: list[torch.Tensor] = []
         self.fit_diagnostics = []
 
         for epoch in range(epochs):
-            perm = torch.randperm(N, device=x_data.device)
-            epoch_loss = 0.0
+            perm = torch.randperm(N, device=x_data.device, generator=generator)
+            epoch_loss = x_data.new_zeros(())
             num_batches = 0
-            epoch_overlap = 0.0
+            epoch_overlap = x_data.new_zeros(())
 
             for i in range(0, N, batch_size):
                 batch_indices = perm[i : i + batch_size]
@@ -321,6 +365,7 @@ class ManifoldCNF(nn.Module):
                                     x_batch.shape[0],
                                     device=x_batch.device,
                                     dtype=x_batch.dtype,
+                                    generator=generator,
                                 )
                                 pair_losses.append(
                                     overlap_consistency_loss(
@@ -348,7 +393,7 @@ class ManifoldCNF(nn.Module):
                         ).mean()
                     if weight_decay_weight > 0.0:
                         loss = loss + weight_decay_weight * weight_decay_loss(self.vf)
-                    epoch_overlap += overlap_penalty.detach().item()
+                    epoch_overlap += overlap_penalty.detach()
                 else:
                     if gradient_mode == "intrinsic_adjoint":
                         nll = intrinsic_adjoint_nll(
@@ -369,23 +414,51 @@ class ManifoldCNF(nn.Module):
                     if weight_decay_weight > 0.0:
                         loss = loss + weight_decay_weight * weight_decay_loss(self.vf)
 
-                loss.backward()
-                nn.utils.clip_grad_norm_(self.vf.parameters(), 1.0)
-                optimizer.step()
+                try:
+                    loss.backward()
+                    if max_grad_norm is not None:
+                        nn.utils.clip_grad_norm_(
+                            self.vf.parameters(),
+                            max_grad_norm,
+                            error_if_nonfinite=error_if_nonfinite,
+                        )
+                    optimizer.step()
+                    for parameter, state in optimizer.state.items():
+                        for name, value in state.items():
+                            if (
+                                torch.is_tensor(value)
+                                and value.device != parameter.device
+                                and not (name == "step" and value.ndim == 0)
+                            ):
+                                raise RuntimeError(
+                                    "ManifoldCNF.fit: optimizer state device mismatch; "
+                                    f"parameter is on {parameter.device}, state is on {value.device}"
+                                )
+                except torch.cuda.OutOfMemoryError as error:
+                    raise torch.cuda.OutOfMemoryError(
+                        "ManifoldCNF.fit: CUDA out of memory; no batch-size "
+                        "change or CPU fallback was attempted"
+                    ) from error
 
-                epoch_loss += loss.item()
+                epoch_loss += loss.detach()
                 num_batches += 1
 
-            avg_loss = epoch_loss / max(num_batches, 1)
-            loss_history.append(avg_loss)
-            self.fit_diagnostics.append(
-                {
-                    "loss": avg_loss,
-                    "overlap_residual": epoch_overlap / max(num_batches, 1),
-                }
-            )
+            avg_loss_tensor = epoch_loss / num_batches
+            avg_overlap_tensor = epoch_overlap / num_batches
+            epoch_losses.append(avg_loss_tensor)
+            epoch_overlaps.append(avg_overlap_tensor)
 
-            if verbose and (epoch % max(1, epochs // 5) == 0 or epoch == epochs - 1):
+            effective_log_every = log_every or max(1, epochs // 5)
+            if verbose and (
+                epoch % effective_log_every == 0 or epoch == epochs - 1
+            ):
+                avg_loss = float(avg_loss_tensor.cpu())
                 print(f"[Epoch {epoch:3d}/{epochs:3d}] Loss: {avg_loss:.4f}")
 
+        loss_history = torch.stack(epoch_losses).cpu().tolist()
+        overlap_history = torch.stack(epoch_overlaps).cpu().tolist()
+        self.fit_diagnostics = [
+            {"loss": loss, "overlap_residual": overlap}
+            for loss, overlap in zip(loss_history, overlap_history)
+        ]
         return loss_history
