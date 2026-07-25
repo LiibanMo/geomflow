@@ -8,7 +8,7 @@ from typing import Callable, Optional
 import numpy as np
 import torch
 
-from ._utils import batched_jacobian
+from ._utils import batched_jacobian, validate_supported_floating_tensor
 from .analytic_metric import AnalyticMetric
 
 DomainPredicate = Callable[[torch.Tensor], torch.Tensor]
@@ -67,7 +67,8 @@ class Chart:
         if samples is not None:
             if samples.dim() != 2 or samples.shape[1] != dim or samples.shape[0] == 0:
                 raise ValueError("samples must have shape (N, dim) with N > 0")
-            if not samples.is_floating_point() or not torch.isfinite(samples).all():
+            validate_supported_floating_tensor(samples, "chart samples")
+            if not torch.isfinite(samples).all():
                 raise ValueError("samples must be finite floating-point coordinates")
         if k is not None and k <= 0:
             raise ValueError("k must be positive")
@@ -114,7 +115,8 @@ class Chart:
         """Replace persistent samples and recompute static coverage metadata."""
         if samples.dim() != 2 or samples.shape[1] != self.dim or samples.shape[0] == 0:
             raise ValueError("samples must have shape (N, dim) with N > 0")
-        if not samples.is_floating_point() or not torch.isfinite(samples).all():
+        validate_supported_floating_tensor(samples, "chart samples")
+        if not torch.isfinite(samples).all():
             raise ValueError("samples must be finite floating-point coordinates")
         self.samples = samples.detach()
         self.radius = self._coverage_radius(self.samples)
@@ -136,8 +138,7 @@ class Chart:
             raise RuntimeError("this chart has no sample-based coverage heuristic")
         if x.shape[-1] != self.dim:
             raise ValueError("coordinate dimension does not match chart")
-        if not x.is_floating_point():
-            raise ValueError("coordinates must be floating point")
+        validate_supported_floating_tensor(x, "chart coverage")
         if self.samples.device != x.device or self.samples.dtype != x.dtype:
             raise ValueError(
                 "chart coverage: expected samples on "
@@ -163,6 +164,7 @@ class Chart:
         """Return the exact or declared conservative chart-domain mask."""
         if x.shape[-1] != self.dim:
             raise ValueError("coordinate dimension does not match chart")
+        validate_supported_floating_tensor(x, "chart membership")
         predicate = self._domain
         mask = self.heuristically_covered(x) if predicate is None else predicate(x)
         return self._validate_mask("chart domain predicate", mask, x) & _all_finite(x)

@@ -9,16 +9,32 @@ import torch.nn as nn
 _SUPPORTED_FLOAT_DTYPES = (torch.float32, torch.float64)
 
 
+def validate_supported_dtype(dtype: torch.dtype, operation: str) -> None:
+    """Validate a requested dtype before allocating a production tensor."""
+    if dtype not in _SUPPORTED_FLOAT_DTYPES:
+        raise TypeError(
+            f"{operation}: unsupported dtype {dtype}; "
+            "expected torch.float32 or torch.float64"
+        )
+
+
+def validate_autocast_disabled(operation: str) -> None:
+    """Reject AMP until complete-trajectory likelihood and gradient gates pass."""
+    if torch.is_autocast_enabled("cuda") or torch.is_autocast_enabled("cpu"):
+        raise RuntimeError(
+            f"{operation}: automatic mixed precision is unsupported; "
+            "disable autocast and use torch.float32 or torch.float64"
+        )
+
+
 def validate_supported_floating_tensor(
     tensor: torch.Tensor, operation: str
 ) -> None:
     """Validate the production floating-point policy without moving data."""
-    if tensor.dtype not in _SUPPORTED_FLOAT_DTYPES:
-        supported = ", ".join(str(dtype) for dtype in _SUPPORTED_FLOAT_DTYPES)
-        raise TypeError(
-            f"{operation}: expected a tensor with dtype {supported}; "
-            f"got device={tensor.device}, dtype={tensor.dtype}"
-        )
+    try:
+        validate_supported_dtype(tensor.dtype, operation)
+    except TypeError as error:
+        raise TypeError(f"{error}; got device={tensor.device}") from None
 
 
 def module_device_dtype(

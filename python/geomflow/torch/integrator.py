@@ -6,7 +6,11 @@ from typing import Callable
 
 import torch
 
-from ._utils import validate_tensor_module_compatibility
+from ._utils import (
+    validate_autocast_disabled,
+    validate_supported_floating_tensor,
+    validate_tensor_module_compatibility,
+)
 from ._schedule import FixedStepSchedule, checkpoint_due, validate_checkpoint_interval
 from .analytic_metric import AnalyticMetric
 from .operators import divergence
@@ -127,8 +131,8 @@ def integrate_rk4(
     """
     if x0.dim() < 1:
         raise ValueError("x0 must have shape (..., dim); got 0-d tensor")
-    if not x0.is_floating_point():
-        raise TypeError("x0 must have a floating-point dtype")
+    validate_autocast_disabled("integrate_rk4")
+    validate_supported_floating_tensor(x0, "integrate_rk4")
     validate_tensor_module_compatibility(x0, vf, "integrate_rk4")
     schedule = FixedStepSchedule(t0, t1, dt)
     checkpoint_interval = validate_checkpoint_interval(checkpoint_interval)

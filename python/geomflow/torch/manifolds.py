@@ -66,7 +66,13 @@ def SphereStereographicMetric(dim: int = 2, radius: float = 1.0) -> AnalyticMetr
         r2 = (x * x).sum(dim=-1)
         return (2.0 * radius / (1.0 + r2)) ** dim
 
-    return AnalyticMetric(dim, metric_fn, inverse_fn, sqrt_det_fn)
+    def domain_fn(x: torch.Tensor) -> torch.Tensor:
+        limit = torch.finfo(x.dtype).max ** 0.25 / math.sqrt(dim)
+        return torch.isfinite(x).all(dim=-1) & (x.abs().amax(dim=-1) < limit)
+
+    return AnalyticMetric(
+        dim, metric_fn, inverse_fn, sqrt_det_fn, domain_fn=domain_fn
+    )
 
 
 def Sphere2DAtlas(n_samples: int = 500, seed: int = 42) -> Atlas:
@@ -91,7 +97,10 @@ def Sphere2DAtlas(n_samples: int = 500, seed: int = 42) -> Atlas:
         return torch.isfinite(x).all(dim=-1)
 
     def overlap_domain(x: torch.Tensor) -> torch.Tensor:
-        return chart_domain(x) & ((x * x).sum(dim=-1) > 0.0)
+        minimum = math.sqrt(torch.finfo(x.dtype).tiny)
+        maximum = torch.finfo(x.dtype).max ** 0.25 / math.sqrt(2.0)
+        scale = x.abs().amax(dim=-1)
+        return chart_domain(x) & (scale > minimum) & (scale < maximum)
 
     chart_a = Chart(
         0,

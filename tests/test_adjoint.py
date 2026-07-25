@@ -448,7 +448,7 @@ def test_custom_function_passes_input_gradcheck() -> None:
 @pytest.mark.parametrize("dtype", [torch.float32, torch.float64])
 @pytest.mark.parametrize("batch_size", [1, 3])
 def test_cuda_adjoint_matches_direct(dtype: torch.dtype, batch_size: int) -> None:
-    device = torch.device("cuda")
+    device = torch.device("cuda", torch.cuda.current_device())
     direct_data = torch.linspace(0.2, 0.8, batch_size, device=device, dtype=dtype)[
         :, None
     ].requires_grad_(True)

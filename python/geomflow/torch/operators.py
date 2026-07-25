@@ -42,7 +42,7 @@ def christoffel(
     Parameters
     ----------
     metric : AnalyticMetric
-        Metric object providing ``.inverse(x)``, ``.derivative(x)``.
+        Metric object providing ``.solve(x, rhs)``, ``.derivative(x)``.
     x : Tensor
         Point(s) in chart coordinates, shape ``(..., dim)`` with
         ``requires_grad=True``.
@@ -52,14 +52,14 @@ def christoffel(
     Gamma : Tensor
         Shape ``(..., dim, dim, dim)``.  ``Gamma[..., k, i, j] = Γ^k_ij``.
     """
-    g_inv = metric.inverse(x)  # (..., dim, dim)
     dg = metric.derivative(x)  # (..., dim, dim, dim)
     first_kind = (
         dg.permute(*range(dg.ndim - 3), -1, -3, -2)
         + dg.transpose(-2, -1)
         - dg
     )
-    return 0.5 * torch.einsum("...kl,...ijl->...kij", g_inv, first_kind)
+    rhs = first_kind.movedim(-1, -3).flatten(-2)
+    return 0.5 * metric.solve(x, rhs).unflatten(-1, (metric.dim, metric.dim))
 
 
 def divergence(
@@ -150,8 +150,7 @@ def gradient(
     if h.shape != x.shape[:-1]:
         raise ValueError(f"scalar_fn returned shape {h.shape}; expected {x.shape[:-1]}")
     dh = _coordinate_derivative(h, x)
-    g_inv = metric.inverse(x)  # (..., dim, dim)
-    return torch.einsum("...ij,...j->...i", g_inv, dh)
+    return metric.solve(x, dh)
 
 
 def covariant_derivative_tensor(

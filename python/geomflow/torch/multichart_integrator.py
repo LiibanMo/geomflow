@@ -7,6 +7,8 @@ import math
 
 import torch
 
+from ._utils import validate_autocast_disabled, validate_supported_floating_tensor
+
 from ._schedule import FixedStepSchedule, checkpoint_due, validate_checkpoint_interval
 from .atlas import Atlas
 from .base_distribution import AtlasBaseDistribution, StandardNormalCoordinateBase
@@ -122,8 +124,8 @@ def integrate_multichart(
             "integrate_multichart expects x0 of shape (batch, dim); "
             f"got shape {tuple(x0.shape)}"
         )
-    if not x0.is_floating_point():
-        raise TypeError("x0 must have a floating-point dtype")
+    validate_autocast_disabled("integrate_multichart")
+    validate_supported_floating_tensor(x0, "integrate_multichart")
     if start_chart not in atlas.charts:
         raise ValueError(f"unknown start chart {start_chart}")
     schedule = FixedStepSchedule(t0, t1, dt)

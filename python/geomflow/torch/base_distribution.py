@@ -7,6 +7,7 @@ from typing import Protocol, runtime_checkable
 
 import torch
 
+from ._utils import validate_supported_dtype, validate_supported_floating_tensor
 from .analytic_metric import AnalyticMetric
 from .atlas import Atlas
 
@@ -49,13 +50,14 @@ class CoordinateBaseDistribution:
         self._validate_points(x, metric)
         if not self.contains(x).all():
             raise ValueError("point lies outside the base distribution support")
-        return self.log_prob_coordinate(x) - torch.log(metric.sqrt_det(x))
+        return self.log_prob_coordinate(x) - 0.5 * metric.log_det(x)
 
     def _validate_points(self, x: torch.Tensor, metric: AnalyticMetric) -> None:
         if x.ndim < 1 or x.shape[-1] != self.dim:
             raise ValueError(f"expected points with shape (..., {self.dim})")
         if metric.dim != self.dim:
             raise ValueError("base distribution and metric dimensions differ")
+        validate_supported_floating_tensor(x, "base distribution log_prob")
 
 
 class StandardNormalCoordinateBase(CoordinateBaseDistribution):
@@ -68,8 +70,7 @@ class StandardNormalCoordinateBase(CoordinateBaseDistribution):
         device: torch.device,
         dtype: torch.dtype,
     ) -> torch.Tensor:
-        if not torch.empty((), dtype=dtype).is_floating_point():
-            raise TypeError("base samples require a floating-point dtype")
+        validate_supported_dtype(dtype, "base samples")
         return torch.randn(*sample_shape, self.dim, device=device, dtype=dtype)
 
     def log_prob_coordinate(self, x: torch.Tensor) -> torch.Tensor:
@@ -91,8 +92,7 @@ class UniformAngleCoordinateBase(CoordinateBaseDistribution):
         device: torch.device,
         dtype: torch.dtype,
     ) -> torch.Tensor:
-        if not torch.empty((), dtype=dtype).is_floating_point():
-            raise TypeError("base samples require a floating-point dtype")
+        validate_supported_dtype(dtype, "base samples")
         shape = (*sample_shape, self.dim)
         return (2.0 * math.pi) * torch.rand(shape, device=device, dtype=dtype) - math.pi
 
@@ -118,8 +118,7 @@ class PoincareDiskCoordinateBase(CoordinateBaseDistribution):
         device: torch.device,
         dtype: torch.dtype,
     ) -> torch.Tensor:
-        if not torch.empty((), dtype=dtype).is_floating_point():
-            raise TypeError("base samples require a floating-point dtype")
+        validate_supported_dtype(dtype, "base samples")
         u = torch.randn(*sample_shape, self.dim, device=device, dtype=dtype)
         return u / torch.sqrt(1.0 + u.square().sum(dim=-1, keepdim=True))
 

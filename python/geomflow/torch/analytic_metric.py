@@ -23,8 +23,9 @@ class AnalyticMetric:
         tensor ``G(x)`` in a single coordinate chart.  Must be a
         torch-differentiable expression.
     inverse_fn : callable, optional
-        If known, maps ``x`` → ``G(x)^{-1}``.  Otherwise computed with
-        ``torch.linalg.inv``.
+        If known, maps ``x`` → ``G(x)^{-1}``.  Otherwise computed by solving
+        against the identity. Downstream inverse actions should use
+        :meth:`solve` instead of materializing this matrix.
     sqrt_det_fn : callable, optional
         If known, maps ``x`` → ``sqrt(det G(x))``.  Otherwise computed.
     derivative_fn : callable, optional
@@ -122,13 +123,45 @@ class AnalyticMetric:
         """Return metric tensor ``G(x)`` of shape ``(..., dim, dim)``."""
         self.validate_points(x)
         G = self._metric_fn(x)
-        return self._validate_callback_output(
+        G = self._validate_callback_output(
             "metric_fn",
             G,
             x,
             x.shape[:-1] + (self.dim, self.dim),
             symmetric=True,
         )
+        if self.debug_validation:
+            _, info = torch.linalg.cholesky_ex(G)
+            failed = info != 0
+            if failed.any():
+                flat_index = failed.reshape(-1).nonzero()[0, 0].item()
+                point = x.reshape(-1, self.dim)[flat_index].detach().cpu().tolist()
+                raise ValueError(
+                    "metric_fn: metric must be symmetric positive-definite; "
+                    f"failed at batch index {flat_index}, point={point}"
+                )
+        return G
+
+    def solve(self, x: torch.Tensor, rhs: torch.Tensor) -> torch.Tensor:
+        """Return the solution of ``G(x) y = rhs`` using SPD factorization."""
+        G = self.metric(x)
+        vector_rhs = rhs.ndim == x.ndim
+        expected = x.shape if vector_rhs else x.shape[:-1] + (self.dim, rhs.shape[-1])
+        if rhs.shape != expected:
+            raise ValueError(
+                f"metric solve: expected rhs shape {tuple(expected)}; "
+                f"got {tuple(rhs.shape)}"
+            )
+        if rhs.device != x.device or rhs.dtype != x.dtype:
+            raise ValueError(
+                f"metric solve: expected device={x.device}, dtype={x.dtype}; "
+                f"got device={rhs.device}, dtype={rhs.dtype}"
+            )
+        factor = torch.linalg.cholesky(G)
+        solution = torch.cholesky_solve(
+            rhs.unsqueeze(-1) if vector_rhs else rhs, factor
+        )
+        return solution.squeeze(-1) if vector_rhs else solution
 
     def inverse(self, x: torch.Tensor) -> torch.Tensor:
         """Return inverse metric ``G(x)^{-1}``."""
@@ -141,7 +174,9 @@ class AnalyticMetric:
                 x.shape[:-1] + (self.dim, self.dim),
                 symmetric=True,
             )
-        return torch.linalg.inv(self.metric(x))
+        identity = torch.eye(self.dim, device=x.device, dtype=x.dtype)
+        identity = identity.expand(x.shape[:-1] + (self.dim, self.dim))
+        return self.solve(x, identity)
 
     def sqrt_det(self, x: torch.Tensor) -> torch.Tensor:
         """Return ``sqrt(det G(x))``."""
@@ -150,11 +185,20 @@ class AnalyticMetric:
             return self._validate_callback_output(
                 "sqrt_det_fn", self._sqrt_det_fn(x), x, x.shape[:-1]
             )
-        return torch.sqrt(torch.linalg.det(self.metric(x)))
+        return torch.exp(0.5 * self.log_det(x))
 
     def log_det(self, x: torch.Tensor) -> torch.Tensor:
         """Return ``log(det G(x))``."""
-        return torch.log(torch.linalg.det(self.metric(x)))
+        self.validate_points(x)
+        if self._sqrt_det_fn is not None:
+            sqrt_det = self._validate_callback_output(
+                "sqrt_det_fn", self._sqrt_det_fn(x), x, x.shape[:-1]
+            )
+            if self.debug_validation and (sqrt_det <= 0).any():
+                raise ValueError("sqrt_det_fn: result must be positive")
+            return 2.0 * torch.log(sqrt_det)
+        factor = torch.linalg.cholesky(self.metric(x))
+        return 2.0 * torch.log(factor.diagonal(dim1=-2, dim2=-1)).sum(-1)
 
     def derivative(self, x: torch.Tensor) -> torch.Tensor:
         """Return ``∂g_ij/∂x_k`` of shape ``(..., dim, dim, dim)``.
