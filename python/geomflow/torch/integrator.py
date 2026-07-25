@@ -121,6 +121,7 @@ def integrate_rk4(
     stage_callback: Callable[[float, torch.Tensor], None] | None = None,
     checkpoint_interval: int = 1,
     detach_trajectory: bool = False,
+    compile: bool = False,
 ) -> FlowResult:
     """Integrate ``x_dot=f`` and ``I_dot=div_g f`` with augmented RK4.
 
@@ -128,6 +129,7 @@ def integrate_rk4(
     step's sign. Trajectory entries are ``(time, state, divergence_integral)``.
     By default they retain autograd history. ``detach_trajectory=True`` stores
     replay-only checkpoints, and ``checkpoint_interval`` controls their spacing.
+    ``compile=True`` opts into the cached single-chart tensor execution path.
     """
     if x0.dim() < 1:
         raise ValueError("x0 must have shape (..., dim); got 0-d tensor")
@@ -136,6 +138,27 @@ def integrate_rk4(
     validate_tensor_module_compatibility(x0, vf, "integrate_rk4")
     schedule = FixedStepSchedule(t0, t1, dt)
     checkpoint_interval = validate_checkpoint_interval(checkpoint_interval)
+
+    if compile:
+        from .compilation import _integrate_rk4_compiled
+
+        compiled = _integrate_rk4_compiled(
+            vf,
+            metric,
+            x0,
+            schedule,
+            compute_divergence=compute_divergence,
+            unsupported_reason=(
+                "stage callbacks require eager execution"
+                if stage_callback is not None
+                else "trajectory capture requires eager execution"
+                if track_trajectory
+                else None
+            ),
+        )
+        if compiled is not None:
+            x, integral = compiled
+            return FlowResult(x, integral, [], checkpoint_interval, detach_trajectory)
 
     x = metric.canonicalize(x0.clone())
     integral = torch.zeros(x0.shape[:-1], device=x0.device, dtype=x0.dtype)

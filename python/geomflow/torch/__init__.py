@@ -24,6 +24,7 @@ from .operators import (
     gradient,
 )
 from .integrator import FlowResult, integrate_rk4
+from .compilation import clear_compilation_cache, compilation_cache_info
 from .adjoint import (
     CNFLossTerms,
     IntrinsicAdjointFunction,
@@ -79,6 +80,8 @@ __all__ = [
     "covariant_derivative_tensor",
     "integrate_rk4",
     "FlowResult",
+    "clear_compilation_cache",
+    "compilation_cache_info",
     "CNFLossTerms",
     "cnf_log_prob",
     "cnf_loss_terms",
