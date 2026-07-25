@@ -161,7 +161,8 @@ claim of an intrinsic global Lipschitz bound.
 ## Intrinsic Discrete Adjoint
 
 `intrinsic_adjoint_nll` provides a custom first-order backward pass for the
-same mean NLL:
+same mean NLL as direct `cnf_nll`: the measure-correct base NLL plus the
+signed Riemannian divergence integral.
 
 ```python
 loss = intrinsic_adjoint_nll(
@@ -187,7 +188,8 @@ Trainable vector-field tensors are explicit custom-autograd inputs in stable
 forward values during replay, and mathematically unused inputs receive zero
 gradients. Parameter VJPs contain both direct variation of `div_g f_theta`
 and state-mediated variation through `f_theta`, matching Mohamud's intrinsic
-first-variation system.
+first-variation system in Theorem 3.7, with the proof-consistent boundary and
+pairing conventions recorded in the mathematical contract.
 
 The adjoint supports first-order derivatives. Use direct `cnf_nll` when
 higher-order derivatives are required. The metric and base distribution must

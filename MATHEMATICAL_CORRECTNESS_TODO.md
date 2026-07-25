@@ -1,7 +1,8 @@
 # Mathematical Correctness Remediation Plan
 
-> Status: Phases 0-6 completed on July 25, 2026. Phase 6's exact discrete
-> intrinsic adjoint matches direct autograd and independent references.
+> Status: Phases 0-12 completed on July 25, 2026. The corrected CPU
+> implementation is the approved numerical reference for future GPU work;
+> GPU implementation remains separately authorization-gated.
 
 ## Attribution And Source Of Truth
 
@@ -765,59 +766,59 @@ mandatory exit gates in this document pass.
 
 ### 12.1 Mathematical Documentation
 
-- [ ] [MATH-1300] Add a concise notation table for points, tangent vectors, cotangent vectors, metrics, divergence, and density.
-- [ ] [MATH-1301] Document density relative to the Riemannian volume form.
-- [ ] [MATH-1302] Document conversion from chart-coordinate base densities.
-- [ ] [MATH-1303] Document forward and reverse sign conventions with one analytic example.
-- [ ] [MATH-1304] Document the difference between flow log Jacobian and log-density change.
-- [ ] [MATH-1305] Document valid domains and topology for every manifold preset.
-- [ ] [MATH-1306] Document direct-autograd and intrinsic-adjoint objectives identically.
-- [ ] [MATH-1307] Document finite-difference limitations in the C++ backend.
+- [x] [MATH-1300] Add a concise notation table for points, tangent vectors, cotangent vectors, metrics, divergence, and density.
+- [x] [MATH-1301] Document density relative to the Riemannian volume form.
+- [x] [MATH-1302] Document conversion from chart-coordinate base densities.
+- [x] [MATH-1303] Document forward and reverse sign conventions with one analytic example.
+- [x] [MATH-1304] Document the difference between flow log Jacobian and log-density change.
+- [x] [MATH-1305] Document valid domains and topology for every manifold preset.
+- [x] [MATH-1306] Document direct-autograd and intrinsic-adjoint objectives identically.
+- [x] [MATH-1307] Document finite-difference limitations in the C++ backend.
 
 ### 12.2 Mohamud Attribution
 
-- [ ] [MATH-1310] Attribute the intrinsic framework to Liiban Mohamud in README architecture sections.
-- [ ] [MATH-1311] Attribute Theorem 3.7 by name in adjoint API documentation.
-- [ ] [MATH-1312] Cite *The Derivation of the Dynamic Chart Manifold Neural ODE Solver* in developer documentation.
-- [ ] [MATH-1313] State that Lou et al. is the ambient-embedding baseline rather than the source of this implementation's intrinsic derivation.
-- [ ] [MATH-1314] Keep the local papers git-ignored.
-- [ ] [MATH-1315] Do not distribute the local PDFs without an explicit project decision.
+- [x] [MATH-1310] Attribute the intrinsic framework to Liiban Mohamud in README architecture sections.
+- [x] [MATH-1311] Attribute Theorem 3.7 by name in adjoint API documentation.
+- [x] [MATH-1312] Cite *The Derivation of the Dynamic Chart Manifold Neural ODE Solver* in developer documentation.
+- [x] [MATH-1313] State that Lou et al. is the ambient-embedding baseline rather than the source of this implementation's intrinsic derivation.
+- [x] [MATH-1314] Keep the local papers git-ignored.
+- [x] [MATH-1315] Do not distribute the local PDFs without an explicit project decision.
 
 ### 12.3 GPU Handoff
 
-- [ ] [MATH-1320] Update the GPU support matrix only after corrected CPU references pass.
-- [ ] [MATH-1321] Make Phase 1 baselines in `TODO.md` use corrected likelihood and gradient semantics.
-- [ ] [MATH-1322] Prevent GPU parity tests from treating old incorrect CPU behavior as expected.
-- [ ] [MATH-1323] Preserve analytic references as the ultimate oracle for CPU/GPU parity.
-- [ ] [MATH-1324] Rebaseline performance only after mathematical outputs stabilize.
+- [x] [MATH-1320] Update the GPU support matrix only after corrected CPU references pass.
+- [x] [MATH-1321] Make Phase 1 baselines in `TODO.md` use corrected likelihood and gradient semantics.
+- [x] [MATH-1322] Prevent GPU parity tests from treating old incorrect CPU behavior as expected.
+- [x] [MATH-1323] Preserve analytic references as the ultimate oracle for CPU/GPU parity.
+- [x] [MATH-1324] Rebaseline performance only after mathematical outputs stabilize.
 - [ ] [MATH-1325] Obtain explicit user authorization before beginning GPU implementation.
 
 ### Phase 12 Exit Gate
 
-- [ ] [MATH-1339] Approve the corrected CPU implementation, repaired tests, documentation, and attribution as the reference for GPU work.
+- [x] [MATH-1339] Approve the corrected CPU implementation, repaired tests, documentation, and attribution as the reference for GPU work.
 
 ## Final Definition Of Done
 
-- [ ] [MATH-1400] Density is consistently defined relative to the Riemannian volume form.
-- [ ] [MATH-1401] Base sampling and base log density represent the same normalized measure.
-- [ ] [MATH-1402] Forward and reverse divergence integrals have mathematically correct signs.
-- [ ] [MATH-1403] State and density integration achieve the approved convergence order.
-- [ ] [MATH-1404] Flow Jacobian, divergence integral, and density change are distinctly named and documented.
-- [ ] [MATH-1405] Direct-autograd losses preserve complete input and parameter dependence.
-- [ ] [MATH-1406] Public geometry operators return correct values and required higher derivatives.
-- [ ] [MATH-1407] Induced metrics retain coordinate dependence through all required derivative orders.
-- [ ] [MATH-1408] Python's intrinsic adjoint matches Mohamud's reviewed first-variation system.
-- [ ] [MATH-1409] Python's intrinsic adjoint returns correct gradients for every trainable parameter.
-- [ ] [MATH-1410] C++ adjoint dynamics and parameter variations match the same reviewed mathematical contract.
-- [ ] [MATH-1411] Non-Euclidean cotangent evolution is coordinate invariant.
-- [ ] [MATH-1412] Dynamic chart transitions occur only in valid overlaps and preserve geometric quantities.
-- [ ] [MATH-1413] Multi-chart vector fields satisfy or explicitly quantify transition compatibility.
-- [ ] [MATH-1414] Poincare, torus, sphere, and induced-metric presets satisfy their domain and topology contracts.
-- [ ] [MATH-1415] Analytic, normalization, finite-difference, convergence, and chart-invariance tests pass.
-- [ ] [MATH-1416] Python and C++ conventions agree wherever APIs overlap.
-- [ ] [MATH-1417] Documentation clearly attributes the intrinsic framework and Theorem 3.7 to Liiban Mohamud.
-- [ ] [MATH-1418] No ambient-space embedding has been introduced.
-- [ ] [MATH-1419] The corrected CPU implementation is approved as the GPU numerical reference.
+- [x] [MATH-1400] Density is consistently defined relative to the Riemannian volume form.
+- [x] [MATH-1401] Base sampling and base log density represent the same normalized measure.
+- [x] [MATH-1402] Forward and reverse divergence integrals have mathematically correct signs.
+- [x] [MATH-1403] State and density integration achieve the approved convergence order.
+- [x] [MATH-1404] Flow Jacobian, divergence integral, and density change are distinctly named and documented.
+- [x] [MATH-1405] Direct-autograd losses preserve complete input and parameter dependence.
+- [x] [MATH-1406] Public geometry operators return correct values and required higher derivatives.
+- [x] [MATH-1407] Induced metrics retain coordinate dependence through all required derivative orders.
+- [x] [MATH-1408] Python's intrinsic adjoint matches Mohamud's reviewed first-variation system.
+- [x] [MATH-1409] Python's intrinsic adjoint returns correct gradients for every trainable parameter.
+- [x] [MATH-1410] C++ adjoint dynamics and parameter variations match the same reviewed mathematical contract.
+- [x] [MATH-1411] Non-Euclidean cotangent evolution is coordinate invariant.
+- [x] [MATH-1412] Dynamic chart transitions occur only in valid overlaps and preserve geometric quantities.
+- [x] [MATH-1413] Multi-chart vector fields satisfy or explicitly quantify transition compatibility.
+- [x] [MATH-1414] Poincare, torus, sphere, and induced-metric presets satisfy their domain and topology contracts.
+- [x] [MATH-1415] Analytic, normalization, finite-difference, convergence, and chart-invariance tests pass.
+- [x] [MATH-1416] Python and C++ conventions agree wherever APIs overlap.
+- [x] [MATH-1417] Documentation clearly attributes the intrinsic framework and Theorem 3.7 to Liiban Mohamud.
+- [x] [MATH-1418] No ambient-space embedding has been introduced.
+- [x] [MATH-1419] The corrected CPU implementation is approved as the GPU numerical reference.
 
 ## Authorization Gate
 

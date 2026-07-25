@@ -8,6 +8,19 @@ purely intrinsic formulation developed by Liiban Mohamud and requires no
 ambient-space embedding to evaluate density, integrate flows, or compute the
 supported Python adjoint gradients.
 
+## Architecture And Attribution
+
+Liiban Mohamud's *The Derivation of the Dynamic Chart Manifold Neural ODE
+Solver* is the mathematical source for geomflow's Riemannian volume-form
+density evolution, dynamic-chart formulation, and intrinsic first variation.
+The adjoint API follows Mohamud's Theorem 3.7 under the proof-consistent sign
+and boundary conventions in the [Mathematical Contract](docs/mathematical_contract.md).
+
+Lou et al., *Neural Manifold ODEs*, is the ambient-space-embedding baseline
+that Mohamud's construction improves upon; it is not the source of geomflow's
+intrinsic derivation. Geomflow does not invoke Whitney embedding in its flow,
+density, differential, or adjoint computations.
+
 ---
 
 ## Key Features
@@ -232,6 +245,10 @@ by the PyTorch frontend.
   signs, tensor layouts, intrinsic first variation, and solver orientation.
 - [Base Distribution Semantics](docs/base_distributions.md): normalized laws,
   coordinate-to-volume conversion, supports, and atlas reference charts.
+- [Built-In Manifold Presets](docs/manifold_presets.md): valid domains,
+  topology, singularities, volume measures, and base laws.
+- [GPU Handoff](docs/gpu_handoff.md): corrected CPU reference status and the
+  authorization boundary for future accelerator work.
 - [Release Notes](docs/release_notes.md): public semantic and API changes.
 
 ---

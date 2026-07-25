@@ -257,6 +257,10 @@ The supported Python API `intrinsic_adjoint_nll` implements the exact discrete
 adjoint of the intrinsic augmented RK4 computation. This makes
 custom backward the derivative of custom forward instead of combining a
 discrete forward solve with a different continuous-adjoint approximation.
+It computes exactly the same mean NLL as direct `cnf_nll`: the
+measure-correct base term plus the signed Riemannian divergence integral.
+The APIs differ only in how the first-order derivative of that discrete
+objective is evaluated.
 
 | Mathematical term or condition | Named implementation operation |
 | --- | --- |
@@ -330,6 +334,10 @@ coordinate. Nested differences in `partial_theta div_g f` and
 an accuracy-limited numerical path. The PyTorch autograd implementation is the
 preferred reference when tighter derivatives or higher-order gradients are
 required.
+C++ finite differences are not exact autograd equivalents: perturbation scales
+must suit the coordinate and parameter magnitudes, accuracy can degrade near
+chart boundaries, and sensitive gradients require refinement or an
+independent analytic check.
 
 ## Solver Orientation
 

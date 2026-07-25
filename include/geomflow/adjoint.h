@@ -19,7 +19,8 @@ template <Manifold Traits> struct AdjointState {
   Scalar density_adjoint = Scalar(1);
 };
 
-// Continuous intrinsic adjoint for Phi(x(t1)) + a_I integral div_g(f) dt.
+// Liiban Mohamud's Theorem 3.7 intrinsic adjoint for
+// Phi(x(t1)) + a_I integral div_g(f) dt, using the proof-consistent sign.
 // In coordinates, the connection terms in D_t lambda and nabla f cancel:
 // dot(lambda_j) = -lambda_i partial_j f^i - a_I partial_j div_g(f).
 template <Manifold Traits, typename Metric, typename VectorField> class AdjointSolver {
