@@ -2,25 +2,34 @@
 
 **General Manifold-Constraint Continuous Normalizing Flows using Intrinsic Riemannian Geometry**
 
-`geomflow` is a high-performance, header-only C++20 library and PyTorch framework for Continuous Normalizing Flows (CNFs) on Riemannian manifolds. Built directly on the purely intrinsic manifold formulation I formulated, `geomflow` requires **no ambient space embedding** (such as Whitney's embedding theorem) to evaluate density, integrate flows, or compute adjoint gradients.
+`geomflow` is a header-only C++20 library and PyTorch framework for
+Continuous Normalizing Flows (CNFs) on Riemannian manifolds. It implements the
+purely intrinsic formulation developed by Liiban Mohamud and requires no
+ambient-space embedding to evaluate density, integrate flows, or compute the
+supported Python adjoint gradients.
 
 ---
 
 ## Key Features
 
 - **Purely Intrinsic Geometry**: All operations—metric tensor $g_{ij}$, Levi-Civita connection $\Gamma_{ij}^k$, divergence $\text{div}_g$, and adjoint gradients—are computed directly on intrinsic coordinate charts.
-- **The Intrinsic Adjoint ODE (Theorem 3.7)**: Memory-efficient backward adjoint ODE solver derived entirely from intrinsic manifold quantities:
+- **Intrinsic Discrete Adjoint**: Exact first-order reverse derivative of the
+  intrinsic augmented RK4 computation, based on Mohamud's Theorem 3.7:
 
 $$\dot{\lambda}(t) + \langle \lambda(t), \nabla f_\theta \rangle = \nabla (\text{div}_g f_\theta)$$
 
 - **High-Level PyTorch Fitter (`geomflow.torch.ManifoldCNF`)**: Intuitive, scikit-learn-style API with `.fit(data)`, `.log_prob(x)`, and `.sample(n)`.
-- **Multi-Chart Atlas Support**: Seamless dynamic chart-switching during flow integration across coordinate patches with overlap consistency loss.
-- **Built-in Manifold Presets**:
-  - **Sphere $S^d$**: Stereographic multi-chart atlas & single-chart metrics.
-  - **Torus $T^2$**: Flat periodic angle coordinate metrics.
-  - **Hyperbolic Space $\mathbb{H}^d$**: Poincaré disk model metric.
+- **Multi-Chart Atlas Support**: Whole-batch chart switching, scalar
+  Riemannian-density transport, and overlap consistency losses.
+- **Built-in Coordinate Geometries**:
+  - **Sphere $S^d$**: Stereographic chart metrics and a two-chart atlas.
+  - **Torus $T^2$**: Ring-torus coordinate metric and canonical-angle base law.
+  - **Hyperbolic Space $\mathbb{H}^d$**: Poincare-disk coordinate metric and
+    disk-supported base law.
   - **Euclidean Space $\mathbb{R}^d$**: Standard flat space.
-  - **Induced Submanifold Metrics**: Automatic pullback metrics $G(x) = J_\phi(x)^T J_\phi(x)$ for arbitrary immersions $\phi: U \subset \mathbb{R}^d \to \mathbb{R}^N$.
+  - **Induced Metrics**: Optional construction of a coordinate metric
+    $G(x) = J_\phi(x)^T J_\phi(x)$ from an immersion. The resulting flow and
+    density computations use only that intrinsic metric.
 - **C++20 Header-Only Core**: Zero-dependency C++ template headers for embedding into native C++ graphics, physics, or simulation pipelines.
 
 ---
@@ -35,7 +44,8 @@ cd geomflow
 pip install -e .
 ```
 
-Requirements: `torch >= 2.0`, `numpy`, `scipy`.
+Requirements: Python 3.12 or newer, `torch >= 2.0`, `numpy >= 1.24`,
+`scipy >= 1.10`, `matplotlib >= 3.7`, and `imageio >= 2.31`.
 
 ### C++20 Header-Only Library
 
@@ -77,7 +87,7 @@ data = torch.randn(256, 2) * 0.2 + torch.tensor([1.0, 1.0])
 # 4. Fit density with Adam optimizer & overlap consistency
 loss_history = cnf.fit(data, epochs=50, batch_size=32, lr=0.01)
 
-# 5. Evaluate exact Riemannian log-likelihood log p(x)
+# 5. Evaluate the numerical Riemannian log-likelihood log p(x)
 log_p = cnf.log_prob(data[:5])
 print("Sample Log Probabilities:", log_p)
 
@@ -140,24 +150,32 @@ div_val = divergence(vf, x, metric)  # (4,)
 
 ---
 
-### 4. The Intrinsic Adjoint ODE (Theorem 3.7)
+### 4. The Intrinsic Discrete Adjoint
 
-For memory-efficient backpropagation without saving intermediate ODE trajectory states:
+The supported Python discrete adjoint does not retain forward trajectory states
+between the forward and backward calls. It replays the exact intrinsic
+augmented RK4 computation during backward and returns gradients for every
+trainable vector-field parameter:
 
 ```python
 import torch
-from geomflow import EuclideanSpace, ManifoldVectorField, IntrinsicAdjointFunction
+from geomflow import EuclideanSpace, ManifoldVectorField, intrinsic_adjoint_nll
 
 metric = EuclideanSpace(dim=2)
 vf = ManifoldVectorField(dim=2, hidden_dim=32)
 data = torch.randn(16, 2, requires_grad=True)
 
-# Compute loss and gradients using Theorem 3.7 intrinsic adjoint ODE
-loss = IntrinsicAdjointFunction.apply(data, vf, metric, 0.05, 0.0, 1.0)
+# Compute loss and first-order gradients using Mohamud's Theorem 3.7.
+loss = intrinsic_adjoint_nll(vf, metric, data, dt=0.05, t0=0.0, t1=1.0)
 loss.backward()
 
 print("Gradients w.r.t. input data:", data.grad.shape)
+print("First parameter gradient:", next(vf.parameters()).grad.shape)
 ```
+
+The Python intrinsic adjoint supports first-order derivatives only and requires
+fixed, non-trainable metric and base-distribution configuration. Use `cnf_nll`
+for higher-order gradients.
 
 ---
 
@@ -195,17 +213,26 @@ int main() {
               << result.x_final[2] << "]\n";
     std::cout << "Divergence integral: " << result.divergence_integral << "\n";
 
-    // Adjoint solver for parameter gradients (Theorem 3.7)
-    geomflow::CotangentVector<Traits> initial_adj({result.x_final[0], result.x_final[1], result.x_final[2]});
-    geomflow::AdjointSolver<Traits, Metric, decltype(field)> adjoint(metric, field);
-    auto grad = adjoint.compute_gradient({0.0, 0.0, 0.0}, 0.0, 1.0, 0.01, initial_adj);
-
-    std::cout << "Gradient dL/d_theta: [" 
-              << grad[0] << ", " << grad[1] << ", " << grad[2] << "]\n";
-
     return 0;
 }
 ```
+
+The C++ example documents the supported augmented flow result. The supported
+complete-gradient and intrinsic discrete-adjoint APIs are currently provided
+by the PyTorch frontend.
+
+---
+
+## Documentation
+
+- [PyTorch API](docs/python_api.md): geometry operators, augmented RK4,
+  likelihoods, direct autograd, intrinsic adjoint, multichart behavior, and
+  the high-level model.
+- [Mathematical Contract](docs/mathematical_contract.md): density measure,
+  signs, tensor layouts, intrinsic first variation, and solver orientation.
+- [Base Distribution Semantics](docs/base_distributions.md): normalized laws,
+  coordinate-to-volume conversion, supports, and atlas reference charts.
+- [Release Notes](docs/release_notes.md): public semantic and API changes.
 
 ---
 
@@ -215,7 +242,7 @@ int main() {
 geomflow/
 ├── include/
 │   └── geomflow/          — C++20 header-only core
-│       ├── adjoint.h      — Intrinsic adjoint ODE solver (Theorem 3.7)
+│       ├── adjoint.h      — Low-level C++ adjoint solver
 │       ├── connection.h   — Levi-Civita connection & Christoffel symbols
 │       ├── covariant.h    — Covariant derivative tensor
 │       ├── divergence.h   — Intrinsic divergence operator

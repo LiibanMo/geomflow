@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+from typing import Callable
 
 import torch
 
@@ -52,6 +53,7 @@ def integrate_rk4(
     dt: float,
     track_trajectory: bool = False,
     compute_divergence: bool = True,
+    stage_callback: Callable[[float, torch.Tensor], None] | None = None,
 ) -> FlowResult:
     """Integrate ``x_dot=f`` and ``I_dot=div_g f`` with augmented RK4.
 
@@ -85,6 +87,8 @@ def integrate_rk4(
     def augmented_rhs(
         time: float, state: torch.Tensor
     ) -> tuple[torch.Tensor, torch.Tensor]:
+        if stage_callback is not None:
+            stage_callback(time, state)
         time_tensor = torch.full(
             state.shape[:-1], time, device=state.device, dtype=state.dtype
         )

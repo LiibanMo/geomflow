@@ -1,9 +1,9 @@
 # Mathematical Contract
 
-## Status And Authority
+## Authority
 
-This is the Phase 0 equation ledger for the intrinsic manifold CNF developed
-by Liiban Mohamud in *The Derivation of the Dynamic Chart Manifold Neural ODE
+This mathematical contract describes the intrinsic manifold CNF developed by
+Liiban Mohamud in *The Derivation of the Dynamic Chart Manifold Neural ODE
 Solver* (June 2026). Definition 3.1, Proposition 3.2, Section 3.2.1, Theorem
 3.7, and its proof are the primary sources.
 
@@ -12,9 +12,8 @@ ambient-embedding baseline discussed by Mohamud. No Whitney embedding or
 other ambient-space construction is part of this contract.
 
 The theorem display and proof in the June 2026 paper disagree on two material
-points. This ledger records the disagreement and adopts the convention that
-follows from the displayed NLL by direct first variation. Phase 1 tests must
-independently validate it before production implementation changes.
+points. This contract records the disagreement and adopts the convention that
+follows from the displayed NLL by direct first variation.
 
 ## Volume And Density
 
@@ -60,12 +59,10 @@ flow_log_abs_det_jacobian   = divergence_integral
 log_density_change          = -divergence_integral.
 ```
 
-These names are not interchangeable. Both backends now expose
+These names are not interchangeable. Both backends expose
 `divergence_integral`, `flow_log_abs_det_jacobian`, and
-`log_density_change`. Python's former `FlowResult.log_det` remains only as a
-migration alias for `divergence_integral`; new code must use the explicit
-name. C++ callers must replace the incorrectly named `log_det_jacobian` field
-with one of the three explicit fields according to the quantity they need.
+`log_density_change`. Python's `FlowResult.log_det` is a deprecated alias for
+`divergence_integral`; new code should use the explicit name.
 
 For fixed data endpoint `x(te)` and base time `0`, Mohamud's NLL is
 
@@ -92,11 +89,9 @@ The following layouts are normative:
 | Field Jacobian | `J[..., i, j] = partial_j f^i` |
 | Covariant field derivative | `nabla_f[..., i, j] = nabla_j f^i` |
 
-The C++ layout `Gamma[k][i][j] = Gamma^k_ij` agrees with the Python public
-layout. The current C++ `nabla_f[i][j]` and cotangent contraction also agree
-with the table. The current Python `covariant_derivative_tensor` documents
-this layout but its Christoffel contraction does not implement it; that is the
-registered MATH-041 defect.
+The C++ layout `Gamma[k][i][j] = Gamma^k_ij` and Python public layout agree
+with the table. Both backends use the same `nabla_f[i][j]` convention and
+cotangent contraction.
 
 The required formulas are
 
@@ -186,7 +181,7 @@ lambda(0) = -d log rho_0(x(0)).
 
 Thus the theorem display and proof are incompatible under one definition of
 `lambda`. A first-order adjoint cannot generally satisfy both `lambda(0)` and
-`lambda(te) = 0`. This ledger selects the proof's initial boundary and negative
+`lambda(te) = 0`. This contract selects the proof's initial boundary and negative
 pairing because they follow algebraically from the stated NLL, fixed data
 endpoint, and augmented functional. This is an initial-value adjoint along a
 trajectory obtained from the fixed endpoint; it is not a two-point boundary
@@ -213,7 +208,7 @@ L(a) = 0.5 x(0)^2 + a T + constant
 dL/da = T (1 - x(0)^2).
 ```
 
-The ledger equations give `lambda(0) = x(0)`,
+The contract equations give `lambda(0) = x(0)`,
 `dot(lambda) + a lambda = 0`, and therefore
 
 ```text
@@ -223,7 +218,46 @@ integral_0^T [partial_a(div f_a) - lambda partial_a f_a] dt
 ```
 
 The theorem display's positive pairing gives the wrong sign for the state
-contribution. This analytic example is the Phase 0 boundary/sign oracle.
+contribution. This analytic example fixes the boundary and pairing signs.
+
+### Python Discrete-Adjoint Mapping
+
+The supported Python API `intrinsic_adjoint_nll` implements the exact discrete
+adjoint of the intrinsic augmented RK4 computation. This makes
+custom backward the derivative of custom forward instead of combining a
+discrete forward solve with a different continuous-adjoint approximation.
+
+| Mathematical term or condition | Named implementation operation |
+| --- | --- |
+| `x_dot = f_theta(t, x)` | `integrate_rk4` state stages |
+| `I_dot = div_g f_theta(t, x)` | `integrate_rk4` divergence stages |
+| `lambda(0) = -d log rho_0(x(0))` | VJP of `base.log_prob_volume` at the replayed base endpoint |
+| `dot(lambda_j) + lambda_i partial_j f^i = partial_j div_g f` | reverse-mode VJPs through each accepted RK stage |
+| direct `delta_theta div_g f_theta` | parameter VJP through each stage divergence |
+| `-<lambda, delta_theta f_theta>` | parameter VJP through each stage state update, with the proof's constraint sign |
+| fixed `x(te)` | `x_data` is the fixed likelihood-replay input at `t1` |
+| `delta_te L` | not exposed; terminal-time differentiation remains separate from density adjoints |
+
+`_functional_field` reconstructs the field from explicit trainable tensor
+inputs in stable `named_parameters()` order while retaining tied parameters
+and module buffers. `IntrinsicAdjointFunction.backward` replays the same signed
+step schedule, including exact remainder lengths, then differentiates the
+complete intrinsic scalar objective. This reverse sweep materializes the input
+cotangent and every parameter VJP; an unused trainable parameter receives an
+explicit zero tensor.
+
+Cotangents obey the chart pullback law exactly for affine coordinate changes,
+under which classical RK4 is equivariant. For nonlinear coordinate changes,
+coordinate RK4 trajectories and their discrete cotangents agree only up to
+the solver's truncation error; refinement tests require fourth-order
+convergence to the intrinsic chart-independent quantity.
+
+The adjoint uses full deterministic replay: custom forward stores no trajectory
+states, while backward reconstructs every accepted RK stage under fixed
+parameters and solver settings. Stochastic or state-mutating field evaluation
+is outside this contract. This API rejects parameterized metrics and base
+distributions. Higher-order gradients through custom backward are unsupported;
+direct `cnf_nll` remains the reference path when they are required.
 
 ## Solver Orientation
 
@@ -254,10 +288,10 @@ state flow. Parameter integrals retain the orientation written in their
 derivation; changing integration direction changes the signed step rather than
 the mathematical integrand.
 
-## Review Gate
+## Validation Identities
 
-No implementation convention that depends on the disputed Theorem 3.7 signs
-or boundary may change until this ledger is reviewed. Phase 1 must establish
-independent analytic, finite-difference, normalization, coordinate-invariance,
-and convergence oracles before the current implementation is used as a
-reference.
+The formulas above admit independent checks through analytic linear flows,
+finite differences, density normalization, coordinate-invariance identities,
+and RK4 convergence. These checks distinguish mathematical identities from
+discretization error and do not use one implementation path as the sole
+reference for another.

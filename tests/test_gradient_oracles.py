@@ -11,9 +11,9 @@ from torch import nn
 from geomflow.torch import (
     AnalyticMetric,
     EuclideanSpace,
-    IntrinsicAdjointFunction,
     cnf_nll,
     integrate_rk4,
+    intrinsic_adjoint_nll,
 )
 
 from analytic_references import central_difference, observed_order
@@ -165,10 +165,6 @@ def test_direct_state_gradient_has_fourth_order_convergence() -> None:
     assert min(orders) > 3.7, f"direct state-gradient order: errors={errors}, orders={orders}"
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="Phase 6 will replace the experimental adjoint and validate convergence",
-)
 def test_intrinsic_adjoint_input_gradient_convergence_is_measured_separately() -> None:
     """MATH-274: estimate adjoint input-gradient order independently of direct autograd."""
     data_value, coefficient = 0.9, 0.7
@@ -177,8 +173,8 @@ def test_intrinsic_adjoint_input_gradient_convergence_is_measured_separately() -
     for step in (0.2, 0.1, 0.05):
         data = torch.tensor([[data_value]], dtype=DTYPE, requires_grad=True)
         field = ScalarLinearField(coefficient)
-        loss = IntrinsicAdjointFunction.apply(
-            data, field, EuclideanSpace(1), step, 0.0, 1.0
+        loss = intrinsic_adjoint_nll(
+            field, EuclideanSpace(1), data, step, 0.0, 1.0
         )
         (actual,) = torch.autograd.grad(loss, (data,))
         errors.append(abs(actual.item() - exact))

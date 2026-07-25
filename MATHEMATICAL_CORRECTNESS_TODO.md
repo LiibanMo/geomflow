@@ -1,7 +1,7 @@
 # Mathematical Correctness Remediation Plan
 
-> Status: Phases 0-5 completed on July 24, 2026. Phase 5's direct-autograd
-> loss and complete-gradient exit gate passes against independent references.
+> Status: Phases 0-6 completed on July 25, 2026. Phase 6's exact discrete
+> intrinsic adjoint matches direct autograd and independent references.
 
 ## Attribution And Source Of Truth
 
@@ -95,11 +95,11 @@ mandatory exit gates in this document pass.
 
 ### Intrinsic Adjoint
 
-- [ ] [MATH-050] Make the Python intrinsic adjoint return gradients for every trainable vector-field parameter.
-- [ ] [MATH-051] Make the Python custom backward the derivative of its exact custom forward computation.
-- [ ] [MATH-052] Evaluate adjoint RK stages at trajectory states consistent with their stage times.
+- [x] [MATH-050] Make the Python intrinsic adjoint return gradients for every trainable vector-field parameter.
+- [x] [MATH-051] Make the Python custom backward the derivative of its exact custom forward computation.
+- [x] [MATH-052] Evaluate adjoint RK stages at trajectory states consistent with their stage times.
 - [ ] [MATH-053] Correct C++ log-density adjoint state semantics.
-- [ ] [MATH-054] Include the direct parameter variation of divergence required by Mohamud's Theorem 3.7.
+- [x] [MATH-054] Include the direct parameter variation of divergence required by Mohamud's Theorem 3.7.
 - [ ] [MATH-055] Make the C++ non-Euclidean cotangent update coordinate invariant.
 - [ ] [MATH-056] Correct reverse-time and final-partial-step parameter integration in C++.
 - [ ] [MATH-057] Pair adjoints and parameter derivatives at consistent times in C++ quadrature.
@@ -469,71 +469,71 @@ mandatory exit gates in this document pass.
 
 ### 6.1 Reviewed Derivation To Code Mapping
 
-- [ ] [MATH-700] Map every term in Mohamud's Theorem 3.7 to one named implementation operation.
-- [ ] [MATH-701] Map `delta_theta div f_theta` to an explicit parameter derivative or VJP.
-- [ ] [MATH-702] Map the cotangent/vector pairing involving `delta_theta f_theta` with the approved sign.
-- [ ] [MATH-703] Map `lambda_dot + <lambda, nabla f_theta> = nabla div f_theta` to the reviewed coordinate-component equation.
-- [ ] [MATH-704] Map base-density boundary terms to the approved adjoint boundary formulation.
-- [ ] [MATH-705] Map fixed data endpoint conditions to the correct trajectory variation.
-- [ ] [MATH-706] Map optional terminal-time variation without conflating it with density adjoints.
-- [ ] [MATH-707] Review the mapping against Mohamud's paper before writing custom autograd code.
+- [x] [MATH-700] Map every term in Mohamud's Theorem 3.7 to one named implementation operation.
+- [x] [MATH-701] Map `delta_theta div f_theta` to an explicit parameter derivative or VJP.
+- [x] [MATH-702] Map the cotangent/vector pairing involving `delta_theta f_theta` with the approved sign.
+- [x] [MATH-703] Map `lambda_dot + <lambda, nabla f_theta> = nabla div f_theta` to the reviewed coordinate-component equation.
+- [x] [MATH-704] Map base-density boundary terms to the approved adjoint boundary formulation.
+- [x] [MATH-705] Map fixed data endpoint conditions to the correct trajectory variation.
+- [x] [MATH-706] Map optional terminal-time variation without conflating it with density adjoints.
+- [x] [MATH-707] Review the mapping against Mohamud's paper before writing custom autograd code.
 
 ### 6.2 Custom Autograd API
 
-- [ ] [MATH-710] Pass trainable parameter tensors as explicit inputs to `torch.autograd.Function.apply`.
-- [ ] [MATH-711] Define stable named-parameter flattening and reconstruction.
-- [ ] [MATH-712] Preserve shared parameters and module buffers.
-- [ ] [MATH-713] Use functional module evaluation for state and parameter VJPs.
-- [ ] [MATH-714] Return one gradient for every tensor input in exact input order.
-- [ ] [MATH-715] Return `None` only for nondifferentiable configuration objects.
-- [ ] [MATH-716] Return explicit zero gradients where the mathematical derivative is zero.
+- [x] [MATH-710] Pass trainable parameter tensors as explicit inputs to `torch.autograd.Function.apply`.
+- [x] [MATH-711] Define stable named-parameter flattening and reconstruction.
+- [x] [MATH-712] Preserve shared parameters and module buffers.
+- [x] [MATH-713] Use functional module evaluation for state and parameter VJPs.
+- [x] [MATH-714] Return one gradient for every tensor input in exact input order.
+- [x] [MATH-715] Return `None` only for nondifferentiable configuration objects.
+- [x] [MATH-716] Return explicit zero gradients where the mathematical derivative is zero.
 
 ### 6.3 Forward Replay Contract
 
-- [ ] [MATH-720] Make custom forward use the corrected augmented integrator.
-- [ ] [MATH-721] Save or reconstruct the exact accepted step schedule.
-- [ ] [MATH-722] Save exact remainder-step lengths.
-- [ ] [MATH-723] Define a trajectory checkpoint policy separately from mathematical correctness.
-- [ ] [MATH-724] Ensure backward never uses a state from the wrong stage time.
-- [ ] [MATH-725] Keep all replay deterministic under fixed parameters and solver settings.
+- [x] [MATH-720] Make custom forward use the corrected augmented integrator.
+- [x] [MATH-721] Save or reconstruct the exact accepted step schedule.
+- [x] [MATH-722] Save exact remainder-step lengths.
+- [x] [MATH-723] Define a trajectory checkpoint policy separately from mathematical correctness.
+- [x] [MATH-724] Ensure backward never uses a state from the wrong stage time.
+- [x] [MATH-725] Keep all replay deterministic under fixed parameters and solver settings.
 
 ### 6.4 Adjoint Integration
 
-- [ ] [MATH-730] Initialize cotangent boundary values from the approved Mohamud boundary formulation.
-- [ ] [MATH-731] Integrate the intrinsic cotangent equation with the correct time orientation.
-- [ ] [MATH-732] Evaluate trajectory state at every adjoint RK stage.
-- [ ] [MATH-733] Evaluate `nabla f` or its coordinate-equivalent Jacobian at matching stage states and times.
-- [ ] [MATH-734] Evaluate `nabla div f` or its metric-lowered differential at matching stage states and times.
-- [ ] [MATH-735] Treat the stage cotangent as an ODE state, not as a quantity to differentiate with respect to trajectory coordinates.
-- [ ] [MATH-736] Apply exact remainder-step lengths.
-- [ ] [MATH-737] Preserve cotangent transformation laws.
+- [x] [MATH-730] Initialize cotangent boundary values from the approved Mohamud boundary formulation.
+- [x] [MATH-731] Integrate the intrinsic cotangent equation with the correct time orientation.
+- [x] [MATH-732] Evaluate trajectory state at every adjoint RK stage.
+- [x] [MATH-733] Evaluate `nabla f` or its coordinate-equivalent Jacobian at matching stage states and times.
+- [x] [MATH-734] Evaluate `nabla div f` or its metric-lowered differential at matching stage states and times.
+- [x] [MATH-735] Treat the stage cotangent as an ODE state, not as a quantity to differentiate with respect to trajectory coordinates.
+- [x] [MATH-736] Apply exact remainder-step lengths.
+- [x] [MATH-737] Preserve cotangent transformation laws.
 
 ### 6.5 Parameter First Variation
 
-- [ ] [MATH-740] Accumulate the direct `delta_theta div f_theta` term.
-- [ ] [MATH-741] Accumulate the cotangent pairing with `delta_theta f_theta` using the Phase 0 sign convention.
-- [ ] [MATH-742] Evaluate both terms at consistent stage times and states.
-- [ ] [MATH-743] Integrate parameter variations with a quadrature order consistent with the adjoint solver.
-- [ ] [MATH-744] Include parameter contributions from every vector-field layer.
-- [ ] [MATH-745] Define behavior for parameterized metrics; reject them explicitly if the initial scope assumes fixed geometry.
-- [ ] [MATH-746] Define behavior for explicit parameter dependence in the base distribution.
+- [x] [MATH-740] Accumulate the direct `delta_theta div f_theta` term.
+- [x] [MATH-741] Accumulate the cotangent pairing with `delta_theta f_theta` using the Phase 0 sign convention.
+- [x] [MATH-742] Evaluate both terms at consistent stage times and states.
+- [x] [MATH-743] Integrate parameter variations with a quadrature order consistent with the adjoint solver.
+- [x] [MATH-744] Include parameter contributions from every vector-field layer.
+- [x] [MATH-745] Define behavior for parameterized metrics; reject them explicitly if the initial scope assumes fixed geometry.
+- [x] [MATH-746] Define behavior for explicit parameter dependence in the base distribution.
 
 ### 6.6 Verification
 
-- [ ] [MATH-750] Compare custom-forward values exactly with corrected direct forward values.
-- [ ] [MATH-751] Compare input gradients against corrected direct autograd.
-- [ ] [MATH-752] Compare every parameter gradient against corrected direct autograd.
-- [ ] [MATH-753] Compare against finite differences on tiny models.
-- [ ] [MATH-754] Test direct divergence-parameter variation with `f_theta(x) = theta x`.
-- [ ] [MATH-755] Test state-dependent divergence with `f_theta(x) = theta x^2`.
-- [ ] [MATH-756] Test non-Euclidean cotangent behavior.
-- [ ] [MATH-757] Test forward/reverse orientation and final remainder steps.
-- [ ] [MATH-758] Test batch reduction scaling.
-- [ ] [MATH-759] Decide and document whether higher-order gradients through the adjoint are supported.
+- [x] [MATH-750] Compare custom-forward values exactly with corrected direct forward values.
+- [x] [MATH-751] Compare input gradients against corrected direct autograd.
+- [x] [MATH-752] Compare every parameter gradient against corrected direct autograd.
+- [x] [MATH-753] Compare against finite differences on tiny models.
+- [x] [MATH-754] Test direct divergence-parameter variation with `f_theta(x) = theta x`.
+- [x] [MATH-755] Test state-dependent divergence with `f_theta(x) = theta x^2`.
+- [x] [MATH-756] Test non-Euclidean cotangent behavior.
+- [x] [MATH-757] Test forward/reverse orientation and final remainder steps.
+- [x] [MATH-758] Test batch reduction scaling.
+- [x] [MATH-759] Decide and document whether higher-order gradients through the adjoint are supported.
 
 ### Phase 6 Exit Gate
 
-- [ ] [MATH-769] Expose the Python intrinsic adjoint as supported only after values, input gradients, and every parameter gradient match independent references.
+- [x] [MATH-769] Expose the Python intrinsic adjoint as supported only after values, input gradients, and every parameter gradient match independent references.
 
 ## Phase 7: Correct The C++ Intrinsic Adjoint
 

@@ -24,6 +24,7 @@ from .adjoint import (
     cnf_log_prob,
     cnf_loss_terms,
     cnf_nll,
+    intrinsic_adjoint_nll,
 )
 from .atlas import Atlas, Chart
 from .multichart import MultiChartVectorField, overlap_consistency_loss
@@ -73,6 +74,7 @@ __all__ = [
     "cnf_loss_terms",
     "cnf_nll",
     "IntrinsicAdjointFunction",
+    "intrinsic_adjoint_nll",
     "Atlas",
     "Chart",
     "MultiChartVectorField",

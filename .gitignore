@@ -86,7 +86,6 @@ uv.lock
 *cache*
 python/geomflow/_version.py
 dist/
-docs/
 *.pt
 *.gif
 *.pdf
