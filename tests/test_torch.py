@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import torch
 import torch.nn as nn
+import pytest
 
 from geomflow.torch import (
     AnalyticMetric,
@@ -12,7 +13,8 @@ from geomflow.torch import (
     cnf_nll,
     divergence,
     integrate_rk4,
-    lipschitz_regularizer,
+    intrinsic_covariant_regularizer,
+    coordinate_jacobian_regularizer,
     weight_decay_loss,
 )
 
@@ -70,6 +72,24 @@ def test_integrator_zero_field():
     print("  integrator zero-field OK")
 
 
+def test_nonsmooth_activation_is_rejected():
+    with pytest.raises(ValueError, match="twice differentiable"):
+        ManifoldVectorField(dim=2, activation=nn.ReLU)
+
+
+def test_intrinsic_covariant_regularizer_for_identity_field():
+    class IdentityField(nn.Module):
+        dim = 2
+
+        def forward(self, t, point):
+            del t
+            return point
+
+    x = torch.tensor([[1.2, 0.7], [0.8, -0.4]], dtype=torch.float64)
+    value = intrinsic_covariant_regularizer(IdentityField(), _euclidean_metric(2), x)
+    torch.testing.assert_close(value, torch.tensor(2.0, dtype=torch.float64))
+
+
 def test_metric_derivative_zero_without_requires_grad():
     """derivative() must not raise even if x has no grad tracking, and must
     be exactly zero for a constant (Euclidean) metric."""
@@ -93,7 +113,7 @@ def test_integrator_batch_shapes():
         x0 = torch.randn(*shape)
         result = integrate_rk4(vf, metric, x0, t0=0.0, t1=0.2, dt=0.05)
         assert result.x_final.shape == shape
-        assert result.log_det.shape == shape[:-1]
+        assert result.divergence_integral.shape == shape[:-1]
     print("  integrator batch-shape broadcasting OK")
 
 
@@ -113,7 +133,7 @@ def test_cnf_training():
     for step in range(80):
         opt.zero_grad()
         nll = cnf_nll(vf, metric, data, dt=0.1)
-        lip = lipschitz_regularizer(vf, data, t=0.5)
+        lip = coordinate_jacobian_regularizer(vf, data, t=0.5)
         loss = nll + 0.01 * lip
         loss.backward()
         opt.step()

@@ -1,17 +1,86 @@
-"""CNF loss for a Riemannian manifold with user-provided analytic metric.
-
-The custom intrinsic adjoint Function is experimental; the public
-``cnf_nll`` uses the robust standard-autograd path through the solver.
-"""
+"""CNF losses and Mohamud's intrinsic discrete adjoint."""
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 import torch
+from torch import nn
+from torch.func import functional_call
 
 from .analytic_metric import AnalyticMetric
-from .integrator import _sample_nll, integrate_rk4
-from .operators import divergence
-from .vector_field import ManifoldVectorField, lipschitz_regularizer, weight_decay_loss
+from .base_distribution import (
+    BaseDistribution,
+    StandardNormalCoordinateBase,
+    validate_base_distribution,
+)
+from .integrator import integrate_rk4
+from .vector_field import (
+    ManifoldVectorField,
+    coordinate_jacobian_regularizer,
+    weight_decay_loss,
+)
+
+
+def cnf_log_prob(
+    vf: ManifoldVectorField,
+    metric: AnalyticMetric,
+    x_data: torch.Tensor,
+    dt: float = 0.05,
+    t0: float = 0.0,
+    t1: float = 1.0,
+    base_distribution: BaseDistribution | None = None,
+) -> torch.Tensor:
+    """Per-sample Riemannian log density from the direct-autograd solver."""
+    base = base_distribution or getattr(
+        metric, "default_base_distribution", StandardNormalCoordinateBase(metric.dim)
+    )
+    validate_base_distribution(base, metric.dim)
+    result = integrate_rk4(vf, metric, x_data, t1, t0, dt, track_trajectory=False)
+    return (
+        base.log_prob_volume(result.x_final, metric)
+        + result.divergence_integral
+    )
+
+
+@dataclass(frozen=True)
+class CNFLossTerms:
+    """Separated mathematical NLL and weighted training penalties."""
+
+    nll: torch.Tensor
+    lipschitz_penalty: torch.Tensor
+    weight_decay_penalty: torch.Tensor
+
+    @property
+    def total(self) -> torch.Tensor:
+        return self.nll + self.lipschitz_penalty + self.weight_decay_penalty
+
+
+def cnf_loss_terms(
+    vf: ManifoldVectorField,
+    metric: AnalyticMetric,
+    x_data: torch.Tensor,
+    dt: float = 0.05,
+    t0: float = 0.0,
+    t1: float = 1.0,
+    lipschitz_weight: float = 0.0,
+    weight_decay_weight: float = 0.0,
+    base_distribution: BaseDistribution | None = None,
+) -> CNFLossTerms:
+    """Return mean NLL and regularizers as distinct diagnostic quantities."""
+    nll = -cnf_log_prob(
+        vf, metric, x_data, dt, t0, t1, base_distribution
+    ).mean()
+    zero = nll.new_zeros(())
+    lipschitz_penalty = zero
+    weight_decay_penalty = zero
+    if lipschitz_weight > 0.0:
+        lipschitz_penalty = lipschitz_weight * coordinate_jacobian_regularizer(
+            vf, x_data, t=(t0 + t1) / 2.0
+        )
+    if weight_decay_weight > 0.0:
+        weight_decay_penalty = weight_decay_weight * weight_decay_loss(vf)
+    return CNFLossTerms(nll, lipschitz_penalty, weight_decay_penalty)
 
 
 def cnf_nll(
@@ -23,6 +92,7 @@ def cnf_nll(
     t1: float = 1.0,
     lipschitz_weight: float = 0.0,
     weight_decay_weight: float = 0.0,
+    base_distribution: BaseDistribution | None = None,
 ) -> torch.Tensor:
     """Negative log-likelihood for a CNF on a Riemannian manifold.
 
@@ -57,76 +127,272 @@ def cnf_nll(
         Scalar loss (NLL plus any active regularizers); call ``.backward()``
         to fill vector-field parameter gradients.
     """
-    result = integrate_rk4(vf, metric, x_data, t1, t0, dt, track_trajectory=False)
-    loss = _sample_nll(result.x_final, result.log_det).mean()
-
-    if lipschitz_weight > 0.0:
-        loss = loss + lipschitz_weight * lipschitz_regularizer(
-            vf, x_data, t=(t0 + t1) / 2.0
-        )
-    if weight_decay_weight > 0.0:
-        loss = loss + weight_decay_weight * weight_decay_loss(vf)
-    return loss
+    return cnf_loss_terms(
+        vf,
+        metric,
+        x_data,
+        dt,
+        t0,
+        t1,
+        lipschitz_weight,
+        weight_decay_weight,
+        base_distribution,
+    ).total
 
 
 class IntrinsicAdjointFunction(torch.autograd.Function):
-    """Custom PyTorch autograd Function implementing Mohamud's Theorem 3.7 intrinsic adjoint ODE.
+    """Exact discrete adjoint of the intrinsic augmented RK4 computation.
 
-    Theorem 3.7 (Mohamud):
-    The intrinsic backward adjoint equation for Riemannian CNF log-density gradient is:
-        lambda_dot(t) = - J_f(t, x(t))^T * lambda(t) + grad_x(div_g f(t, x(t)))
+    This is the solver-discretized form of Liiban Mohamud's Theorem 3.7.
+    Reverse-mode VJPs through every accepted RK stage implement the coordinate
+    cotangent equation ``lambda_dot + lambda_i partial_j f^i = partial_j div_g f``.
+    VJPs with respect to the explicit parameter inputs include both
+    ``delta_theta div_g f`` and the approved negative cotangent pairing from
+    the theorem's proof. No ambient-space embedding is used.
 
-    No Whitney embedding R^(2n+1) ambient space is invoked.
+    Use :func:`intrinsic_adjoint_nll`; direct calls to ``apply`` require the
+    internal configuration arguments and explicit parameter tensors.
+    Higher-order derivatives through this custom backward are unsupported.
     """
 
     @staticmethod
-    def forward(ctx, x_data, vf, metric, dt=0.05, t0=0.0, t1=1.0):
+    def forward(
+        ctx,
+        x_data,
+        vf,
+        metric,
+        base_distribution,
+        dt,
+        t0,
+        t1,
+        parameter_names,
+        *parameters,
+    ):
         ctx.dt = dt
         ctx.t0 = t0
         ctx.t1 = t1
         ctx.vf = vf
         ctx.metric = metric
+        ctx.base_distribution = base_distribution
+        ctx.parameter_names = parameter_names
+        named_buffers = tuple(vf.named_buffers())
+        ctx.buffer_names = tuple(name for name, _ in named_buffers)
+        buffers = tuple(buffer.detach().clone() for _, buffer in named_buffers)
+        ctx.parameter_count = len(parameters)
 
         with torch.no_grad():
-            res = integrate_rk4(vf, metric, x_data, t0=t1, t1=t0, dt=dt, track_trajectory=True)
+            field = _functional_field(
+                vf,
+                parameter_names,
+                parameters,
+                ctx.buffer_names,
+                tuple(buffer.clone() for buffer in buffers),
+            )
+            res = integrate_rk4(
+                field,
+                metric,
+                x_data,
+                t0=t1,
+                t1=t0,
+                dt=dt,
+                track_trajectory=False,
+                stage_callback=lambda _time, state: _reject_differentiable_metric(
+                    metric, state
+                ),
+            )
+            _reject_differentiable_metric(metric, res.x_final)
+            _reject_differentiable_base(
+                base_distribution, metric, res.x_final
+            )
+            loss = -(
+                base_distribution.log_prob_volume(res.x_final, metric)
+                + res.divergence_integral
+            ).mean()
 
-        ctx.save_for_backward(x_data, res.x_final, res.log_det)
-        ctx.trajectory = res.trajectory
-        return _sample_nll(res.x_final, res.log_det).mean()
+        ctx.save_for_backward(x_data, *parameters, *buffers)
+        return loss
 
     @staticmethod
     def backward(ctx, grad_output):
-        x_data, x_final, log_det = ctx.saved_tensors
-        dt = ctx.dt
-        vf = ctx.vf
-        metric = ctx.metric
+        saved_x, *saved_values = ctx.saved_tensors
+        saved_parameters = saved_values[: ctx.parameter_count]
+        saved_buffers = saved_values[ctx.parameter_count :]
+        with torch.enable_grad():
+            replay_x = saved_x.detach().requires_grad_(True)
+            replay_parameters = tuple(
+                parameter.detach().requires_grad_(True)
+                for parameter in saved_parameters
+            )
+            field = _functional_field(
+                ctx.vf,
+                ctx.parameter_names,
+                replay_parameters,
+                ctx.buffer_names,
+                tuple(buffer.clone() for buffer in saved_buffers),
+            )
+            result = integrate_rk4(
+                field,
+                ctx.metric,
+                replay_x,
+                t0=ctx.t1,
+                t1=ctx.t0,
+                dt=ctx.dt,
+                track_trajectory=False,
+            )
+            replay_loss = -(
+                ctx.base_distribution.log_prob_volume(
+                    result.x_final, ctx.metric
+                )
+                + result.divergence_integral
+            ).mean()
+            replay_inputs = (replay_x, *replay_parameters)
+            if replay_loss.requires_grad:
+                gradients = torch.autograd.grad(
+                    replay_loss,
+                    replay_inputs,
+                    grad_outputs=grad_output.detach(),
+                    allow_unused=True,
+                )
+            else:
+                gradients = (None,) * len(replay_inputs)
 
-        x_cur = x_final.clone().detach().requires_grad_(True)
-        adj_x = x_cur.clone()
+        materialized = tuple(
+            torch.zeros_like(value) if gradient is None else gradient
+            for value, gradient in zip(replay_inputs, gradients)
+        )
+        grad_x, *parameter_gradients = materialized
+        return (
+            grad_x,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            *parameter_gradients,
+        )
 
-        trajectory = list(reversed(ctx.trajectory))
-        for i in range(len(trajectory) - 1):
-            t_curr, x_t = trajectory[i][0], trajectory[i][2] if len(trajectory[i]) > 2 else trajectory[i][1]
-            t_prev = trajectory[i + 1][0]
-            h = t_prev - t_curr
 
-            with torch.enable_grad():
-                x_step = x_t.clone().detach().requires_grad_(True)
+def _functional_field(
+    vf: nn.Module,
+    parameter_names: tuple[str, ...],
+    parameters: tuple[torch.Tensor, ...],
+    buffer_names: tuple[str, ...],
+    buffers: tuple[torch.Tensor, ...],
+):
+    state_map = dict(zip(parameter_names, parameters, strict=True))
+    state_map.update(zip(buffer_names, buffers, strict=True))
 
-                def _adj_rhs(t_val, l_val):
-                    t_s = torch.full((x_step.shape[0],), t_val, device=x_step.device)
-                    div_val = divergence(lambda x_: vf(t_s, x_), x_step, metric)
-                    (grad_div,) = torch.autograd.grad(div_val.sum(), x_step, retain_graph=True)
-                    f_val = vf(t_s, x_step)
-                    v_prod = (f_val * l_val).sum()
-                    (Jf_T_l,) = torch.autograd.grad(v_prod, x_step, retain_graph=True)
-                    return -Jf_T_l + grad_div
+    def field(time: torch.Tensor, state: torch.Tensor) -> torch.Tensor:
+        return functional_call(vf, state_map, (time, state), strict=False)
 
-                k1 = _adj_rhs(t_curr, adj_x)
-                k2 = _adj_rhs(t_curr + 0.5 * h, adj_x + 0.5 * h * k1)
-                k3 = _adj_rhs(t_curr + 0.5 * h, adj_x + 0.5 * h * k2)
-                k4 = _adj_rhs(t_curr + h, adj_x + h * k3)
-                adj_x = adj_x + (h / 6.0) * (k1 + 2.0 * k2 + 2.0 * k3 + k4)
+    return field
 
-        grad_x_data = (grad_output / x_data.shape[0]) * adj_x
-        return grad_x_data, None, None, None, None, None
+
+def _contains_trainable_tensor(
+    value: object, seen: set[int] | None = None
+) -> bool:
+    if seen is None:
+        seen = set()
+    identity = id(value)
+    if identity in seen:
+        return False
+    seen.add(identity)
+    if isinstance(value, torch.Tensor):
+        return value.requires_grad
+    if isinstance(value, nn.Module):
+        return any(
+            tensor.requires_grad
+            for tensor in (*value.parameters(), *value.buffers())
+        )
+    if isinstance(value, dict):
+        return any(_contains_trainable_tensor(item, seen) for item in value.values())
+    if isinstance(value, (list, tuple, set, frozenset)):
+        return any(_contains_trainable_tensor(item, seen) for item in value)
+    closure = getattr(value, "__closure__", None)
+    if closure is not None:
+        return any(
+            _contains_trainable_tensor(cell.cell_contents, seen) for cell in closure
+        )
+    attributes = getattr(value, "__dict__", None)
+    if attributes is not None:
+        return any(
+            _contains_trainable_tensor(attribute, seen)
+            for attribute in attributes.values()
+        )
+    return False
+
+
+def _reject_trainable_configuration(value: object, name: str) -> None:
+    if _contains_trainable_tensor(value):
+        raise ValueError(f"trainable {name} tensors are not supported")
+
+
+def _reject_differentiable_metric(
+    metric: AnalyticMetric, x_data: torch.Tensor
+) -> None:
+    probe = x_data.detach()
+    with torch.enable_grad():
+        metric_outputs = (
+            metric.metric(probe),
+            metric.inverse(probe),
+            metric.sqrt_det(probe),
+        )
+        if any(output.requires_grad for output in metric_outputs):
+            raise ValueError("trainable metric tensors are not supported")
+
+
+def _reject_differentiable_base(
+    base: BaseDistribution, metric: AnalyticMetric, base_point: torch.Tensor
+) -> None:
+    with torch.enable_grad():
+        if base.log_prob_volume(base_point.detach(), metric).requires_grad:
+            raise ValueError("trainable base-distribution tensors are not supported")
+
+
+def intrinsic_adjoint_nll(
+    vf: nn.Module,
+    metric: AnalyticMetric,
+    x_data: torch.Tensor,
+    dt: float = 0.05,
+    t0: float = 0.0,
+    t1: float = 1.0,
+    base_distribution: BaseDistribution | None = None,
+) -> torch.Tensor:
+    """Mean CNF NLL with Mohamud's intrinsic first-order discrete adjoint.
+
+    The forward value is exactly :func:`cnf_nll` without regularizers. The
+    vector-field parameters are explicit custom-autograd inputs in stable
+    ``named_parameters()`` order. Geometry and base-distribution parameters
+    are fixed in this first supported scope.
+    """
+    base = base_distribution
+    if base is None:
+        base = getattr(
+            metric,
+            "default_base_distribution",
+            StandardNormalCoordinateBase(metric.dim),
+        )
+    validate_base_distribution(base, metric.dim)
+    _reject_trainable_configuration(metric, "metric")
+    _reject_trainable_configuration(base, "base-distribution")
+    _reject_differentiable_metric(metric, x_data)
+    named_parameters = tuple(
+        (name, parameter)
+        for name, parameter in vf.named_parameters()
+        if parameter.requires_grad
+    )
+    parameter_names = tuple(name for name, _ in named_parameters)
+    parameters = tuple(parameter for _, parameter in named_parameters)
+    return IntrinsicAdjointFunction.apply(
+        x_data,
+        vf,
+        metric,
+        base,
+        dt,
+        t0,
+        t1,
+        parameter_names,
+        *parameters,
+    )

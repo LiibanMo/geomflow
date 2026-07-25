@@ -298,7 +298,7 @@ int main(int argc, char** argv) {
         for (size_t i = 0; i < N; ++i)
           log_base += -Scalar(0.5) * z[i] * z[i] - Scalar(0.5) * std::log(2 * M_PI);
 
-        Scalar log_model = log_base - result.log_det_jacobian;
+        Scalar log_model = log_base - result.divergence_integral;
         Scalar log_target = log_target_density(xT, cfg.manifold);
         Scalar loss = -log_model + log_target;
 

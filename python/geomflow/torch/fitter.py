@@ -13,10 +13,25 @@ import torch.nn as nn
 
 from .analytic_metric import AnalyticMetric
 from .atlas import Atlas
-from .integrator import integrate_rk4, _base_log_prob
+from .base_distribution import (
+    AtlasBaseDistribution,
+    BaseDistribution,
+    StandardNormalCoordinateBase,
+    validate_base_distribution,
+)
+from .adjoint import cnf_log_prob
+from .integrator import integrate_rk4
 from .multichart import MultiChartVectorField, overlap_consistency_loss
-from .multichart_integrator import cnf_nll_multichart, integrate_multichart
-from .vector_field import ManifoldVectorField, lipschitz_regularizer, weight_decay_loss
+from .multichart_integrator import (
+    cnf_log_prob_multichart,
+    cnf_nll_multichart,
+    integrate_multichart,
+)
+from .vector_field import (
+    ManifoldVectorField,
+    coordinate_jacobian_regularizer,
+    weight_decay_loss,
+)
 
 
 class ManifoldCNF(nn.Module):
@@ -41,6 +56,8 @@ class ManifoldCNF(nn.Module):
         hidden_dim: int = 64,
         n_layers: int = 2,
         dt: float = 0.05,
+        base_distribution: BaseDistribution | AtlasBaseDistribution | None = None,
+        activation: type[nn.Module] = nn.SiLU,
     ):
         super().__init__()
         self.manifold = manifold
@@ -49,12 +66,35 @@ class ManifoldCNF(nn.Module):
 
         if self.is_multichart:
             self.atlas: Atlas = manifold
-            self.vf = MultiChartVectorField(self.atlas, hidden_dim, n_layers)
+            self.vf = MultiChartVectorField(
+                self.atlas, hidden_dim, n_layers, activation=activation
+            )
             self.dim = self.atlas.charts[next(iter(self.atlas.charts))].dim
+            self.base_distribution = base_distribution or AtlasBaseDistribution(
+                StandardNormalCoordinateBase(self.dim), self.atlas.reference_chart_id
+            )
+            if not isinstance(self.base_distribution, AtlasBaseDistribution):
+                raise TypeError("an atlas requires AtlasBaseDistribution")
+            if self.base_distribution.reference_chart_id != self.atlas.reference_chart_id:
+                raise ValueError("base reference chart does not match atlas reference chart")
         else:
             self.metric: AnalyticMetric = manifold
             self.dim = self.metric.dim
-            self.vf = ManifoldVectorField(self.dim, hidden_dim, n_layers)
+            self.vf = ManifoldVectorField(
+                self.dim,
+                hidden_dim,
+                n_layers,
+                activation=activation,
+                periodic=getattr(self.metric, "coordinate_topology", None)
+                == "angles modulo 2*pi",
+            )
+            self.base_distribution = base_distribution or getattr(
+                self.metric,
+                "default_base_distribution",
+                StandardNormalCoordinateBase(self.dim),
+            )
+            validate_base_distribution(self.base_distribution, self.dim)
+        self.fit_diagnostics: list[dict[str, float]] = []
 
     def log_prob(
         self,
@@ -76,32 +116,22 @@ class ManifoldCNF(nn.Module):
             Log-likelihood values of shape ``(batch,)``.
         """
         if self.is_multichart:
-            res = integrate_multichart(
+            return cnf_log_prob_multichart(
                 self.vf,
                 self.atlas,
                 x_data,
-                start_chart=start_chart,
-                t0=1.0,
-                t1=0.0,
+                start_chart,
                 dt=self.dt,
-                compute_divergence=True,
+                base_distribution=self.base_distribution,
             )
-            x0 = res.x_final
-            if res.chart_final != self.atlas.reference_chart_id:
-                x0 = self.atlas[res.chart_final].transition_to(
-                    self.atlas.reference_chart_id, x0
-                )
-            return _base_log_prob(x0) + res.log_det
         else:
-            res = integrate_rk4(
+            return cnf_log_prob(
                 self.vf,
                 self.metric,
                 x_data,
-                t0=1.0,
-                t1=0.0,
-                dt=self.dt,
+                self.dt,
+                base_distribution=self.base_distribution,
             )
-            return _base_log_prob(res.x_final) + res.log_det
 
     def sample(
         self,
@@ -129,10 +159,23 @@ class ManifoldCNF(nn.Module):
         if device is None:
             device = next(self.parameters()).device
 
-        x0 = torch.randn(n_samples, self.dim, device=device)
+        dtype = next(self.parameters()).dtype
+        x0 = self.base_distribution.sample(
+            (n_samples,), device=device, dtype=dtype
+        )
+        if not self.base_distribution.contains(x0).all():
+            raise RuntimeError("base sampler produced a point outside its declared support")
 
         if self.is_multichart:
             cid = start_chart if start_chart is not None else self.atlas.reference_chart_id
+            if cid != self.atlas.reference_chart_id:
+                try:
+                    x0 = self.atlas[self.atlas.reference_chart_id].transition_to(cid, x0)
+                except KeyError as error:
+                    raise ValueError(
+                        "base samples cannot be mapped from the reference chart "
+                        f"to requested chart {cid}"
+                    ) from error
             res = integrate_multichart(
                 self.vf,
                 self.atlas,
@@ -152,6 +195,7 @@ class ManifoldCNF(nn.Module):
                 t0=0.0,
                 t1=1.0,
                 dt=self.dt,
+                compute_divergence=False,
             )
             return res.x_final, None
 
@@ -180,7 +224,8 @@ class ManifoldCNF(nn.Module):
         lr : float
             Learning rate.
         lipschitz_weight : float
-            Lipschitz regularization weight.
+            Coordinate-Jacobian engineering regularization weight. This is not
+            an intrinsic Lipschitz bound or a theorem assumption.
         weight_decay_weight : float
             L2 weight decay regularization weight.
         overlap_weight : float
@@ -197,11 +242,13 @@ class ManifoldCNF(nn.Module):
         optimizer = torch.optim.Adam(self.vf.parameters(), lr=lr)
         N = x_data.shape[0]
         loss_history: list[float] = []
+        self.fit_diagnostics = []
 
         for epoch in range(epochs):
             perm = torch.randperm(N, device=x_data.device)
             epoch_loss = 0.0
             num_batches = 0
+            epoch_overlap = 0.0
 
             for i in range(0, N, batch_size):
                 batch_indices = perm[i : i + batch_size]
@@ -216,28 +263,57 @@ class ManifoldCNF(nn.Module):
                         x_batch,
                         start_chart=start_chart,
                         dt=self.dt,
+                        base_distribution=self.base_distribution,
                     )
                     loss = nll
+                    overlap_penalty = nll.new_zeros(())
                     if overlap_weight > 0.0 and len(self.atlas.charts) > 1:
-                        # Compute overlap loss across connected chart pairs
+                        pair_losses = []
+                        seen_pairs: set[frozenset[int]] = set()
                         for cid_a, chart_a in self.atlas.charts.items():
                             for cid_b in chart_a.transitions:
-                                t_rand = torch.rand(x_batch.shape[0], device=x_batch.device)
-                                overlap = overlap_consistency_loss(
-                                    self.vf,
-                                    self.atlas,
-                                    x_batch,
-                                    chart_alpha=cid_a,
-                                    chart_beta=cid_b,
-                                    t=t_rand,
+                                pair = frozenset((cid_a, cid_b))
+                                if pair in seen_pairs:
+                                    continue
+                                seen_pairs.add(pair)
+                                t_rand = torch.rand(
+                                    x_batch.shape[0],
+                                    device=x_batch.device,
+                                    dtype=x_batch.dtype,
                                 )
-                                loss = loss + overlap_weight * overlap
+                                pair_losses.append(
+                                    overlap_consistency_loss(
+                                        self.vf,
+                                        self.atlas,
+                                        x_batch,
+                                        chart_alpha=cid_a,
+                                        chart_beta=cid_b,
+                                        t=t_rand,
+                                        coordinate_chart=start_chart,
+                                    )
+                                )
+                        if pair_losses:
+                            overlap_penalty = torch.stack(pair_losses).mean()
+                            loss = loss + overlap_weight * overlap_penalty
+                    if lipschitz_weight > 0.0:
+                        coordinate_penalties = [
+                            coordinate_jacobian_regularizer(
+                                self.vf.head(cid), x_batch, t=0.5
+                            )
+                            for cid in self.atlas.charts
+                        ]
+                        loss = loss + lipschitz_weight * torch.stack(
+                            coordinate_penalties
+                        ).mean()
+                    if weight_decay_weight > 0.0:
+                        loss = loss + weight_decay_weight * weight_decay_loss(self.vf)
+                    epoch_overlap += overlap_penalty.detach().item()
                 else:
                     log_p = self.log_prob(x_batch)
                     nll = -log_p.mean()
                     loss = nll
                     if lipschitz_weight > 0.0:
-                        loss = loss + lipschitz_weight * lipschitz_regularizer(
+                        loss = loss + lipschitz_weight * coordinate_jacobian_regularizer(
                             self.vf, x_batch, t=0.5
                         )
                     if weight_decay_weight > 0.0:
@@ -252,6 +328,12 @@ class ManifoldCNF(nn.Module):
 
             avg_loss = epoch_loss / max(num_batches, 1)
             loss_history.append(avg_loss)
+            self.fit_diagnostics.append(
+                {
+                    "loss": avg_loss,
+                    "overlap_residual": epoch_overlap / max(num_batches, 1),
+                }
+            )
 
             if verbose and (epoch % max(1, epochs // 5) == 0 or epoch == epochs - 1):
                 print(f"[Epoch {epoch:3d}/{epochs:3d}] Loss: {avg_loss:.4f}")

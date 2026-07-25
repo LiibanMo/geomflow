@@ -45,10 +45,19 @@ write_to = "python/geomflow/_version.py"
 
 [tool.cibuildwheel]
 build = "cp{312,313,314}-*"
-test-command = "python -c \"import geomflow; print(geomflow.EuclideanMetric3D())\""
+test-requires = ["pytest>=7.0", "torchdiffeq>=0.2"]
+test-sources = ["tests"]
+test-command = "python -m pytest {project}/tests -m 'not slow'"
 
 [tool.cibuildwheel.macos.environment]
 MACOSX_DEPLOYMENT_TARGET = "11.0"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+addopts = "--strict-markers"
+markers = [
+    "slow: long-running mathematical regression",
+    "convergence: numerical order test using multiple refinements",
+    "normalization: numerical integration or high-sample normalization test",
+    "optional: test permitted to skip because an external capability is unavailable",
+]
