@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-import math
 from typing import Callable
 
 import torch
 
-from .analytic_metric import AnalyticMetric
 from ._utils import validate_tensor_module_compatibility
+from ._schedule import FixedStepSchedule, checkpoint_due, validate_checkpoint_interval
+from .analytic_metric import AnalyticMetric
 from .operators import divergence
 from .vector_field import ManifoldVectorField
 
@@ -26,10 +26,14 @@ class FlowResult:
         x_final: torch.Tensor,
         divergence_integral: torch.Tensor,
         trajectory: list[tuple[float, torch.Tensor, torch.Tensor]],
+        trajectory_checkpoint_interval: int = 1,
+        trajectory_is_detached: bool = False,
     ) -> None:
         self.x_final = x_final
         self.divergence_integral = divergence_integral
         self.trajectory = trajectory
+        self.trajectory_checkpoint_interval = trajectory_checkpoint_interval
+        self.trajectory_is_detached = trajectory_is_detached
 
     @property
     def flow_log_abs_det_jacobian(self) -> torch.Tensor:
@@ -55,36 +59,36 @@ def integrate_rk4(
     track_trajectory: bool = False,
     compute_divergence: bool = True,
     stage_callback: Callable[[float, torch.Tensor], None] | None = None,
+    checkpoint_interval: int = 1,
+    detach_trajectory: bool = False,
 ) -> FlowResult:
     """Integrate ``x_dot=f`` and ``I_dot=div_g f`` with augmented RK4.
 
     ``dt`` is a finite positive magnitude. The interval determines each
     step's sign. Trajectory entries are ``(time, state, divergence_integral)``.
+    By default they retain autograd history. ``detach_trajectory=True`` stores
+    replay-only checkpoints, and ``checkpoint_interval`` controls their spacing.
     """
     if x0.dim() < 1:
         raise ValueError("x0 must have shape (..., dim); got 0-d tensor")
     if not x0.is_floating_point():
         raise TypeError("x0 must have a floating-point dtype")
     validate_tensor_module_compatibility(x0, vf, "integrate_rk4")
-    if not math.isfinite(float(t0)) or not math.isfinite(float(t1)):
-        raise ValueError("t0 and t1 must be finite")
-    if not math.isfinite(float(dt)) or dt <= 0.0:
-        raise ValueError("dt must be a finite positive step magnitude")
+    schedule = FixedStepSchedule(t0, t1, dt)
+    checkpoint_interval = validate_checkpoint_interval(checkpoint_interval)
 
     x = metric.canonicalize(x0.clone())
     integral = torch.zeros(x0.shape[:-1], device=x0.device, dtype=x0.dtype)
     trajectory: list[tuple[float, torch.Tensor, torch.Tensor]] = []
+    def checkpoint(time: float) -> None:
+        state = x.detach() if detach_trajectory else x.clone()
+        density = integral.detach() if detach_trajectory else integral.clone()
+        trajectory.append((time, state, density))
+
     if track_trajectory:
-        trajectory.append((float(t0), x.clone(), integral.clone()))
+        checkpoint(schedule.t0)
 
-    duration = abs(float(t1) - float(t0))
-    if duration == 0.0:
-        return FlowResult(x, integral, trajectory)
-
-    step_magnitude = float(dt)
-    n_steps = math.ceil(duration / step_magnitude)
-    direction = 1.0 if t1 > t0 else -1.0
-    t = float(t0)
+    build_graph = torch.is_grad_enabled()
 
     def augmented_rhs(
         time: float, state: torch.Tensor
@@ -112,16 +116,14 @@ def integrate_rk4(
                 )
                 return vf(stage_time, value)
 
-            divergence_value = divergence(
-                field_at_state, divergence_state, metric
-            )
+            divergence_value = divergence(field_at_state, divergence_state, metric)
+            if not build_graph:
+                divergence_value = divergence_value.detach()
         return field_value, divergence_value
 
-    for step_index in range(n_steps):
-        remaining = abs(float(t1) - t)
-        h = direction * min(step_magnitude, remaining)
-        if step_index == n_steps - 1:
-            h = float(t1) - t
+    for step in schedule:
+        t = step.start
+        h = step.size
         half_h = h / 2.0
 
         k1_x, k1_i = augmented_rhs(t, x)
@@ -135,9 +137,11 @@ def integrate_rk4(
         integral = integral + (h / 6.0) * (
             k1_i + 2.0 * k2_i + 2.0 * k3_i + k4_i
         )
-        t = float(t1) if step_index == n_steps - 1 else t + h
+        if track_trajectory and checkpoint_due(
+            step.index + 1, len(schedule), checkpoint_interval
+        ):
+            checkpoint(step.end)
 
-        if track_trajectory:
-            trajectory.append((t, x.clone(), integral.clone()))
-
-    return FlowResult(x, integral, trajectory)
+    return FlowResult(
+        x, integral, trajectory, checkpoint_interval, detach_trajectory
+    )

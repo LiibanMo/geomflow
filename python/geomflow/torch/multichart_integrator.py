@@ -7,6 +7,7 @@ import math
 
 import torch
 
+from ._schedule import FixedStepSchedule, checkpoint_due, validate_checkpoint_interval
 from .atlas import Atlas
 from .base_distribution import AtlasBaseDistribution, StandardNormalCoordinateBase
 from .multichart import MultiChartVectorField
@@ -47,6 +48,8 @@ class MultiChartFlowResult:
         trajectory: list[tuple[float, int, torch.Tensor, torch.Tensor]],
         transition_events: list[ChartTransitionEvent],
         operations: list[AcceptedChartSegment | ChartTransitionEvent] | None = None,
+        trajectory_checkpoint_interval: int = 1,
+        trajectory_is_detached: bool = False,
     ) -> None:
         self.x_final = x_final
         self.chart_final = chart_final
@@ -54,6 +57,8 @@ class MultiChartFlowResult:
         self.trajectory = trajectory
         self.transition_events = transition_events
         self.operations = operations or []
+        self.trajectory_checkpoint_interval = trajectory_checkpoint_interval
+        self.trajectory_is_detached = trajectory_is_detached
 
     @property
     def flow_log_abs_det_jacobian(self) -> torch.Tensor:
@@ -97,6 +102,11 @@ def integrate_multichart(
     dt: float,
     track_trajectory: bool = False,
     compute_divergence: bool = True,
+    checkpoint_interval: int = 1,
+    detach_trajectory: bool = False,
+    min_step: float | None = None,
+    max_subdivisions: int = 20,
+    record_operations: bool = False,
 ) -> MultiChartFlowResult:
     """Integrate ``x_dot=f`` and ``I_dot=div_g f`` with chart switching.
 
@@ -104,6 +114,8 @@ def integrate_multichart(
     field evaluation. Unsafe intervals are bisected to a source-valid point in
     a declared overlap, then their remainder is integrated in the target chart.
     Riemannian density is scalar, so transitions introduce no jump in ``I``.
+    ``record_operations`` opts into full accepted-segment retention for replay;
+    normal direct-autograd integration stores only transition events.
     """
     if x0.dim() < 2:
         raise ValueError(
@@ -114,10 +126,15 @@ def integrate_multichart(
         raise TypeError("x0 must have a floating-point dtype")
     if start_chart not in atlas.charts:
         raise ValueError(f"unknown start chart {start_chart}")
-    if not math.isfinite(float(t0)) or not math.isfinite(float(t1)):
-        raise ValueError("t0 and t1 must be finite")
-    if not math.isfinite(float(dt)) or dt <= 0.0:
-        raise ValueError("dt must be a finite positive step magnitude")
+    schedule = FixedStepSchedule(t0, t1, dt)
+    checkpoint_interval = validate_checkpoint_interval(checkpoint_interval)
+    if isinstance(max_subdivisions, bool) or not isinstance(max_subdivisions, int):
+        raise ValueError("max_subdivisions must be a positive integer")
+    if max_subdivisions <= 0:
+        raise ValueError("max_subdivisions must be a positive integer")
+    minimum_step = schedule.dt * 1e-4 if min_step is None else float(min_step)
+    if not math.isfinite(minimum_step) or minimum_step <= 0.0:
+        raise ValueError("min_step must be a finite positive magnitude")
 
     current_chart = start_chart
     x = x0.clone()
@@ -125,20 +142,15 @@ def integrate_multichart(
     trajectory: list[tuple[float, int, torch.Tensor, torch.Tensor]] = []
     transition_events: list[ChartTransitionEvent] = []
     operations: list[AcceptedChartSegment | ChartTransitionEvent] = []
-    t = float(t0)
+    def checkpoint(time: float, chart_id: int) -> None:
+        state = x.detach() if detach_trajectory else x.clone()
+        density = integral.detach() if detach_trajectory else integral.clone()
+        trajectory.append((time, chart_id, state, density))
+
     if track_trajectory:
-        trajectory.append((t, current_chart, x.clone(), integral.clone()))
+        checkpoint(schedule.t0, current_chart)
 
-    duration = abs(float(t1) - float(t0))
-    if duration == 0.0:
-        return MultiChartFlowResult(
-            x, current_chart, integral, trajectory, transition_events, operations
-        )
-
-    direction = 1.0 if t1 > t0 else -1.0
-    base_dt = float(dt)
-    min_dt = base_dt * 1e-4
-    max_segments = 100 * math.ceil(duration / base_dt) + 100
+    build_graph = torch.is_grad_enabled()
 
     def augmented_rhs(
         time: float, state: torch.Tensor, chart_id: int
@@ -168,6 +180,8 @@ def integrate_multichart(
                 divergence_state,
                 atlas[chart_id].analytic_metric,
             )
+            if not build_graph:
+                divergence_value = divergence_value.detach()
         return field_value, divergence_value
 
     def chart_contains(chart_id: int, state: torch.Tensor) -> torch.Tensor:
@@ -208,37 +222,34 @@ def integrate_multichart(
         )
         return proposed_x, proposed_integral
 
-    segment_count = 0
-    while t != float(t1):
-        nominal_end = (
-            float(t1)
-            if abs(float(t1) - t) <= base_dt
-            else t + direction * base_dt
-        )
-        while direction * (nominal_end - t) > 0.0:
-            segment_count += 1
-            if segment_count > max_segments:
-                raise RuntimeError("integrate_multichart exceeded its segment bound")
+    max_segments_per_step = max_subdivisions + 1
+    for scheduled_step in schedule:
+        t = scheduled_step.start
+        nominal_end = scheduled_step.end
+        for _segment_index in range(max_segments_per_step):
+            if t == nominal_end:
+                break
             source_chart = current_chart
             h = nominal_end - t
             source_x = x
             trial = rk4_trial(t, x, integral, h, source_chart)
             if trial is not None:
                 x, integral = trial
-                operations.append(
-                    AcceptedChartSegment(
-                        t, nominal_end, source_chart, source_x.clone(), x.clone()
+                if record_operations:
+                    operations.append(
+                        AcceptedChartSegment(
+                            t, nominal_end, source_chart, source_x.clone(), x.clone()
+                        )
                     )
-                )
                 t = nominal_end
-                if track_trajectory:
-                    trajectory.append((t, current_chart, x.clone(), integral.clone()))
-                continue
+                break
 
             lo = 0.0
             hi = h
             safe_trial: tuple[torch.Tensor, torch.Tensor] | None = None
-            while abs(hi - lo) > min_dt:
+            for _attempt in range(max_subdivisions):
+                if abs(hi - lo) <= minimum_step:
+                    break
                 mid = (lo + hi) / 2.0
                 candidate = rk4_trial(t, x, integral, mid, source_chart)
                 if candidate is None:
@@ -246,7 +257,7 @@ def integrate_multichart(
                 else:
                     lo = mid
                     safe_trial = candidate
-            if safe_trial is None or abs(lo) <= min_dt:
+            if safe_trial is None or abs(lo) <= minimum_step:
                 raise RuntimeError(
                     f"trajectory leaves chart {source_chart} near t={t:.6g} "
                     "before a valid overlap transition"
@@ -268,23 +279,27 @@ def integrate_multichart(
                         break
             else:
                 try:
-                    target_chart, event_target = atlas.best_chart(event_source, source_chart)
+                    target_chart, event_target = atlas.best_chart(
+                        event_source, source_chart
+                    )
                 except ValueError:
                     pass
             if target_chart is None or event_target is None:
                 raise RuntimeError(
-                    f"no declared overlap covers chart {source_chart} near t={event_time:.6g}"
+                    f"no declared overlap covers chart {source_chart} "
+                    f"near t={event_time:.6g}"
                 )
 
-            operations.append(
-                AcceptedChartSegment(
-                    t,
-                    event_time,
-                    source_chart,
-                    source_x.clone(),
-                    event_source.clone(),
+            if record_operations:
+                operations.append(
+                    AcceptedChartSegment(
+                        t,
+                        event_time,
+                        source_chart,
+                        source_x.clone(),
+                        event_source.clone(),
+                    )
                 )
-            )
             if hasattr(source, "jacobian"):
                 jacobian = source.jacobian(target_chart, event_source)
             else:
@@ -299,17 +314,42 @@ def integrate_multichart(
                 jacobian.clone(),
             )
             transition_events.append(event)
-            operations.append(event)
+            if record_operations:
+                operations.append(event)
             x = event_target
             integral = event_integral
             t = event_time
             current_chart = target_chart
             if track_trajectory:
-                trajectory.append((t, source_chart, event_source.clone(), integral.clone()))
-                trajectory.append((t, current_chart, x.clone(), integral.clone()))
+                source_state = (
+                    event_source.detach() if detach_trajectory else event_source.clone()
+                )
+                target_state = x.detach() if detach_trajectory else x.clone()
+                density = integral.detach() if detach_trajectory else integral.clone()
+                trajectory.append((t, source_chart, source_state, density))
+                trajectory.append((t, current_chart, target_state, density))
+        else:
+            raise RuntimeError(
+                "integrate_multichart exceeded max_subdivisions for one fixed step"
+            )
+        if t != nominal_end:
+            raise RuntimeError(
+                "integrate_multichart exceeded max_subdivisions for one fixed step"
+            )
+        if track_trajectory and checkpoint_due(
+            scheduled_step.index + 1, len(schedule), checkpoint_interval
+        ):
+            checkpoint(t, current_chart)
 
     return MultiChartFlowResult(
-        x, current_chart, integral, trajectory, transition_events, operations
+        x,
+        current_chart,
+        integral,
+        trajectory,
+        transition_events,
+        operations,
+        checkpoint_interval,
+        detach_trajectory,
     )
 
 
