@@ -20,7 +20,7 @@ from .base_distribution import (
     StandardNormalCoordinateBase,
     validate_base_distribution,
 )
-from .adjoint import cnf_log_prob
+from .adjoint import cnf_log_prob, intrinsic_adjoint_nll
 from .integrator import integrate_rk4
 from .multichart import MultiChartVectorField, overlap_consistency_loss
 from .multichart_integrator import (
@@ -237,6 +237,7 @@ class ManifoldCNF(nn.Module):
         overlap_weight: float = 0.01,
         start_chart: int = 0,
         verbose: bool = True,
+        gradient_mode: str = "direct",
     ) -> list[float]:
         """Fit the manifold CNF to target data using Adam optimizer.
 
@@ -261,11 +262,23 @@ class ManifoldCNF(nn.Module):
             Chart ID for x_data (for multi-chart atlas).
         verbose : bool
             Print training progress loss.
+        gradient_mode : {"direct", "intrinsic_adjoint"}
+            Single-chart gradient implementation. Direct autograd is the
+            default; the intrinsic adjoint reduces trajectory memory through
+            deterministic replay. Multi-chart training requires ``direct``.
 
         Returns
         -------
         loss_history : list of float
         """
+        if gradient_mode not in {"direct", "intrinsic_adjoint"}:
+            raise ValueError(
+                "gradient_mode must be 'direct' or 'intrinsic_adjoint'"
+            )
+        if self.is_multichart and gradient_mode == "intrinsic_adjoint":
+            raise ValueError(
+                "intrinsic_adjoint is not supported for multi-chart training"
+            )
         validate_tensor_module_compatibility(x_data, self, "ManifoldCNF.fit")
         optimizer = torch.optim.Adam(self.vf.parameters(), lr=lr)
         N = x_data.shape[0]
@@ -337,8 +350,17 @@ class ManifoldCNF(nn.Module):
                         loss = loss + weight_decay_weight * weight_decay_loss(self.vf)
                     epoch_overlap += overlap_penalty.detach().item()
                 else:
-                    log_p = self.log_prob(x_batch)
-                    nll = -log_p.mean()
+                    if gradient_mode == "intrinsic_adjoint":
+                        nll = intrinsic_adjoint_nll(
+                            self.vf,
+                            self.metric,
+                            x_batch,
+                            dt=self.dt,
+                            base_distribution=self.base_distribution,
+                        )
+                    else:
+                        log_p = self.log_prob(x_batch)
+                        nll = -log_p.mean()
                     loss = nll
                     if lipschitz_weight > 0.0:
                         loss = loss + lipschitz_weight * coordinate_jacobian_regularizer(

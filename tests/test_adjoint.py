@@ -20,6 +20,7 @@ from geomflow.torch import (
 )
 
 from analytic_references import central_difference, observed_order
+from conftest import requires_cuda
 
 
 DTYPE = torch.float64
@@ -420,6 +421,59 @@ def test_higher_order_gradients_are_explicitly_unsupported() -> None:
     loss = intrinsic_adjoint_nll(field, EuclideanSpace(1), data, dt=0.2)
     (gradient,) = torch.autograd.grad(loss, (field.coefficient,), create_graph=True)
     assert not gradient.requires_grad
+
+
+def test_repeated_backward_with_retained_graph() -> None:
+    data = torch.tensor([[0.7]], dtype=DTYPE, requires_grad=True)
+    field = LinearField(0.2)
+    loss = intrinsic_adjoint_nll(field, EuclideanSpace(1), data, dt=0.2)
+    first = torch.autograd.grad(loss, (field.coefficient, data), retain_graph=True)
+    second = torch.autograd.grad(loss, (field.coefficient, data))
+    for actual, expected in zip(second, first):
+        torch.testing.assert_close(actual, expected, rtol=0.0, atol=0.0)
+
+
+def test_custom_function_passes_input_gradcheck() -> None:
+    field = LinearField(0.2)
+
+    def objective(data: torch.Tensor) -> torch.Tensor:
+        return intrinsic_adjoint_nll(field, EuclideanSpace(1), data, dt=0.5)
+
+    data = torch.tensor([[0.7]], dtype=DTYPE, requires_grad=True)
+    assert torch.autograd.gradcheck(objective, (data,), fast_mode=True)
+
+
+@pytest.mark.gpu
+@requires_cuda
+@pytest.mark.parametrize("dtype", [torch.float32, torch.float64])
+@pytest.mark.parametrize("batch_size", [1, 3])
+def test_cuda_adjoint_matches_direct(dtype: torch.dtype, batch_size: int) -> None:
+    device = torch.device("cuda")
+    direct_data = torch.linspace(0.2, 0.8, batch_size, device=device, dtype=dtype)[
+        :, None
+    ].requires_grad_(True)
+    adjoint_data = direct_data.detach().clone().requires_grad_(True)
+    direct_field = LinearField(0.2).to(device=device, dtype=dtype)
+    adjoint_field = LinearField(0.2).to(device=device, dtype=dtype)
+    direct = _gradients(
+        cnf_nll(direct_field, EuclideanSpace(1), direct_data, dt=0.3),
+        direct_field,
+        direct_data,
+    )
+    adjoint = _gradients(
+        intrinsic_adjoint_nll(
+            adjoint_field, EuclideanSpace(1), adjoint_data, dt=0.3
+        ),
+        adjoint_field,
+        adjoint_data,
+    )
+    tolerance = 2e-5 if dtype == torch.float32 else 2e-11
+    for actual, expected in zip(adjoint, direct):
+        assert actual.device == expected.device == device
+        assert actual.dtype == expected.dtype == dtype
+        torch.testing.assert_close(
+            actual, expected, rtol=tolerance, atol=tolerance
+        )
 
 
 def test_disconnected_constant_objective_returns_zero_input_cotangent() -> None:

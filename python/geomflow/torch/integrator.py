@@ -49,6 +49,62 @@ class FlowResult:
         return self.divergence_integral
 
 
+def _augmented_rk4_step(
+    vf: ManifoldVectorField,
+    metric: AnalyticMetric,
+    x: torch.Tensor,
+    time: float,
+    step_size: float,
+    *,
+    compute_divergence: bool = True,
+    stage_callback: Callable[[float, torch.Tensor], None] | None = None,
+) -> tuple[torch.Tensor, torch.Tensor]:
+    """Advance one intrinsic augmented RK4 step."""
+    build_graph = torch.is_grad_enabled()
+
+    def augmented_rhs(
+        stage_time: float, state: torch.Tensor
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        metric.validate_points(state)
+        if stage_callback is not None:
+            stage_callback(stage_time, state)
+        time_tensor = torch.full(
+            state.shape[:-1], stage_time, device=state.device, dtype=state.dtype
+        )
+        field_value = vf(time_tensor, state)
+        if not compute_divergence:
+            return field_value, state.new_zeros(state.shape[:-1])
+
+        with torch.enable_grad():
+            divergence_state = state
+            if not divergence_state.requires_grad:
+                divergence_state = divergence_state.clone().requires_grad_(True)
+
+            def field_at_state(value: torch.Tensor) -> torch.Tensor:
+                value_time = torch.full(
+                    value.shape[:-1], stage_time, device=value.device, dtype=value.dtype
+                )
+                return vf(value_time, value)
+
+            divergence_value = divergence(field_at_state, divergence_state, metric)
+            if not build_graph:
+                divergence_value = divergence_value.detach()
+        return field_value, divergence_value
+
+    half_h = step_size / 2.0
+    k1_x, k1_i = augmented_rhs(time, x)
+    k2_x, k2_i = augmented_rhs(time + half_h, x + half_h * k1_x)
+    k3_x, k3_i = augmented_rhs(time + half_h, x + half_h * k2_x)
+    k4_x, k4_i = augmented_rhs(time + step_size, x + step_size * k3_x)
+    x_next = metric.canonicalize(
+        x + (step_size / 6.0) * (k1_x + 2.0 * k2_x + 2.0 * k3_x + k4_x)
+    )
+    integral_increment = (step_size / 6.0) * (
+        k1_i + 2.0 * k2_i + 2.0 * k3_i + k4_i
+    )
+    return x_next, integral_increment
+
+
 def integrate_rk4(
     vf: ManifoldVectorField,
     metric: AnalyticMetric,
@@ -88,55 +144,17 @@ def integrate_rk4(
     if track_trajectory:
         checkpoint(schedule.t0)
 
-    build_graph = torch.is_grad_enabled()
-
-    def augmented_rhs(
-        time: float, state: torch.Tensor
-    ) -> tuple[torch.Tensor, torch.Tensor]:
-        metric.validate_points(state)
-        if stage_callback is not None:
-            stage_callback(time, state)
-        time_tensor = torch.full(
-            state.shape[:-1], time, device=state.device, dtype=state.dtype
-        )
-        field_value = vf(time_tensor, state)
-        if not compute_divergence:
-            return field_value, torch.zeros(
-                state.shape[:-1], device=state.device, dtype=state.dtype
-            )
-
-        with torch.enable_grad():
-            divergence_state = state
-            if not divergence_state.requires_grad:
-                divergence_state = divergence_state.clone().requires_grad_(True)
-
-            def field_at_state(value: torch.Tensor) -> torch.Tensor:
-                stage_time = torch.full(
-                    value.shape[:-1], time, device=value.device, dtype=value.dtype
-                )
-                return vf(stage_time, value)
-
-            divergence_value = divergence(field_at_state, divergence_state, metric)
-            if not build_graph:
-                divergence_value = divergence_value.detach()
-        return field_value, divergence_value
-
     for step in schedule:
-        t = step.start
-        h = step.size
-        half_h = h / 2.0
-
-        k1_x, k1_i = augmented_rhs(t, x)
-        k2_x, k2_i = augmented_rhs(t + half_h, x + half_h * k1_x)
-        k3_x, k3_i = augmented_rhs(t + half_h, x + half_h * k2_x)
-        k4_x, k4_i = augmented_rhs(t + h, x + h * k3_x)
-
-        x = metric.canonicalize(
-            x + (h / 6.0) * (k1_x + 2.0 * k2_x + 2.0 * k3_x + k4_x)
+        x, integral_increment = _augmented_rk4_step(
+            vf,
+            metric,
+            x,
+            step.start,
+            step.size,
+            compute_divergence=compute_divergence,
+            stage_callback=stage_callback,
         )
-        integral = integral + (h / 6.0) * (
-            k1_i + 2.0 * k2_i + 2.0 * k3_i + k4_i
-        )
+        integral = integral + integral_increment
         if track_trajectory and checkpoint_due(
             step.index + 1, len(schedule), checkpoint_interval
         ):

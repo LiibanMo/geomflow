@@ -118,6 +118,33 @@ def test_fit_records_global_field_compatibility_diagnostics():
     assert model.fit_diagnostics[0]["overlap_residual"] >= 0.0
 
 
+@pytest.mark.training
+def test_single_chart_fitter_exposes_intrinsic_adjoint_mode():
+    model = ManifoldCNF(EuclideanSpace(1), hidden_dim=4, n_layers=1, dt=0.5)
+    data = torch.tensor([[-0.2], [0.3]])
+    history = model.fit(
+        data,
+        epochs=1,
+        batch_size=2,
+        lipschitz_weight=0.0,
+        weight_decay_weight=0.0,
+        verbose=False,
+        gradient_mode="intrinsic_adjoint",
+    )
+    assert len(history) == 1
+    assert torch.isfinite(torch.tensor(history)).all()
+
+
+def test_multichart_fitter_rejects_intrinsic_adjoint_mode():
+    model = ManifoldCNF(Sphere2DAtlas(), hidden_dim=4, n_layers=1, dt=0.5)
+    with pytest.raises(ValueError, match="not supported for multi-chart"):
+        model.fit(
+            torch.tensor([[0.5, 0.1]]),
+            epochs=0,
+            gradient_mode="intrinsic_adjoint",
+        )
+
+
 if __name__ == "__main__":
     print("=== Testing ManifoldCNF Fitter & Presets ===\n")
     test_single_chart_fitter_euclidean()
