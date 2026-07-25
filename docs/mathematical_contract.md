@@ -259,6 +259,47 @@ is outside this contract. This API rejects parameterized metrics and base
 distributions. Higher-order gradients through custom backward are unsupported;
 direct `cnf_nll` remains the reference path when they are required.
 
+### C++ Intrinsic Adjoint
+
+`AdjointSolver::compute_gradient` differentiates
+
+```text
+Phi(x(t1)) + a_I integral_t0^t1 div_g f_theta(t, x(t)) dt,
+```
+
+where `terminal_cotangent = d Phi(x(t1))` and `density_adjoint = a_I`.
+The density adjoint is constant because the augmented divergence state does not
+appear in its own dynamics. Set `density_adjoint` to zero for an endpoint-only
+objective and to one for the full displayed objective. Terminal-time
+derivatives are separate and are not represented by this scalar.
+
+Following Liiban Mohamud's intrinsic adjoint derivation, the C++ solver uses the
+coordinate equation
+
+```text
+dot(lambda_j) = -lambda_i partial_j f_theta^i
+                - a_I partial_j div_g f_theta.
+```
+
+This is the coordinate form of the intrinsic cotangent equation: the
+Levi-Civita connection terms from covariant transport cancel those in
+`lambda_i nabla_j f^i`. Consequently, `lambda` remains a cotangent even though
+the implemented right-hand side contains ordinary coordinate derivatives.
+Forward trajectory entries supply exact accepted interval times and lengths;
+the reverse RK4 sweep reconstructs matching midpoint states and pairs every
+state, cotangent, and parameter derivative at the same quadrature time.
+
+The C++ backend estimates state and parameter derivatives with scaled central
+differences, using `epsilon * max(1, abs(value))`. Both `dt` and finite-
+difference epsilon must be finite and positive. Manifold callbacks must reject
+points outside their chart domain; such rejection propagates when a central
+perturbation leaves the domain rather than silently evaluating an invalid
+coordinate. Nested differences in `partial_theta div_g f` and
+`partial_x div_g f` amplify roundoff and truncation error, so C++ gradients are
+an accuracy-limited numerical path. The PyTorch autograd implementation is the
+preferred reference when tighter derivatives or higher-order gradients are
+required.
+
 ## Solver Orientation
 
 `t_base = 0` and `t_data = te`. Generation integrates from base to data;

@@ -74,7 +74,7 @@ mandatory exit gates in this document pass.
 - [x] [MATH-025] Correct Python single-chart divergence evaluations that pair the updated state with the old time.
 - [x] [MATH-026] Correct C++ divergence quadrature that evaluates both temporal endpoints at the final spatial point.
 - [x] [MATH-027] Reject or explicitly define zero-step behavior instead of permitting nontermination.
-- [ ] [MATH-028] Correct final partial-step handling in C++ adjoint integration and parameter quadrature.
+- [x] [MATH-028] Correct final partial-step handling in C++ adjoint integration and parameter quadrature.
 
 ### Density Measure And Base Distribution
 
@@ -98,11 +98,11 @@ mandatory exit gates in this document pass.
 - [x] [MATH-050] Make the Python intrinsic adjoint return gradients for every trainable vector-field parameter.
 - [x] [MATH-051] Make the Python custom backward the derivative of its exact custom forward computation.
 - [x] [MATH-052] Evaluate adjoint RK stages at trajectory states consistent with their stage times.
-- [ ] [MATH-053] Correct C++ log-density adjoint state semantics.
+- [x] [MATH-053] Correct C++ log-density adjoint state semantics.
 - [x] [MATH-054] Include the direct parameter variation of divergence required by Mohamud's Theorem 3.7.
-- [ ] [MATH-055] Make the C++ non-Euclidean cotangent update coordinate invariant.
-- [ ] [MATH-056] Correct reverse-time and final-partial-step parameter integration in C++.
-- [ ] [MATH-057] Pair adjoints and parameter derivatives at consistent times in C++ quadrature.
+- [x] [MATH-055] Make the C++ non-Euclidean cotangent update coordinate invariant.
+- [x] [MATH-056] Correct reverse-time and final-partial-step parameter integration in C++.
+- [x] [MATH-057] Pair adjoints and parameter derivatives at consistent times in C++ quadrature.
 
 ### Charts And Built-In Manifolds
 
@@ -539,56 +539,56 @@ mandatory exit gates in this document pass.
 
 ### 7.1 Adjoint State Model
 
-- [ ] [MATH-800] Review whether `AdjointState::mu` corresponds to any state in Mohamud's Theorem 3.7.
-- [ ] [MATH-801] Remove `mu`, rename it, or redefine it only after the Phase 0 derivation identifies its exact mathematical role.
-- [ ] [MATH-802] Do not evolve a log-density adjoint with `mu_dot = -lambda(f)` if the augmented density state does not depend on density.
-- [ ] [MATH-803] If an augmented density adjoint is retained, enforce its mathematically derived constant dynamics.
-- [ ] [MATH-804] Multiply any divergence source by the correct density-adjoint coefficient when that formulation is used.
-- [ ] [MATH-805] Keep terminal-time adjoints separate from log-density adjoints.
+- [x] [MATH-800] Review whether `AdjointState::mu` corresponds to any state in Mohamud's Theorem 3.7.
+- [x] [MATH-801] Remove `mu`, rename it, or redefine it only after the Phase 0 derivation identifies its exact mathematical role.
+- [x] [MATH-802] Do not evolve a log-density adjoint with `mu_dot = -lambda(f)` if the augmented density state does not depend on density.
+- [x] [MATH-803] If an augmented density adjoint is retained, enforce its mathematically derived constant dynamics.
+- [x] [MATH-804] Multiply any divergence source by the correct density-adjoint coefficient when that formulation is used.
+- [x] [MATH-805] Keep terminal-time adjoints separate from log-density adjoints.
 
 ### 7.2 Intrinsic Cotangent Dynamics
 
-- [ ] [MATH-810] Derive C++ coordinate updates from Mohamud's intrinsic cotangent equation.
-- [ ] [MATH-811] If the left-hand derivative is covariant, include cotangent connection transport in coordinate integration.
-- [ ] [MATH-812] If connection terms cancel against `lambda contracted nabla f`, implement and document the resulting partial-Jacobian equation.
-- [ ] [MATH-813] Do not combine a covariant RHS with an ordinary derivative without the required conversion.
-- [ ] [MATH-814] Test the one-dimensional metric `g = exp(2x)` and constant field counterexample.
-- [ ] [MATH-815] Test coordinate covariance under a nontrivial chart transformation.
+- [x] [MATH-810] Derive C++ coordinate updates from Mohamud's intrinsic cotangent equation.
+- [x] [MATH-811] If the left-hand derivative is covariant, include cotangent connection transport in coordinate integration.
+- [x] [MATH-812] If connection terms cancel against `lambda contracted nabla f`, implement and document the resulting partial-Jacobian equation.
+- [x] [MATH-813] Do not combine a covariant RHS with an ordinary derivative without the required conversion.
+- [x] [MATH-814] Test the one-dimensional metric `g = exp(2x)` and constant field counterexample.
+- [x] [MATH-815] Test coordinate covariance under a nontrivial chart transformation.
 
 ### 7.3 Backward Step Replay
 
-- [ ] [MATH-820] Store forward times rather than reconstructing them with a separate loop.
-- [ ] [MATH-821] Use each interval's exact signed length.
-- [ ] [MATH-822] Evaluate midpoint adjoint stages at midpoint trajectory approximations or reconstructed stage states.
-- [ ] [MATH-823] Evaluate the final adjoint stage at the interval's opposite endpoint state.
-- [ ] [MATH-824] Avoid freezing `x_back` for all four stages.
-- [ ] [MATH-825] Verify adjoint convergence order independently.
+- [x] [MATH-820] Store forward times rather than reconstructing them with a separate loop.
+- [x] [MATH-821] Use each interval's exact signed length.
+- [x] [MATH-822] Evaluate midpoint adjoint stages at midpoint trajectory approximations or reconstructed stage states.
+- [x] [MATH-823] Evaluate the final adjoint stage at the interval's opposite endpoint state.
+- [x] [MATH-824] Avoid freezing `x_back` for all four stages.
+- [x] [MATH-825] Verify adjoint convergence order independently.
 
 ### 7.4 C++ Parameter Variation
 
-- [ ] [MATH-830] Add direct finite-difference evaluation of `delta_theta div f_theta`.
-- [ ] [MATH-831] Combine it with the cotangent pairing using the approved Theorem 3.7 sign.
-- [ ] [MATH-832] Preserve time orientation rather than always multiplying by `abs(dt)`.
-- [ ] [MATH-833] Use exact final remainder-step length.
-- [ ] [MATH-834] Pair `lambda(t)`, `x(t)`, and parameter derivatives at the same quadrature time.
-- [ ] [MATH-835] Avoid pairing an updated endpoint cotangent with a previous endpoint field derivative.
-- [ ] [MATH-836] Add a density-only counterexample with zero terminal state cotangent and nonzero divergence parameter gradient.
-- [ ] [MATH-837] Add endpoint-only and full-NLL objectives as distinct tests.
-- [ ] [MATH-838] Remove tests that accidentally validate a different objective from the solver contract.
+- [x] [MATH-830] Add direct finite-difference evaluation of `delta_theta div f_theta`.
+- [x] [MATH-831] Combine it with the cotangent pairing using the approved Theorem 3.7 sign.
+- [x] [MATH-832] Preserve time orientation rather than always multiplying by `abs(dt)`.
+- [x] [MATH-833] Use exact final remainder-step length.
+- [x] [MATH-834] Pair `lambda(t)`, `x(t)`, and parameter derivatives at the same quadrature time.
+- [x] [MATH-835] Avoid pairing an updated endpoint cotangent with a previous endpoint field derivative.
+- [x] [MATH-836] Add a density-only counterexample with zero terminal state cotangent and nonzero divergence parameter gradient.
+- [x] [MATH-837] Add endpoint-only and full-NLL objectives as distinct tests.
+- [x] [MATH-838] Remove tests that accidentally validate a different objective from the solver contract.
 
 ### 7.5 Finite-Difference Reliability
 
-- [ ] [MATH-840] Define coordinate-scaled perturbations for state derivatives.
-- [ ] [MATH-841] Define parameter-scaled perturbations for parameter variations.
-- [ ] [MATH-842] Reject zero perturbation sizes.
-- [ ] [MATH-843] Detect perturbations that leave a valid chart domain.
-- [ ] [MATH-844] Use central differences where practical.
-- [ ] [MATH-845] Quantify nested finite-difference error in `grad(div f)`.
-- [ ] [MATH-846] Document C++ accuracy limitations relative to PyTorch autograd.
+- [x] [MATH-840] Define coordinate-scaled perturbations for state derivatives.
+- [x] [MATH-841] Define parameter-scaled perturbations for parameter variations.
+- [x] [MATH-842] Reject zero perturbation sizes.
+- [x] [MATH-843] Detect perturbations that leave a valid chart domain.
+- [x] [MATH-844] Use central differences where practical.
+- [x] [MATH-845] Quantify nested finite-difference error in `grad(div f)`.
+- [x] [MATH-846] Document C++ accuracy limitations relative to PyTorch autograd.
 
 ### Phase 7 Exit Gate
 
-- [ ] [MATH-859] Pass C++ analytic state, density, non-Euclidean cotangent, direct-divergence parameter, reverse-time, and remainder-step gradient tests.
+- [x] [MATH-859] Pass C++ analytic state, density, non-Euclidean cotangent, direct-divergence parameter, reverse-time, and remainder-step gradient tests.
 
 ## Phase 8: Dynamic Charts And Global Geometric Consistency
 
