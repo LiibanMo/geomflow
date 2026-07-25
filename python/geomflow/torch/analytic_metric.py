@@ -10,7 +10,7 @@ from typing import Callable, Optional
 
 import torch
 
-from ._utils import validate_supported_floating_tensor
+from ._utils import batched_jacobian, validate_supported_floating_tensor
 
 
 class AnalyticMetric:
@@ -174,25 +174,12 @@ class AnalyticMetric:
                 x.shape[:-1] + (self.dim, self.dim, self.dim),
             )
 
-        x_grad = x if x.requires_grad else x.clone().requires_grad_(True)
-        G = self.metric(x_grad)
-        dG: list[torch.Tensor] = []
-        for i in range(self.dim):
-            dG_row: list[torch.Tensor] = []
-            for j in range(self.dim):
-                component = G[..., i, j]
-                if component.requires_grad:
-                    (g,) = torch.autograd.grad(
-                        component.sum(),
-                        x_grad,
-                        create_graph=True,
-                        retain_graph=True,
-                        allow_unused=True,
-                    )
-                else:
-                    g = None
-                if g is None:
-                    g = torch.zeros_like(x_grad)
-                dG_row.append(g)
-            dG.append(torch.stack(dG_row, dim=-2))
-        return torch.stack(dG, dim=-3)
+        self.validate_points(x)
+
+        def flattened_metric(point: torch.Tensor) -> torch.Tensor:
+            return self._metric_fn(point).reshape(
+                point.shape[:-1] + (self.dim * self.dim,)
+            )
+
+        derivative = batched_jacobian(flattened_metric, x)
+        return derivative.reshape(x.shape[:-1] + (self.dim, self.dim, self.dim))

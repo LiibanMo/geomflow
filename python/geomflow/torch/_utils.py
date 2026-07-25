@@ -69,39 +69,69 @@ def validate_tensor_module_compatibility(
 def batched_jacobian(
     fn: callable, x: torch.Tensor
 ) -> torch.Tensor:
-    """Compute Jacobian of ``fn`` for a batch, returning ``(..., dim_out, dim_in)``.
+    """Return independent-sample Jacobians with shape ``(..., out, in)``.
 
-    ``fn`` must act pointwise over every leading batch dimension. Summing each
-    output component then gives the per-sample Jacobian without materializing
-    the zero cross-sample blocks of a full coupled-batch Jacobian.
+    ``fn`` is evaluated on one point at a time and must map ``(in,)`` to
+    ``(out,)``. Arbitrary leading batch dimensions are flattened for the
+    transform and restored in the result.
     """
     if x.ndim < 1:
         raise ValueError("x must have a final coordinate dimension")
 
     *batch_shape, dim_in = x.shape
     x_grad = x if x.requires_grad else x.clone().requires_grad_(True)
-    y = fn(x_grad)
-    if y.ndim < 1 or y.shape[:-1] != x.shape[:-1]:
-        raise ValueError(
-            "fn must preserve all leading batch dimensions and return "
-            "shape (..., dim_out)"
-        )
-    dim_out = y.shape[-1]
 
-    rows: list[torch.Tensor] = []
-    for i in range(dim_out):
-        component = y[..., i]
-        if component.requires_grad:
-            (row,) = torch.autograd.grad(
-                component.sum(),
-                x_grad,
-                create_graph=True,
-                retain_graph=True,
-                allow_unused=True,
+    def point_fn(point: torch.Tensor) -> torch.Tensor:
+        result = fn(point)
+        if result.ndim != 1:
+            raise ValueError(
+                "fn must preserve leading batch dimensions and map each point "
+                "to a one-dimensional output"
             )
-        else:
+        return result
+
+    def autograd_fallback() -> torch.Tensor:
+        y = fn(x_grad)
+        if y.ndim < 1 or y.shape[:-1] != x.shape[:-1]:
+            raise ValueError(
+                "fn must preserve all leading batch dimensions and return "
+                "shape (..., dim_out)"
+            )
+        rows: list[torch.Tensor] = []
+        for component in y.unbind(-1):
             row = None
-        if row is None:
-            row = torch.zeros(*batch_shape, dim_in, device=x.device, dtype=x.dtype)
-        rows.append(row)
-    return torch.stack(rows, dim=-2)
+            if component.requires_grad:
+                (row,) = torch.autograd.grad(
+                    component.sum(),
+                    x_grad,
+                    create_graph=True,
+                    retain_graph=True,
+                    allow_unused=True,
+                )
+            rows.append(torch.zeros_like(x_grad) if row is None else row)
+        return torch.stack(rows, dim=-2)
+
+    if not batch_shape:
+        return torch.func.jacrev(point_fn)(x_grad)
+
+    flat_x = x_grad.reshape(-1, dim_in)
+    if flat_x.shape[0] == 0:
+        prototype = fn(x_grad)
+        if prototype.ndim < 1 or prototype.shape[:-1] != x.shape[:-1]:
+            raise ValueError(
+                "fn must preserve all leading batch dimensions and return "
+                "shape (..., dim_out)"
+            )
+        return x.new_empty(*batch_shape, prototype.shape[-1], dim_in)
+
+    if x.device.type == "cpu":
+        return autograd_fallback()
+
+    try:
+        jacobian = torch.vmap(torch.func.jacrev(point_fn))(flat_x)
+    except RuntimeError as error:
+        message = str(error)
+        if "vmap:" not in message and "functorch" not in message:
+            raise
+        return autograd_fallback()
+    return jacobian.reshape(*batch_shape, jacobian.shape[-2], dim_in)
