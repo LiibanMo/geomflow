@@ -103,6 +103,32 @@ class Chart:
         if self._domain is None and self._tree is None:
             self._domain = _all_finite
 
+    def set_samples(self, samples: torch.Tensor) -> None:
+        """Replace persistent samples and safely rebuild the CPU query cache."""
+        self.samples = samples.detach()
+        from scipy.spatial import KDTree
+
+        sample_np = self.samples.cpu().numpy()
+        self._tree = KDTree(sample_np)
+        k_eff = min(self.k, len(sample_np))
+        distances, _ = self._tree.query(sample_np, k=k_eff)
+        distances = np.asarray(distances).reshape(len(sample_np), -1)
+        self.radius = max(
+            float(np.percentile(distances.max(axis=1), 95)) * 2.5,
+            float(np.finfo(sample_np.dtype).eps),
+        )
+
+    @staticmethod
+    def _validate_mask(name: str, mask: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
+        if mask.shape != x.shape[:-1]:
+            raise ValueError(f"{name} must return shape x.shape[:-1]")
+        if mask.device != x.device or mask.dtype != torch.bool:
+            raise ValueError(
+                f"{name}: expected device={x.device}, dtype=torch.bool; got "
+                f"device={mask.device}, dtype={mask.dtype}"
+            )
+        return mask
+
     def heuristically_covered(self, x: torch.Tensor) -> torch.Tensor:
         """Return the k-NN sample-coverage heuristic, never chart validity."""
         if self._tree is None or self.samples is None or self.radius is None:
@@ -124,9 +150,7 @@ class Chart:
             raise ValueError("coordinate dimension does not match chart")
         predicate = self._domain
         mask = self.heuristically_covered(x) if predicate is None else predicate(x)
-        if mask.shape != x.shape[:-1]:
-            raise ValueError("chart domain predicate must return shape x.shape[:-1]")
-        return mask.to(device=x.device, dtype=torch.bool) & _all_finite(x)
+        return self._validate_mask("chart domain predicate", mask, x) & _all_finite(x)
 
     def is_inside(self, x: torch.Tensor) -> torch.Tensor:
         """Compatibility alias for :meth:`contains`."""
@@ -137,9 +161,7 @@ class Chart:
         if target_id not in self.transitions:
             return torch.zeros(x.shape[:-1], device=x.device, dtype=torch.bool)
         mask = self.transitions[target_id].source_domain(x)
-        if mask.shape != x.shape[:-1]:
-            raise ValueError("transition domain must return shape x.shape[:-1]")
-        return self.contains(x) & mask.to(device=x.device, dtype=torch.bool)
+        return self.contains(x) & self._validate_mask("transition domain", mask, x)
 
     def transition_to(self, target_id: int, x: torch.Tensor) -> torch.Tensor:
         """Map coordinates after requiring every point to lie in the overlap."""
@@ -149,7 +171,20 @@ class Chart:
             raise ChartDomainError(
                 f"coordinates are outside overlap {self.chart_id}->{target_id}"
             )
-        return self.transitions[target_id].map(x)
+        mapped = self.transitions[target_id].map(x)
+        if not isinstance(mapped, torch.Tensor):
+            raise TypeError("transition map must return a torch.Tensor")
+        if mapped.shape != x.shape:
+            raise ValueError(
+                f"transition map: expected shape {tuple(x.shape)}; "
+                f"got {tuple(mapped.shape)}"
+            )
+        if mapped.device != x.device or mapped.dtype != x.dtype:
+            raise ValueError(
+                f"transition map: expected device={x.device}, dtype={x.dtype}; "
+                f"got device={mapped.device}, dtype={mapped.dtype}"
+            )
+        return mapped
 
     def jacobian(self, target_id: int, x: torch.Tensor) -> torch.Tensor:
         """Return ``D psi_target,self`` on the declared overlap."""

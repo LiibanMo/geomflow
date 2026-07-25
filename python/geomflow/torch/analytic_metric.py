@@ -10,6 +10,8 @@ from typing import Callable, Optional
 
 import torch
 
+from ._utils import validate_supported_floating_tensor
+
 
 class AnalyticMetric:
     """Wrap a user-provided analytic Riemannian metric.
@@ -41,6 +43,7 @@ class AnalyticMetric:
         derivative_fn: Optional[Callable[[torch.Tensor], torch.Tensor]] = None,
         domain_fn: Optional[Callable[[torch.Tensor], torch.Tensor]] = None,
         canonicalize_fn: Optional[Callable[[torch.Tensor], torch.Tensor]] = None,
+        debug_validation: bool = False,
     ):
         if dim < 1:
             raise ValueError("metric dimension must be positive")
@@ -51,18 +54,55 @@ class AnalyticMetric:
         self._derivative_fn = derivative_fn
         self._domain_fn = domain_fn
         self._canonicalize_fn = canonicalize_fn
+        self.debug_validation = debug_validation
+
+    def _validate_callback_output(
+        self,
+        name: str,
+        value: torch.Tensor,
+        x: torch.Tensor,
+        expected_shape: torch.Size,
+        *,
+        symmetric: bool = False,
+    ) -> torch.Tensor:
+        if not isinstance(value, torch.Tensor):
+            raise TypeError(f"{name}: expected a torch.Tensor result")
+        if value.shape != expected_shape:
+            raise ValueError(
+                f"{name}: expected shape {tuple(expected_shape)}; "
+                f"got {tuple(value.shape)}"
+            )
+        if value.device != x.device or value.dtype != x.dtype:
+            raise ValueError(
+                f"{name}: expected device={x.device}, dtype={x.dtype}; "
+                f"got device={value.device}, dtype={value.dtype}"
+            )
+        validate_supported_floating_tensor(value, name)
+        if self.debug_validation:
+            if not torch.isfinite(value).all():
+                raise ValueError(f"{name}: result must be finite")
+            if symmetric and not torch.allclose(value, value.transpose(-1, -2)):
+                raise ValueError(f"{name}: result must be symmetric")
+        return value
 
     def contains(self, x: torch.Tensor) -> torch.Tensor:
         """Return whether coordinates lie in this preset's declared domain."""
         if x.ndim < 1 or x.shape[-1] != self.dim:
             raise ValueError(f"expected points with shape (..., {self.dim})")
+        validate_supported_floating_tensor(x, "AnalyticMetric.contains")
         finite = torch.isfinite(x).all(dim=-1)
         if self._domain_fn is None:
             return finite
         mask = self._domain_fn(x)
         if mask.shape != x.shape[:-1]:
             raise ValueError("metric domain predicate must return shape x.shape[:-1]")
-        return finite & mask.to(device=x.device, dtype=torch.bool)
+        if mask.device != x.device or mask.dtype != torch.bool:
+            raise ValueError(
+                "metric domain predicate: expected "
+                f"device={x.device}, dtype=torch.bool; got "
+                f"device={mask.device}, dtype={mask.dtype}"
+            )
+        return finite & mask
 
     def validate_points(self, x: torch.Tensor) -> None:
         """Raise an actionable error when any coordinate is outside the domain."""
@@ -72,30 +112,44 @@ class AnalyticMetric:
     def canonicalize(self, x: torch.Tensor) -> torch.Tensor:
         """Return the canonical representative of identified coordinates."""
         self.validate_points(x)
-        return x if self._canonicalize_fn is None else self._canonicalize_fn(x)
+        if self._canonicalize_fn is None:
+            return x
+        return self._validate_callback_output(
+            "canonicalize_fn", self._canonicalize_fn(x), x, x.shape
+        )
 
     def metric(self, x: torch.Tensor) -> torch.Tensor:
         """Return metric tensor ``G(x)`` of shape ``(..., dim, dim)``."""
         self.validate_points(x)
         G = self._metric_fn(x)
-        if G.shape[-2:] != (self.dim, self.dim):
-            raise ValueError(
-                f"metric_fn returned shape {G.shape} but expected (..., {self.dim}, {self.dim})"
-            )
-        return G
+        return self._validate_callback_output(
+            "metric_fn",
+            G,
+            x,
+            x.shape[:-1] + (self.dim, self.dim),
+            symmetric=True,
+        )
 
     def inverse(self, x: torch.Tensor) -> torch.Tensor:
         """Return inverse metric ``G(x)^{-1}``."""
         self.validate_points(x)
         if self._inverse_fn is not None:
-            return self._inverse_fn(x)
+            return self._validate_callback_output(
+                "inverse_fn",
+                self._inverse_fn(x),
+                x,
+                x.shape[:-1] + (self.dim, self.dim),
+                symmetric=True,
+            )
         return torch.linalg.inv(self.metric(x))
 
     def sqrt_det(self, x: torch.Tensor) -> torch.Tensor:
         """Return ``sqrt(det G(x))``."""
         self.validate_points(x)
         if self._sqrt_det_fn is not None:
-            return self._sqrt_det_fn(x)
+            return self._validate_callback_output(
+                "sqrt_det_fn", self._sqrt_det_fn(x), x, x.shape[:-1]
+            )
         return torch.sqrt(torch.linalg.det(self.metric(x)))
 
     def log_det(self, x: torch.Tensor) -> torch.Tensor:
@@ -113,7 +167,12 @@ class AnalyticMetric:
         evaluate the numerical derivative value.
         """
         if self._derivative_fn is not None:
-            return self._derivative_fn(x)
+            return self._validate_callback_output(
+                "derivative_fn",
+                self._derivative_fn(x),
+                x,
+                x.shape[:-1] + (self.dim, self.dim, self.dim),
+            )
 
         x_grad = x if x.requires_grad else x.clone().requires_grad_(True)
         G = self.metric(x_grad)

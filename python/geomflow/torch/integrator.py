@@ -8,6 +8,7 @@ from typing import Callable
 import torch
 
 from .analytic_metric import AnalyticMetric
+from ._utils import validate_tensor_module_compatibility
 from .operators import divergence
 from .vector_field import ManifoldVectorField
 
@@ -64,6 +65,7 @@ def integrate_rk4(
         raise ValueError("x0 must have shape (..., dim); got 0-d tensor")
     if not x0.is_floating_point():
         raise TypeError("x0 must have a floating-point dtype")
+    validate_tensor_module_compatibility(x0, vf, "integrate_rk4")
     if not math.isfinite(float(t0)) or not math.isfinite(float(t1)):
         raise ValueError("t0 and t1 must be finite")
     if not math.isfinite(float(dt)) or dt <= 0.0:

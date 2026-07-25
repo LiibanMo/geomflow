@@ -12,6 +12,7 @@ import torch
 import torch.nn as nn
 
 from .analytic_metric import AnalyticMetric
+from ._utils import module_device_dtype, validate_tensor_module_compatibility
 from .atlas import Atlas
 from .base_distribution import (
     AtlasBaseDistribution,
@@ -77,6 +78,9 @@ class ManifoldCNF(nn.Module):
                 raise TypeError("an atlas requires AtlasBaseDistribution")
             if self.base_distribution.reference_chart_id != self.atlas.reference_chart_id:
                 raise ValueError("base reference chart does not match atlas reference chart")
+            for chart_id, chart in self.atlas.charts.items():
+                if chart.samples is not None:
+                    self.register_buffer(f"_atlas_samples_{chart_id}", chart.samples)
         else:
             self.metric: AnalyticMetric = manifold
             self.dim = self.metric.dim
@@ -95,6 +99,24 @@ class ManifoldCNF(nn.Module):
             )
             validate_base_distribution(self.base_distribution, self.dim)
         self.fit_diagnostics: list[dict[str, float]] = []
+
+    def _sync_atlas_samples(self) -> None:
+        if not self.is_multichart:
+            return
+        for chart_id, chart in self.atlas.charts.items():
+            name = f"_atlas_samples_{chart_id}"
+            if name in self._buffers:
+                chart.set_samples(self._buffers[name])
+
+    def _apply(self, fn, recurse: bool = True):
+        result = super()._apply(fn, recurse)
+        self._sync_atlas_samples()
+        return result
+
+    def load_state_dict(self, state_dict, strict: bool = True, assign: bool = False):
+        result = super().load_state_dict(state_dict, strict=strict, assign=assign)
+        self._sync_atlas_samples()
+        return result
 
     def log_prob(
         self,
@@ -115,6 +137,7 @@ class ManifoldCNF(nn.Module):
         log_p : Tensor
             Log-likelihood values of shape ``(batch,)``.
         """
+        validate_tensor_module_compatibility(x_data, self, "ManifoldCNF.log_prob")
         if self.is_multichart:
             return cnf_log_prob_multichart(
                 self.vf,
@@ -137,7 +160,7 @@ class ManifoldCNF(nn.Module):
         self,
         n_samples: int,
         start_chart: Optional[int] = None,
-        device: Optional[torch.device] = None,
+        device: Optional[torch.device | str] = None,
     ) -> tuple[torch.Tensor, Optional[int]]:
         """Sample from the learned manifold CNF by integrating t = 0 -> 1.
 
@@ -156,10 +179,14 @@ class ManifoldCNF(nn.Module):
         final_chart : int or None
             Final chart ID if multi-chart, else None.
         """
-        if device is None:
-            device = next(self.parameters()).device
-
-        dtype = next(self.parameters()).dtype
+        model_device, dtype = module_device_dtype(self, "ManifoldCNF.sample")
+        if device is not None and torch.device(device) != model_device:
+            raise ValueError(
+                f"ManifoldCNF.sample: expected device={model_device}, "
+                f"dtype={dtype}; got requested device={torch.device(device)}, "
+                f"dtype={dtype}"
+            )
+        device = model_device
         x0 = self.base_distribution.sample(
             (n_samples,), device=device, dtype=dtype
         )
@@ -239,6 +266,7 @@ class ManifoldCNF(nn.Module):
         -------
         loss_history : list of float
         """
+        validate_tensor_module_compatibility(x_data, self, "ManifoldCNF.fit")
         optimizer = torch.optim.Adam(self.vf.parameters(), lr=lr)
         N = x_data.shape[0]
         loss_history: list[float] = []
