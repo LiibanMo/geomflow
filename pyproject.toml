@@ -60,4 +60,9 @@ markers = [
     "convergence: numerical order test using multiple refinements",
     "normalization: numerical integration or high-sample normalization test",
     "optional: test permitted to skip because an external capability is unavailable",
+    "training: optimizer or fitter workload",
+    "compilation: torch.compile workload",
+    "distributed: multi-process or multi-device workload",
+    "stress: resource-intensive stability workload",
+    "gpu: accelerator device workload",
 ]

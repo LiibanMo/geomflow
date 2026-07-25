@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "run": {
+    "timestamp_utc": "2026-07-25T07:47:47.954195+00:00",
+    "git_revision": "25325da7f63cd46e1f76b273d13275b54b91d106",
+    "git_dirty": true,
+    "command": [
+      "benchmarks/run.py",
+      "--scenario",
+      "euclidean",
+      "--batch-size",
+      "64",
+      "--steps",
+      "8",
+      "--dtype",
+      "float32",
+      "--device",
+      "cpu",
+      "--workload",
+      "backward",
+      "--warmup",
+      "1",
+      "--repetitions",
+      "1",
+      "--profile",
+      "--output",
+      "benchmarks/results/phase1_profile_single.json",
+      "--fail-on-error"
+    ],
+    "hostname": "Mac.lan",
+    "os": "macOS-26.5.2-arm64-arm-64bit",
+    "machine": "arm64",
+    "cpu": "arm",
+    "python": "3.12.13",
+    "torch": "2.13.0",
+    "cuda_available": false,
+    "cuda_runtime": null,
+    "cudnn": null,
+    "gpu": []
+  },
+  "cases": [
+    {
+      "case_id": "euclidean-cpu-float32-b64-d2-w32x2-s8-backward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "euclidean",
+        "batch_size": 64,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float32",
+        "device": "cpu",
+        "divergence_mode": "exact",
+        "workload": "backward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 1,
+      "timing_samples": [
+        {
+          "forward_ms": 6.950083,
+          "backward_ms": 6.4515,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 13.401583
+        }
+      ],
+      "median_wall_ms": 13.401583,
+      "samples_per_second": 4775.555245973554,
+      "accepted_steps_per_second": 596.9444057466942,
+      "memory_samples": [],
+      "profiler": {
+        "trace": "benchmarks/traces/euclidean-cpu-float32-b64-d2-w32x2-s8-backward-exact.json",
+        "aten_to_count": 352,
+        "aten_to_copy_count": 350
+      }
+    }
+  ]
+}

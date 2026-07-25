@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 import torch
 
 from geomflow.torch import (
@@ -16,6 +17,7 @@ from geomflow.torch import (
 )
 
 
+@pytest.mark.training
 def test_single_chart_fitter_euclidean():
     torch.manual_seed(42)
     metric = EuclideanSpace(2)
@@ -80,6 +82,7 @@ def test_induced_metric():
     assert G.shape == (4, 2, 2)
 
 
+@pytest.mark.training
 def test_multichart_fitter_sphere():
     torch.manual_seed(42)
     atlas = Sphere2DAtlas(n_samples=200, seed=42)
@@ -98,6 +101,7 @@ def test_multichart_fitter_sphere():
     assert samples.shape == (8, 2)
 
 
+@pytest.mark.training
 def test_fit_records_global_field_compatibility_diagnostics():
     model = ManifoldCNF(Sphere2DAtlas(), hidden_dim=4, n_layers=1, dt=0.25)
     data = torch.tensor([[0.5, 0.1], [0.8, -0.2]])
