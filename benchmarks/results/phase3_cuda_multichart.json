@@ -1,0 +1,105 @@
+{
+  "schema_version": 1,
+  "run": {
+    "timestamp_utc": "2026-07-25T12:53:21.530425+00:00",
+    "git_revision": "unknown",
+    "git_dirty": true,
+    "command": [
+      "benchmarks/run.py",
+      "--scenario",
+      "sphere-atlas",
+      "--batch-size",
+      "64",
+      "--steps",
+      "8",
+      "--dtype",
+      "float32",
+      "--device",
+      "cuda",
+      "--workload",
+      "forward",
+      "--warmup",
+      "1",
+      "--repetitions",
+      "2",
+      "--profile",
+      "--output",
+      "benchmarks/results/phase3_cuda_multichart.json",
+      "--fail-on-error"
+    ],
+    "hostname": "f7e4ad1325af",
+    "os": "Linux-5.15.0-92-generic-x86_64-with-glibc2.35",
+    "machine": "x86_64",
+    "cpu": "x86_64",
+    "python": "3.11.10",
+    "torch": "2.5.1+cu124",
+    "cuda_available": true,
+    "cuda_runtime": "12.4",
+    "nvidia_driver": "535.161.07",
+    "cudnn": 90100,
+    "gpu": [
+      {
+        "index": 0,
+        "name": "NVIDIA RTX A4000",
+        "total_memory_bytes": 16888889344,
+        "capability": [
+          8,
+          6
+        ]
+      }
+    ]
+  },
+  "cases": [
+    {
+      "case_id": "sphere-atlas-cuda-float32-b64-d2-w32x2-s8-forward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "sphere-atlas",
+        "batch_size": 64,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float32",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "forward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 2,
+      "timing_samples": [
+        {
+          "forward_ms": 89.0041275024414,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 89.0041275024414
+        },
+        {
+          "forward_ms": 96.40038299560547,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 96.40038299560547
+        }
+      ],
+      "median_wall_ms": 92.70225524902344,
+      "samples_per_second": 690.3823410560899,
+      "accepted_steps_per_second": 86.29779263201124,
+      "memory_samples": [
+        {
+          "allocated_bytes": 26675712,
+          "reserved_bytes": 31457280
+        },
+        {
+          "allocated_bytes": 35450368,
+          "reserved_bytes": 39845888
+        }
+      ],
+      "profiler": {
+        "trace": "benchmarks/traces/sphere-atlas-cuda-float32-b64-d2-w32x2-s8-forward-exact.json",
+        "aten_to_count": 96,
+        "aten_to_copy_count": 0
+      }
+    }
+  ]
+}

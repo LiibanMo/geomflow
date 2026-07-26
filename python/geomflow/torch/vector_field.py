@@ -7,6 +7,7 @@ import torch.nn as nn
 import warnings
 
 from .operators import covariant_derivative_tensor
+from ._utils import validate_tensor_module_compatibility
 
 
 _NONSMOOTH_ACTIVATIONS = (nn.ReLU, nn.ReLU6, nn.LeakyReLU, nn.PReLU, nn.RReLU, nn.Hardtanh)
@@ -80,6 +81,13 @@ class ManifoldVectorField(nn.Module):
         f : Tensor
             Vector components, shape ``(..., dim)``.
         """
+        validate_tensor_module_compatibility(x, self, "ManifoldVectorField.forward")
+        if t.device != x.device or t.dtype != x.dtype:
+            raise ValueError(
+                "ManifoldVectorField.forward: expected time "
+                f"device={x.device}, dtype={x.dtype}; got "
+                f"device={t.device}, dtype={t.dtype}"
+            )
         if t.dim() == x.dim() - 1:
             t = t.unsqueeze(-1)
         coordinates = torch.cat([torch.sin(x), torch.cos(x)], dim=-1) if self.periodic else x
@@ -99,7 +107,7 @@ def weight_decay_loss(vf: ManifoldVectorField) -> torch.Tensor:
         term = (p * p).sum()
         total = term if total is None else total + term
     if total is None:
-        return torch.tensor(0.0)
+        raise ValueError("weight_decay_loss: module has no parameters")
     return total
 
 

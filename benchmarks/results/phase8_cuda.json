@@ -1,0 +1,422 @@
+{
+  "schema_version": 1,
+  "environment": {
+    "timestamp_utc": "2026-07-25T22:40:44.312940+00:00",
+    "git_revision": "unavailable",
+    "git_dirty": false,
+    "os": "Linux-6.8.0-111-generic-x86_64-with-glibc2.39",
+    "cpu": "x86_64",
+    "logical_cpu_count": 32,
+    "ram_bytes": 134963302400,
+    "python": "3.12.3",
+    "torch": "2.13.0+cu130",
+    "torch_compile_available": true,
+    "cuda_available": true,
+    "cuda_runtime": "13.0",
+    "cudnn": 92000,
+    "gpu": "NVIDIA GeForce RTX 3060",
+    "gpu_capability": [
+      8,
+      6
+    ],
+    "driver": "590.48.01",
+    "arguments": {
+      "output": "benchmarks/results/phase8_cuda.json",
+      "quick": false,
+      "batch_size": 64,
+      "dynamic_batches": [
+        8,
+        32,
+        96
+      ],
+      "steps": 8,
+      "width": 16,
+      "warmup": 2,
+      "repetitions": 5,
+      "dtype": "float32",
+      "allow_cpu_only": false
+    },
+    "compile_backend": "eager",
+    "compile_dynamic_shapes": true,
+    "nvtx": "disabled: profiler events and JSON are the benchmark outputs"
+  },
+  "compile_scope": {
+    "default": "eager; compilation is optional via integrate_rk4(..., compile=True)",
+    "supported": "single-chart direct-autograd fixed-step RK4 without trajectory capture or stage callbacks",
+    "unsupported": [
+      "multichart integration",
+      "intrinsic adjoint",
+      "user callbacks",
+      "trajectory capture"
+    ],
+    "fallback": "warning followed by eager execution on the input device",
+    "cache": "bounded 8-entry LRU keyed by field, metric, device, dtype, schedule, divergence, and grad mode; batch is dynamic"
+  },
+  "graph_break_reports": [
+    {
+      "name": "vector_field",
+      "status": "reported",
+      "graph_count": 1,
+      "graph_break_count": 0,
+      "break_reasons": []
+    },
+    {
+      "name": "operators",
+      "status": "reported",
+      "graph_count": 5,
+      "graph_break_count": 4,
+      "break_reasons": [
+        "generic_jump TensorVariable()",
+        "requires_grad_() intermediate leaked as output\n  Explanation: An intermediate tensor with requires_grad_() called on it (or a tensor derived from it) is returned from the compiled region. Graph breaking here to preserve partial acceleration.\n  Hint: Call .detach() before returning if you only need values.\n  Hint: Consume the gradient inside the compiled function (call backward() and use .grad), or move requires_grad_() outside torch.compile.\n\n  Developer debug context: call_method TensorVariable() requires_grad_\n\n For more details about this graph break, please visit: https://meta-pytorch.github.io/compile-graph-break-site/gb/gb8985.html"
+      ]
+    },
+    {
+      "name": "single_chart",
+      "status": "reported",
+      "graph_count": 18,
+      "graph_break_count": 17,
+      "break_reasons": [
+        "Data-dependent branching\n  Explanation: Detected data-dependent branching (e.g. `if my_tensor.sum() > 0:`). Dynamo does not support tracing dynamic control flow.\n  Hint: For the common pattern `if tensor_cond: x = transform(x)` (e.g. clamping inf/nan values), consider making the code branchless by always applying the transform. Operations like torch.clamp, torch.nan_to_num, and torch.where are typically no-ops on well-behaved inputs and compile without graph breaks.\n  Hint: Note: Python `or`/`and` between tensor expressions (e.g. `tensor.any() or other_tensor.any()`) triggers implicit bool conversion. Use `torch.logical_or`/`torch.logical_and` or the `|`/`&` operators instead.\n  Hint: This graph break is fundamental - it is unlikely that Dynamo will ever be able to trace through your code. Consider finding a workaround.\n  Hint: Use `torch.cond` to express dynamic control flow.\n\n  Developer debug context: attempted to jump with TensorVariable()\n\n For more details about this graph break, please visit: https://meta-pytorch.github.io/compile-graph-break-site/gb/gb0170.html",
+        "generic_jump TensorVariable()",
+        "requires_grad_() intermediate leaked as output\n  Explanation: An intermediate tensor with requires_grad_() called on it (or a tensor derived from it) is returned from the compiled region. Graph breaking here to preserve partial acceleration.\n  Hint: Call .detach() before returning if you only need values.\n  Hint: Consume the gradient inside the compiled function (call backward() and use .grad), or move requires_grad_() outside torch.compile.\n\n  Developer debug context: call_method TensorVariable() requires_grad_\n\n For more details about this graph break, please visit: https://meta-pytorch.github.io/compile-graph-break-site/gb/gb8985.html",
+        "generic_jump TensorVariable()",
+        "Data-dependent branching\n  Explanation: Detected data-dependent branching (e.g. `if my_tensor.sum() > 0:`). Dynamo does not support tracing dynamic control flow.\n  Hint: For the common pattern `if tensor_cond: x = transform(x)` (e.g. clamping inf/nan values), consider making the code branchless by always applying the transform. Operations like torch.clamp, torch.nan_to_num, and torch.where are typically no-ops on well-behaved inputs and compile without graph breaks.\n  Hint: Note: Python `or`/`and` between tensor expressions (e.g. `tensor.any() or other_tensor.any()`) triggers implicit bool conversion. Use `torch.logical_or`/`torch.logical_and` or the `|`/`&` operators instead.\n  Hint: This graph break is fundamental - it is unlikely that Dynamo will ever be able to trace through your code. Consider finding a workaround.\n  Hint: Use `torch.cond` to express dynamic control flow.\n\n  Developer debug context: attempted to jump with TensorVariable()\n\n For more details about this graph break, please visit: https://meta-pytorch.github.io/compile-graph-break-site/gb/gb0170.html",
+        "Data-dependent branching\n  Explanation: Detected data-dependent branching (e.g. `if my_tensor.sum() > 0:`). Dynamo does not support tracing dynamic control flow.\n  Hint: For the common pattern `if tensor_cond: x = transform(x)` (e.g. clamping inf/nan values), consider making the code branchless by always applying the transform. Operations like torch.clamp, torch.nan_to_num, and torch.where are typically no-ops on well-behaved inputs and compile without graph breaks.\n  Hint: Note: Python `or`/`and` between tensor expressions (e.g. `tensor.any() or other_tensor.any()`) triggers implicit bool conversion. Use `torch.logical_or`/`torch.logical_and` or the `|`/`&` operators instead.\n  Hint: This graph break is fundamental - it is unlikely that Dynamo will ever be able to trace through your code. Consider finding a workaround.\n  Hint: Use `torch.cond` to express dynamic control flow.\n\n  Developer debug context: attempted to jump with TensorVariable()\n\n For more details about this graph break, please visit: https://meta-pytorch.github.io/compile-graph-break-site/gb/gb0170.html",
+        "Data-dependent branching\n  Explanation: Detected data-dependent branching (e.g. `if my_tensor.sum() > 0:`). Dynamo does not support tracing dynamic control flow.\n  Hint: For the common pattern `if tensor_cond: x = transform(x)` (e.g. clamping inf/nan values), consider making the code branchless by always applying the transform. Operations like torch.clamp, torch.nan_to_num, and torch.where are typically no-ops on well-behaved inputs and compile without graph breaks.\n  Hint: Note: Python `or`/`and` between tensor expressions (e.g. `tensor.any() or other_tensor.any()`) triggers implicit bool conversion. Use `torch.logical_or`/`torch.logical_and` or the `|`/`&` operators instead.\n  Hint: This graph break is fundamental - it is unlikely that Dynamo will ever be able to trace through your code. Consider finding a workaround.\n  Hint: Use `torch.cond` to express dynamic control flow.\n\n  Developer debug context: attempted to jump with TensorVariable()\n\n For more details about this graph break, please visit: https://meta-pytorch.github.io/compile-graph-break-site/gb/gb0170.html",
+        "Data-dependent branching\n  Explanation: Detected data-dependent branching (e.g. `if my_tensor.sum() > 0:`). Dynamo does not support tracing dynamic control flow.\n  Hint: For the common pattern `if tensor_cond: x = transform(x)` (e.g. clamping inf/nan values), consider making the code branchless by always applying the transform. Operations like torch.clamp, torch.nan_to_num, and torch.where are typically no-ops on well-behaved inputs and compile without graph breaks.\n  Hint: Note: Python `or`/`and` between tensor expressions (e.g. `tensor.any() or other_tensor.any()`) triggers implicit bool conversion. Use `torch.logical_or`/`torch.logical_and` or the `|`/`&` operators instead.\n  Hint: This graph break is fundamental - it is unlikely that Dynamo will ever be able to trace through your code. Consider finding a workaround.\n  Hint: Use `torch.cond` to express dynamic control flow.\n\n  Developer debug context: attempted to jump with TensorVariable()\n\n For more details about this graph break, please visit: https://meta-pytorch.github.io/compile-graph-break-site/gb/gb0170.html",
+        "Data-dependent branching\n  Explanation: Detected data-dependent branching (e.g. `if my_tensor.sum() > 0:`). Dynamo does not support tracing dynamic control flow.\n  Hint: For the common pattern `if tensor_cond: x = transform(x)` (e.g. clamping inf/nan values), consider making the code branchless by always applying the transform. Operations like torch.clamp, torch.nan_to_num, and torch.where are typically no-ops on well-behaved inputs and compile without graph breaks.\n  Hint: Note: Python `or`/`and` between tensor expressions (e.g. `tensor.any() or other_tensor.any()`) triggers implicit bool conversion. Use `torch.logical_or`/`torch.logical_and` or the `|`/`&` operators instead.\n  Hint: This graph break is fundamental - it is unlikely that Dynamo will ever be able to trace through your code. Consider finding a workaround.\n  Hint: Use `torch.cond` to express dynamic control flow.\n\n  Developer debug context: attempted to jump with TensorVariable()\n\n For more details about this graph break, please visit: https://meta-pytorch.github.io/compile-graph-break-site/gb/gb0170.html",
+        "Data-dependent branching\n  Explanation: Detected data-dependent branching (e.g. `if my_tensor.sum() > 0:`). Dynamo does not support tracing dynamic control flow.\n  Hint: For the common pattern `if tensor_cond: x = transform(x)` (e.g. clamping inf/nan values), consider making the code branchless by always applying the transform. Operations like torch.clamp, torch.nan_to_num, and torch.where are typically no-ops on well-behaved inputs and compile without graph breaks.\n  Hint: Note: Python `or`/`and` between tensor expressions (e.g. `tensor.any() or other_tensor.any()`) triggers implicit bool conversion. Use `torch.logical_or`/`torch.logical_and` or the `|`/`&` operators instead.\n  Hint: This graph break is fundamental - it is unlikely that Dynamo will ever be able to trace through your code. Consider finding a workaround.\n  Hint: Use `torch.cond` to express dynamic control flow.\n\n  Developer debug context: attempted to jump with TensorVariable()\n\n For more details about this graph break, please visit: https://meta-pytorch.github.io/compile-graph-break-site/gb/gb0170.html",
+        "Data-dependent branching\n  Explanation: Detected data-dependent branching (e.g. `if my_tensor.sum() > 0:`). Dynamo does not support tracing dynamic control flow.\n  Hint: For the common pattern `if tensor_cond: x = transform(x)` (e.g. clamping inf/nan values), consider making the code branchless by always applying the transform. Operations like torch.clamp, torch.nan_to_num, and torch.where are typically no-ops on well-behaved inputs and compile without graph breaks.\n  Hint: Note: Python `or`/`and` between tensor expressions (e.g. `tensor.any() or other_tensor.any()`) triggers implicit bool conversion. Use `torch.logical_or`/`torch.logical_and` or the `|`/`&` operators instead.\n  Hint: This graph break is fundamental - it is unlikely that Dynamo will ever be able to trace through your code. Consider finding a workaround.\n  Hint: Use `torch.cond` to express dynamic control flow.\n\n  Developer debug context: attempted to jump with TensorVariable()\n\n For more details about this graph break, please visit: https://meta-pytorch.github.io/compile-graph-break-site/gb/gb0170.html",
+        "Data-dependent branching\n  Explanation: Detected data-dependent branching (e.g. `if my_tensor.sum() > 0:`). Dynamo does not support tracing dynamic control flow.\n  Hint: For the common pattern `if tensor_cond: x = transform(x)` (e.g. clamping inf/nan values), consider making the code branchless by always applying the transform. Operations like torch.clamp, torch.nan_to_num, and torch.where are typically no-ops on well-behaved inputs and compile without graph breaks.\n  Hint: Note: Python `or`/`and` between tensor expressions (e.g. `tensor.any() or other_tensor.any()`) triggers implicit bool conversion. Use `torch.logical_or`/`torch.logical_and` or the `|`/`&` operators instead.\n  Hint: This graph break is fundamental - it is unlikely that Dynamo will ever be able to trace through your code. Consider finding a workaround.\n  Hint: Use `torch.cond` to express dynamic control flow.\n\n  Developer debug context: attempted to jump with TensorVariable()\n\n For more details about this graph break, please visit: https://meta-pytorch.github.io/compile-graph-break-site/gb/gb0170.html",
+        "Data-dependent branching\n  Explanation: Detected data-dependent branching (e.g. `if my_tensor.sum() > 0:`). Dynamo does not support tracing dynamic control flow.\n  Hint: For the common pattern `if tensor_cond: x = transform(x)` (e.g. clamping inf/nan values), consider making the code branchless by always applying the transform. Operations like torch.clamp, torch.nan_to_num, and torch.where are typically no-ops on well-behaved inputs and compile without graph breaks.\n  Hint: Note: Python `or`/`and` between tensor expressions (e.g. `tensor.any() or other_tensor.any()`) triggers implicit bool conversion. Use `torch.logical_or`/`torch.logical_and` or the `|`/`&` operators instead.\n  Hint: This graph break is fundamental - it is unlikely that Dynamo will ever be able to trace through your code. Consider finding a workaround.\n  Hint: Use `torch.cond` to express dynamic control flow.\n\n  Developer debug context: attempted to jump with TensorVariable()\n\n For more details about this graph break, please visit: https://meta-pytorch.github.io/compile-graph-break-site/gb/gb0170.html",
+        "Data-dependent branching\n  Explanation: Detected data-dependent branching (e.g. `if my_tensor.sum() > 0:`). Dynamo does not support tracing dynamic control flow.\n  Hint: For the common pattern `if tensor_cond: x = transform(x)` (e.g. clamping inf/nan values), consider making the code branchless by always applying the transform. Operations like torch.clamp, torch.nan_to_num, and torch.where are typically no-ops on well-behaved inputs and compile without graph breaks.\n  Hint: Note: Python `or`/`and` between tensor expressions (e.g. `tensor.any() or other_tensor.any()`) triggers implicit bool conversion. Use `torch.logical_or`/`torch.logical_and` or the `|`/`&` operators instead.\n  Hint: This graph break is fundamental - it is unlikely that Dynamo will ever be able to trace through your code. Consider finding a workaround.\n  Hint: Use `torch.cond` to express dynamic control flow.\n\n  Developer debug context: attempted to jump with TensorVariable()\n\n For more details about this graph break, please visit: https://meta-pytorch.github.io/compile-graph-break-site/gb/gb0170.html"
+      ]
+    },
+    {
+      "name": "multichart",
+      "status": "reported",
+      "graph_count": 11,
+      "graph_break_count": 10,
+      "break_reasons": [
+        "generic_jump TensorVariable()",
+        "generic_jump TensorVariable()",
+        "generic_jump TensorVariable()",
+        "generic_jump TensorVariable()",
+        "generic_jump TensorVariable()",
+        "generic_jump TensorVariable()",
+        "generic_jump TensorVariable()",
+        "generic_jump TensorVariable()",
+        "generic_jump TensorVariable()",
+        "generic_jump TensorVariable()"
+      ]
+    }
+  ],
+  "latency": {
+    "device": "cuda",
+    "cold_milliseconds": 6777.073431,
+    "warm_milliseconds": 400.729645,
+    "cache_info": {
+      "hits": 1,
+      "misses": 1,
+      "maxsize": 8,
+      "currsize": 1
+    }
+  },
+  "dynamic_batches": {
+    "batches": [
+      8,
+      32,
+      96
+    ],
+    "result_shapes": [
+      [
+        8,
+        2
+      ],
+      [
+        32,
+        2
+      ],
+      [
+        96,
+        2
+      ]
+    ],
+    "cache_info": {
+      "hits": 2,
+      "misses": 1,
+      "maxsize": 8,
+      "currsize": 1
+    }
+  },
+  "parity": [
+    {
+      "device": "cuda",
+      "dtype": "float32",
+      "errors": {
+        "state": {
+          "max_absolute": 0.0,
+          "max_relative": 0.0,
+          "finite": true
+        },
+        "divergence": {
+          "max_absolute": 0.0,
+          "max_relative": 0.0,
+          "finite": true
+        },
+        "input_gradient": {
+          "max_absolute": 0.0,
+          "max_relative": 0.0,
+          "finite": true
+        },
+        "parameter_gradient:net.0.weight": {
+          "max_absolute": 0.0,
+          "max_relative": 0.0,
+          "finite": true
+        },
+        "parameter_gradient:net.0.bias": {
+          "max_absolute": 0.0,
+          "max_relative": 0.0,
+          "finite": true
+        },
+        "parameter_gradient:net.2.weight": {
+          "max_absolute": 0.0,
+          "max_relative": 0.0,
+          "finite": true
+        },
+        "parameter_gradient:net.2.bias": {
+          "max_absolute": 0.0,
+          "max_relative": 0.0,
+          "finite": true
+        }
+      }
+    },
+    {
+      "device": "cpu",
+      "dtype": "float32",
+      "errors": {
+        "state": {
+          "max_absolute": 0.0,
+          "max_relative": 0.0,
+          "finite": true
+        },
+        "divergence": {
+          "max_absolute": 0.0,
+          "max_relative": 0.0,
+          "finite": true
+        },
+        "input_gradient": {
+          "max_absolute": 0.0,
+          "max_relative": 0.0,
+          "finite": true
+        },
+        "parameter_gradient:net.0.weight": {
+          "max_absolute": 0.0,
+          "max_relative": 0.0,
+          "finite": true
+        },
+        "parameter_gradient:net.0.bias": {
+          "max_absolute": 0.0,
+          "max_relative": 0.0,
+          "finite": true
+        },
+        "parameter_gradient:net.2.weight": {
+          "max_absolute": 0.0,
+          "max_relative": 0.0,
+          "finite": true
+        },
+        "parameter_gradient:net.2.bias": {
+          "max_absolute": 0.0,
+          "max_relative": 0.0,
+          "finite": true
+        }
+      }
+    }
+  ],
+  "runtime": [
+    {
+      "mode": "direct_eager",
+      "device": "cuda",
+      "milliseconds": [
+        392.597,
+        382.304616,
+        381.832022,
+        393.10557,
+        392.98219
+      ],
+      "median_milliseconds": 392.597,
+      "minimum_milliseconds": 381.832022
+    },
+    {
+      "mode": "direct_compiled",
+      "device": "cuda",
+      "milliseconds": [
+        407.907162,
+        447.022297,
+        434.448388,
+        443.070652,
+        434.701117
+      ],
+      "median_milliseconds": 434.701117,
+      "minimum_milliseconds": 407.907162
+    },
+    {
+      "mode": "intrinsic_adjoint_eager",
+      "device": "cuda",
+      "compilation": "unsupported: intrinsic adjoint is eager-only",
+      "milliseconds": [
+        846.08028,
+        882.974766,
+        902.639184,
+        889.686791,
+        894.417725
+      ],
+      "median_milliseconds": 889.686791,
+      "minimum_milliseconds": 846.08028
+    },
+    {
+      "mode": "direct_eager",
+      "device": "cpu",
+      "milliseconds": [
+        69.524952,
+        69.724766,
+        69.518592,
+        69.694539,
+        70.444559
+      ],
+      "median_milliseconds": 69.694539,
+      "minimum_milliseconds": 69.518592
+    },
+    {
+      "mode": "direct_compiled",
+      "device": "cpu",
+      "milliseconds": [
+        80.588747,
+        82.134868,
+        83.942889,
+        81.203834,
+        82.5473
+      ],
+      "median_milliseconds": 82.134868,
+      "minimum_milliseconds": 80.588747
+    },
+    {
+      "mode": "intrinsic_adjoint_eager",
+      "device": "cpu",
+      "compilation": "unsupported: intrinsic adjoint is eager-only",
+      "milliseconds": [
+        273.061692,
+        271.154331,
+        273.141842,
+        270.013332,
+        273.137048
+      ],
+      "median_milliseconds": 273.061692,
+      "minimum_milliseconds": 270.013332
+    }
+  ],
+  "cpu_regression": {
+    "meaning": "within-run compiled/eager characterization; compare preserved JSON with the frozen baseline for a release regression decision",
+    "rows": [
+      {
+        "mode": "direct_eager",
+        "device": "cpu",
+        "milliseconds": [
+          69.524952,
+          69.724766,
+          69.518592,
+          69.694539,
+          70.444559
+        ],
+        "median_milliseconds": 69.694539,
+        "minimum_milliseconds": 69.518592
+      },
+      {
+        "mode": "direct_compiled",
+        "device": "cpu",
+        "milliseconds": [
+          80.588747,
+          82.134868,
+          83.942889,
+          81.203834,
+          82.5473
+        ],
+        "median_milliseconds": 82.134868,
+        "minimum_milliseconds": 80.588747
+      },
+      {
+        "mode": "intrinsic_adjoint_eager",
+        "device": "cpu",
+        "compilation": "unsupported: intrinsic adjoint is eager-only",
+        "milliseconds": [
+          273.061692,
+          271.154331,
+          273.141842,
+          270.013332,
+          273.137048
+        ],
+        "median_milliseconds": 273.061692,
+        "minimum_milliseconds": 270.013332
+      }
+    ]
+  },
+  "unsupported_modes": [
+    {
+      "mode": "multichart_compiled",
+      "status": "eager-only"
+    },
+    {
+      "mode": "intrinsic_adjoint_compiled",
+      "status": "eager-only"
+    }
+  ],
+  "profiler": {
+    "steps": 8,
+    "cuda_kernel_event_count": 4839,
+    "cuda_kernel_events_per_step": 604.875,
+    "unique_cuda_kernel_count": 34,
+    "unique_cuda_kernel_names": [
+      "Memcpy DtoD (Device -> Device)",
+      "Memcpy DtoH (Device -> Pinned)",
+      "ampere_sgemm_128x32_nn",
+      "ampere_sgemm_128x32_tn",
+      "ampere_sgemm_32x32_sliced1x4_nt",
+      "void at::native::(anonymous namespace)::CatArrayBatchedCopy<at::native::(anonymous namespace)::OpaqueType<4u>, unsigned int, 2, 64, 64>(at::native::(anonymous namespace)::OpaqueType<4u>*, at::native::(anonymous namespace)::CatArrInputTensorMetadata<at::native::(anonymous namespace)::OpaqueType<4u>, unsigned int, 64, 64>, at::native::(anonymous namespace)::TensorSizeStride<unsigned int, 4u>, int, unsigned int)",
+      "void at::native::(anonymous namespace)::CatArrayBatchedCopy_alignedK_contig<at::native::(anonymous namespace)::OpaqueType<4u>, unsigned int, 2, 128, 1, 16>(at::native::(anonymous namespace)::OpaqueType<4u>*, at::native::(anonymous namespace)::CatArrInputTensorMetadata<at::native::(anonymous namespace)::OpaqueType<4u>, unsigned int, 128, 1>, at::native::(anonymous namespace)::TensorSizeStride<unsigned int, 4u>, int, unsigned int)",
+      "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::BUnaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > >(at::TensorIteratorBase&, at::native::BUnaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::BUnaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > >(at::TensorIteratorBase&, at::native::BUnaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > const&)::{lambda(int)#1})",
+      "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > >(at::TensorIteratorBase&, at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > >(at::TensorIteratorBase&, at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > const&)::{lambda(int)#1})",
+      "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::CUDAFunctor_add<float> >(at::TensorIteratorBase&, at::native::CUDAFunctor_add<float> const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::CUDAFunctor_add<float> >(at::TensorIteratorBase&, at::native::CUDAFunctor_add<float> const&)::{lambda(int)#1})",
+      "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1})",
+      "void at::native::reduce_kernel<128, 4, at::native::ReduceOp<bool, at::native::func_wrapper_t<bool, at::native::and_kernel_cuda(at::TensorIterator&)::{lambda()#1}::operator()() const::{lambda()#12}::operator()() const::{lambda(bool, bool)#1}>, unsigned int, bool, 4, 4> >(at::native::ReduceOp<bool, at::native::func_wrapper_t<bool, at::native::and_kernel_cuda(at::TensorIterator&)::{lambda()#1}::operator()() const::{lambda()#12}::operator()() const::{lambda(bool, bool)#1}>, unsigned int, bool, 4, 4>)",
+      "void at::native::reduce_kernel<128, 4, at::native::ReduceOp<float, at::native::func_wrapper_t<float, at::native::sum_functor<float, float, float>::operator()(at::TensorIterator&)::{lambda(float, float)#1}>, unsigned int, float, 4, 4> >(at::native::ReduceOp<float, at::native::func_wrapper_t<float, at::native::sum_functor<float, float, float>::operator()(at::TensorIterator&)::{lambda(float, float)#1}>, unsigned int, float, 4, 4>)",
+      "void at::native::reduce_kernel<256, 2, at::native::ReduceOp<float, at::native::func_wrapper_t<float, at::native::sum_functor<float, float, float>::operator()(at::TensorIterator&)::{lambda(float, float)#1}>, unsigned int, float, 4, 4> >(at::native::ReduceOp<float, at::native::func_wrapper_t<float, at::native::sum_functor<float, float, float>::operator()(at::TensorIterator&)::{lambda(float, float)#1}>, unsigned int, float, 4, 4>)",
+      "void at::native::reduce_kernel<512, 1, at::native::ReduceOp<bool, at::native::func_wrapper_t<bool, at::native::and_kernel_cuda(at::TensorIterator&)::{lambda()#1}::operator()() const::{lambda()#12}::operator()() const::{lambda(bool, bool)#1}>, unsigned int, bool, 4, 4> >(at::native::ReduceOp<bool, at::native::func_wrapper_t<bool, at::native::and_kernel_cuda(at::TensorIterator&)::{lambda()#1}::operator()() const::{lambda()#12}::operator()() const::{lambda(bool, bool)#1}>, unsigned int, bool, 4, 4>)",
+      "void at::native::reduce_kernel<512, 1, at::native::ReduceOp<float, at::native::MeanOps<float, float, float, float>, unsigned int, float, 4, 4> >(at::native::ReduceOp<float, at::native::MeanOps<float, float, float, float>, unsigned int, float, 4, 4>)",
+      "void at::native::reduce_kernel<512, 1, at::native::ReduceOp<float, at::native::func_wrapper_t<float, at::native::sum_functor<float, float, float>::operator()(at::TensorIterator&)::{lambda(float, float)#1}>, unsigned int, float, 4, 4> >(at::native::ReduceOp<float, at::native::func_wrapper_t<float, at::native::sum_functor<float, float, float>::operator()(at::TensorIterator&)::{lambda(float, float)#1}>, unsigned int, float, 4, 4>)",
+      "void at::native::vectorized_elementwise_kernel<4, at::native::(anonymous namespace)::pow_tensor_scalar_kernel_impl<float, float>(at::TensorIteratorBase&, float)::{lambda(float)#1}, std::array<char*, 2ul> >(int, at::native::(anonymous namespace)::pow_tensor_scalar_kernel_impl<float, float>(at::TensorIteratorBase&, float)::{lambda(float)#1}, std::array<char*, 2ul>)",
+      "void at::native::vectorized_elementwise_kernel<4, at::native::(anonymous namespace)::silu_backward_kernel(at::TensorIteratorBase&)::{lambda()#1}::operator()() const::{lambda()#2}::operator()() const::{lambda(float, float)#1}, std::array<char*, 3ul> >(int, at::native::(anonymous namespace)::silu_backward_kernel(at::TensorIteratorBase&)::{lambda()#1}::operator()() const::{lambda()#2}::operator()() const::{lambda(float, float)#1}, std::array<char*, 3ul>)",
+      "void at::native::vectorized_elementwise_kernel<4, at::native::(anonymous namespace)::silu_kernel(at::TensorIteratorBase&)::{lambda()#1}::operator()() const::{lambda()#2}::operator()() const::{lambda(float)#1}, std::array<char*, 2ul> >(int, at::native::(anonymous namespace)::silu_kernel(at::TensorIteratorBase&)::{lambda()#1}::operator()() const::{lambda()#2}::operator()() const::{lambda(float)#1}, std::array<char*, 2ul>)",
+      "void at::native::vectorized_elementwise_kernel<4, at::native::AUnaryFunctor<float, float, bool, at::native::(anonymous namespace)::CompareEqFunctor<float> >, std::array<char*, 2ul> >(int, at::native::AUnaryFunctor<float, float, bool, at::native::(anonymous namespace)::CompareEqFunctor<float> >, std::array<char*, 2ul>)",
+      "void at::native::vectorized_elementwise_kernel<4, at::native::AUnaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> >, std::array<char*, 2ul> >(int, at::native::AUnaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> >, std::array<char*, 2ul>)",
+      "void at::native::vectorized_elementwise_kernel<4, at::native::AbsFunctor<float>, std::array<char*, 2ul> >(int, at::native::AbsFunctor<float>, std::array<char*, 2ul>)",
+      "void at::native::vectorized_elementwise_kernel<4, at::native::BinaryFunctor<bool, bool, bool, at::native::binary_internal::MulFunctor<bool> >, std::array<char*, 3ul> >(int, at::native::BinaryFunctor<bool, bool, bool, at::native::binary_internal::MulFunctor<bool> >, std::array<char*, 3ul>)",
+      "void at::native::vectorized_elementwise_kernel<4, at::native::BinaryFunctor<float, float, bool, at::native::(anonymous namespace)::CompareEqFunctor<float> >, std::array<char*, 3ul> >(int, at::native::BinaryFunctor<float, float, bool, at::native::(anonymous namespace)::CompareEqFunctor<float> >, std::array<char*, 3ul>)",
+      "void at::native::vectorized_elementwise_kernel<4, at::native::BinaryFunctor<float, float, float, at::native::binary_internal::DivFunctor<float> >, std::array<char*, 3ul> >(int, at::native::BinaryFunctor<float, float, float, at::native::binary_internal::DivFunctor<float> >, std::array<char*, 3ul>)",
+      "void at::native::vectorized_elementwise_kernel<4, at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> >, std::array<char*, 3ul> >(int, at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> >, std::array<char*, 3ul>)",
+      "void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctorOnSelf_add<float>, std::array<char*, 2ul> >(int, at::native::CUDAFunctorOnSelf_add<float>, std::array<char*, 2ul>)",
+      "void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctor_add<float>, std::array<char*, 3ul> >(int, at::native::CUDAFunctor_add<float>, std::array<char*, 3ul>)",
+      "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)",
+      "void at::native::vectorized_elementwise_kernel<4, at::native::neg_kernel_cuda(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}, std::array<char*, 2ul> >(int, at::native::neg_kernel_cuda(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}, std::array<char*, 2ul>)",
+      "void at::native::vectorized_elementwise_kernel<4, at::native::sigmoid_backward_kernel_cuda(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#2}::operator()() const::{lambda(float, float)#1}, std::array<char*, 3ul> >(int, at::native::sigmoid_backward_kernel_cuda(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#2}::operator()() const::{lambda(float, float)#1}, std::array<char*, 3ul>)",
+      "void at::native::vectorized_elementwise_kernel<4, at::native::sigmoid_kernel_cuda(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#2}::operator()() const::{lambda(float)#1}, std::array<char*, 2ul> >(int, at::native::sigmoid_kernel_cuda(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#2}::operator()() const::{lambda(float)#1}, std::array<char*, 2ul>)",
+      "void cublasLt::splitKreduce_kernel<32, 16, int, float, float, float, float, false, float, float, float, true, false, false, false>(cublasLt::cublasSplitKParams<float>, float const*, float const*, float*, float*, float const*, float const*, float const*, float const*, float*, void*, long, float*, int*, float*, float*, float const*, float const*, float const*, float const*, float const*)"
+    ],
+    "peak_cuda_allocated_bytes": 19151872,
+    "profiler_self_cuda_memory_usage_bytes": 1671168
+  },
+  "non_default_stream": {
+    "completed": true,
+    "finite": true,
+    "result_device": "cuda:0"
+  }
+}

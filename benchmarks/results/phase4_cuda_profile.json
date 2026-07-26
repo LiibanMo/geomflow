@@ -1,0 +1,94 @@
+{
+  "schema_version": 1,
+  "run": {
+    "timestamp_utc": "2026-07-25T13:19:20.414032+00:00",
+    "git_revision": "unknown",
+    "git_dirty": true,
+    "command": [
+      "benchmarks/run.py",
+      "--scenario",
+      "sphere",
+      "--batch-size",
+      "256",
+      "--steps",
+      "16",
+      "--dtype",
+      "float32",
+      "--device",
+      "cuda",
+      "--workload",
+      "backward",
+      "--warmup",
+      "1",
+      "--repetitions",
+      "1",
+      "--profile",
+      "--output",
+      "benchmarks/results/phase4_cuda_profile.json"
+    ],
+    "hostname": "36fee4df9e63",
+    "os": "Linux-6.8.0-136-generic-x86_64-with-glibc2.35",
+    "machine": "x86_64",
+    "cpu": "x86_64",
+    "python": "3.11.13",
+    "torch": "2.7.1+cu128",
+    "cuda_available": true,
+    "cuda_runtime": "12.8",
+    "nvidia_driver": "580.159.03",
+    "cudnn": 90701,
+    "gpu": [
+      {
+        "index": 0,
+        "name": "NVIDIA GeForce RTX 3060",
+        "total_memory_bytes": 12488343552,
+        "capability": [
+          8,
+          6
+        ]
+      }
+    ]
+  },
+  "cases": [
+    {
+      "case_id": "sphere-cuda-float32-b256-d2-w32x2-s16-backward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "sphere",
+        "batch_size": 256,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 16,
+        "dtype": "torch.float32",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "backward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 1,
+      "timing_samples": [
+        {
+          "forward_ms": 190.7415008544922,
+          "backward_ms": 152.99993896484375,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 343.74143981933594
+        }
+      ],
+      "median_wall_ms": 343.74143981933594,
+      "samples_per_second": 744.7458186436551,
+      "accepted_steps_per_second": 46.54661366522844,
+      "memory_samples": [
+        {
+          "allocated_bytes": 86657024,
+          "reserved_bytes": 92274688
+        }
+      ],
+      "profiler": {
+        "trace": "benchmarks/traces/sphere-cuda-float32-b256-d2-w32x2-s16-backward-exact.json",
+        "aten_to_count": 514,
+        "aten_to_copy_count": 0
+      }
+    }
+  ]
+}

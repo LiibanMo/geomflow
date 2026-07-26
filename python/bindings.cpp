@@ -16,6 +16,28 @@ namespace py = pybind11;
 
 namespace geomflow {
 
+inline void reject_tensor(const py::handle& value, const char* argument) {
+  const py::object type = py::type::of(value);
+  const std::string module = py::str(type.attr("__module__"));
+  if (module == "torch" || module.rfind("torch.", 0) == 0) {
+    throw py::type_error(std::string(argument) +
+                         " belongs to geomflow's CPU-only C++ API and does not "
+                         "accept torch.Tensor; use geomflow.torch for tensor "
+                         "inputs, or pass a Python list of CPU scalars");
+  }
+}
+
+template <size_t N>
+std::array<double, N> checked_array(const py::handle& value, const char* argument) {
+  reject_tensor(value, argument);
+  return py::cast<std::array<double, N>>(value);
+}
+
+inline std::vector<double> checked_vector(const py::handle& value, const char* argument) {
+  reject_tensor(value, argument);
+  return py::cast<std::vector<double>>(value);
+}
+
 template <size_t N> using PTraits = ManifoldTraits<N>;
 template <size_t N> using PScalar = typename PTraits<N>::ScalarType;
 template <size_t N> using PPoint = typename PTraits<N>::Point;
@@ -91,7 +113,9 @@ template <size_t N> void bind_dimension(py::module& m, const std::string& suffix
 
   py::class_<Tangent>(m, name_tv.c_str())
       .def(py::init<>())
-      .def(py::init<const std::array<double, N>&>())
+      .def(py::init([](const py::object& components) {
+        return Tangent(checked_array<N>(components, "components"));
+      }))
       .def_readwrite("components", &Tangent::components)
       .def("__add__", &Tangent::operator+)
       .def("__sub__", &Tangent::operator-)
@@ -102,7 +126,9 @@ template <size_t N> void bind_dimension(py::module& m, const std::string& suffix
 
   py::class_<Cotangent>(m, name_ctv.c_str())
       .def(py::init<>())
-      .def(py::init<const std::array<double, N>&>())
+      .def(py::init([](const py::object& components) {
+        return Cotangent(checked_array<N>(components, "components"));
+      }))
       .def_readwrite("components", &Cotangent::components)
       .def("__add__", &Cotangent::operator+)
       .def("__mul__", [](const Cotangent& v, double s) { return v * s; })
@@ -137,7 +163,10 @@ template <size_t N> void bind_dimension(py::module& m, const std::string& suffix
       .def(py::init<const Metric&, std::function<Tangent(double, const std::array<double, N>&,
                                                          const std::vector<double>&)>>())
       .def("__call__", &Field::operator())
-      .def("set_params", py::overload_cast<const std::vector<double>&>(&Field::set_params))
+      .def("set_params",
+           [](Field& field, const py::object& params) {
+             field.set_params(checked_vector(params, "params"));
+           })
       .def("params", &Field::params);
 
   py::class_<FlowIntegrator<Traits, Metric, Field>>(m, name_integrator.c_str())

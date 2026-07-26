@@ -2,11 +2,16 @@
 
 from __future__ import annotations
 
-import math
 from typing import Callable
 
 import torch
 
+from ._utils import (
+    validate_autocast_disabled,
+    validate_supported_floating_tensor,
+    validate_tensor_module_compatibility,
+)
+from ._schedule import FixedStepSchedule, checkpoint_due, validate_checkpoint_interval
 from .analytic_metric import AnalyticMetric
 from .operators import divergence
 from .vector_field import ManifoldVectorField
@@ -25,10 +30,14 @@ class FlowResult:
         x_final: torch.Tensor,
         divergence_integral: torch.Tensor,
         trajectory: list[tuple[float, torch.Tensor, torch.Tensor]],
+        trajectory_checkpoint_interval: int = 1,
+        trajectory_is_detached: bool = False,
     ) -> None:
         self.x_final = x_final
         self.divergence_integral = divergence_integral
         self.trajectory = trajectory
+        self.trajectory_checkpoint_interval = trajectory_checkpoint_interval
+        self.trajectory_is_detached = trajectory_is_detached
 
     @property
     def flow_log_abs_det_jacobian(self) -> torch.Tensor:
@@ -44,6 +53,62 @@ class FlowResult:
         return self.divergence_integral
 
 
+def _augmented_rk4_step(
+    vf: ManifoldVectorField,
+    metric: AnalyticMetric,
+    x: torch.Tensor,
+    time: float,
+    step_size: float,
+    *,
+    compute_divergence: bool = True,
+    stage_callback: Callable[[float, torch.Tensor], None] | None = None,
+) -> tuple[torch.Tensor, torch.Tensor]:
+    """Advance one intrinsic augmented RK4 step."""
+    build_graph = torch.is_grad_enabled()
+
+    def augmented_rhs(
+        stage_time: float, state: torch.Tensor
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        metric.validate_points(state)
+        if stage_callback is not None:
+            stage_callback(stage_time, state)
+        time_tensor = torch.full(
+            state.shape[:-1], stage_time, device=state.device, dtype=state.dtype
+        )
+        field_value = vf(time_tensor, state)
+        if not compute_divergence:
+            return field_value, state.new_zeros(state.shape[:-1])
+
+        with torch.enable_grad():
+            divergence_state = state
+            if not divergence_state.requires_grad:
+                divergence_state = divergence_state.clone().requires_grad_(True)
+
+            def field_at_state(value: torch.Tensor) -> torch.Tensor:
+                value_time = torch.full(
+                    value.shape[:-1], stage_time, device=value.device, dtype=value.dtype
+                )
+                return vf(value_time, value)
+
+            divergence_value = divergence(field_at_state, divergence_state, metric)
+            if not build_graph:
+                divergence_value = divergence_value.detach()
+        return field_value, divergence_value
+
+    half_h = step_size / 2.0
+    k1_x, k1_i = augmented_rhs(time, x)
+    k2_x, k2_i = augmented_rhs(time + half_h, x + half_h * k1_x)
+    k3_x, k3_i = augmented_rhs(time + half_h, x + half_h * k2_x)
+    k4_x, k4_i = augmented_rhs(time + step_size, x + step_size * k3_x)
+    x_next = metric.canonicalize(
+        x + (step_size / 6.0) * (k1_x + 2.0 * k2_x + 2.0 * k3_x + k4_x)
+    )
+    integral_increment = (step_size / 6.0) * (
+        k1_i + 2.0 * k2_i + 2.0 * k3_i + k4_i
+    )
+    return x_next, integral_increment
+
+
 def integrate_rk4(
     vf: ManifoldVectorField,
     metric: AnalyticMetric,
@@ -54,88 +119,74 @@ def integrate_rk4(
     track_trajectory: bool = False,
     compute_divergence: bool = True,
     stage_callback: Callable[[float, torch.Tensor], None] | None = None,
+    checkpoint_interval: int = 1,
+    detach_trajectory: bool = False,
+    compile: bool = False,
 ) -> FlowResult:
     """Integrate ``x_dot=f`` and ``I_dot=div_g f`` with augmented RK4.
 
     ``dt`` is a finite positive magnitude. The interval determines each
     step's sign. Trajectory entries are ``(time, state, divergence_integral)``.
+    By default they retain autograd history. ``detach_trajectory=True`` stores
+    replay-only checkpoints, and ``checkpoint_interval`` controls their spacing.
+    ``compile=True`` opts into the cached single-chart tensor execution path.
     """
     if x0.dim() < 1:
         raise ValueError("x0 must have shape (..., dim); got 0-d tensor")
-    if not x0.is_floating_point():
-        raise TypeError("x0 must have a floating-point dtype")
-    if not math.isfinite(float(t0)) or not math.isfinite(float(t1)):
-        raise ValueError("t0 and t1 must be finite")
-    if not math.isfinite(float(dt)) or dt <= 0.0:
-        raise ValueError("dt must be a finite positive step magnitude")
+    validate_autocast_disabled("integrate_rk4")
+    validate_supported_floating_tensor(x0, "integrate_rk4")
+    validate_tensor_module_compatibility(x0, vf, "integrate_rk4")
+    schedule = FixedStepSchedule(t0, t1, dt)
+    checkpoint_interval = validate_checkpoint_interval(checkpoint_interval)
+
+    if compile:
+        from .compilation import _integrate_rk4_compiled
+
+        compiled = _integrate_rk4_compiled(
+            vf,
+            metric,
+            x0,
+            schedule,
+            compute_divergence=compute_divergence,
+            unsupported_reason=(
+                "stage callbacks require eager execution"
+                if stage_callback is not None
+                else "trajectory capture requires eager execution"
+                if track_trajectory
+                else None
+            ),
+        )
+        if compiled is not None:
+            x, integral = compiled
+            return FlowResult(x, integral, [], checkpoint_interval, detach_trajectory)
 
     x = metric.canonicalize(x0.clone())
     integral = torch.zeros(x0.shape[:-1], device=x0.device, dtype=x0.dtype)
     trajectory: list[tuple[float, torch.Tensor, torch.Tensor]] = []
+    def checkpoint(time: float) -> None:
+        state = x.detach() if detach_trajectory else x.clone()
+        density = integral.detach() if detach_trajectory else integral.clone()
+        trajectory.append((time, state, density))
+
     if track_trajectory:
-        trajectory.append((float(t0), x.clone(), integral.clone()))
+        checkpoint(schedule.t0)
 
-    duration = abs(float(t1) - float(t0))
-    if duration == 0.0:
-        return FlowResult(x, integral, trajectory)
-
-    step_magnitude = float(dt)
-    n_steps = math.ceil(duration / step_magnitude)
-    direction = 1.0 if t1 > t0 else -1.0
-    t = float(t0)
-
-    def augmented_rhs(
-        time: float, state: torch.Tensor
-    ) -> tuple[torch.Tensor, torch.Tensor]:
-        metric.validate_points(state)
-        if stage_callback is not None:
-            stage_callback(time, state)
-        time_tensor = torch.full(
-            state.shape[:-1], time, device=state.device, dtype=state.dtype
+    for step in schedule:
+        x, integral_increment = _augmented_rk4_step(
+            vf,
+            metric,
+            x,
+            step.start,
+            step.size,
+            compute_divergence=compute_divergence,
+            stage_callback=stage_callback,
         )
-        field_value = vf(time_tensor, state)
-        if not compute_divergence:
-            return field_value, torch.zeros(
-                state.shape[:-1], device=state.device, dtype=state.dtype
-            )
+        integral = integral + integral_increment
+        if track_trajectory and checkpoint_due(
+            step.index + 1, len(schedule), checkpoint_interval
+        ):
+            checkpoint(step.end)
 
-        with torch.enable_grad():
-            divergence_state = state
-            if not divergence_state.requires_grad:
-                divergence_state = divergence_state.clone().requires_grad_(True)
-
-            def field_at_state(value: torch.Tensor) -> torch.Tensor:
-                stage_time = torch.full(
-                    value.shape[:-1], time, device=value.device, dtype=value.dtype
-                )
-                return vf(stage_time, value)
-
-            divergence_value = divergence(
-                field_at_state, divergence_state, metric
-            )
-        return field_value, divergence_value
-
-    for step_index in range(n_steps):
-        remaining = abs(float(t1) - t)
-        h = direction * min(step_magnitude, remaining)
-        if step_index == n_steps - 1:
-            h = float(t1) - t
-        half_h = h / 2.0
-
-        k1_x, k1_i = augmented_rhs(t, x)
-        k2_x, k2_i = augmented_rhs(t + half_h, x + half_h * k1_x)
-        k3_x, k3_i = augmented_rhs(t + half_h, x + half_h * k2_x)
-        k4_x, k4_i = augmented_rhs(t + h, x + h * k3_x)
-
-        x = metric.canonicalize(
-            x + (h / 6.0) * (k1_x + 2.0 * k2_x + 2.0 * k3_x + k4_x)
-        )
-        integral = integral + (h / 6.0) * (
-            k1_i + 2.0 * k2_i + 2.0 * k3_i + k4_i
-        )
-        t = float(t1) if step_index == n_steps - 1 else t + h
-
-        if track_trajectory:
-            trajectory.append((t, x.clone(), integral.clone()))
-
-    return FlowResult(x, integral, trajectory)
+    return FlowResult(
+        x, integral, trajectory, checkpoint_interval, detach_trajectory
+    )

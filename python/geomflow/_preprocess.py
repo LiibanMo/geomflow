@@ -16,6 +16,7 @@ def preprocess(
     *,
     normalize: bool = False,
     dtype: torch.dtype = torch.float32,
+    device: torch.device | str | None = None,
 ) -> torch.Tensor:
     """Convert ArrayLike input to a torch.Tensor ready for CNF training.
 
@@ -29,12 +30,11 @@ def preprocess(
         D = manifold dimension. Gradient tracking enabled.
     """
     if isinstance(data, torch.Tensor):
-        tensor = data.to(dtype=dtype)
+        tensor = data.to(dtype=dtype, device=device or data.device)
     elif isinstance(data, np.ndarray):
-        tensor = torch.from_numpy(data).to(dtype=dtype)
+        tensor = torch.as_tensor(data, dtype=dtype, device=device)
     elif isinstance(data, list):
-        arr = np.asarray(data, dtype=np.float32)
-        tensor = torch.from_numpy(arr).to(dtype=dtype)
+        tensor = torch.as_tensor(data, dtype=dtype, device=device)
     else:
         raise TypeError(
             f"Unsupported type: {type(data)}. "
@@ -51,4 +51,3 @@ def preprocess(
 
     tensor = tensor.requires_grad_(True)
     return tensor
-

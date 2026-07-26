@@ -1,0 +1,35 @@
+{
+  "phase": 10,
+  "status": "passed",
+  "cases": [
+    {
+      "name": "single_chart_direct",
+      "status": "passed",
+      "iterations": 40,
+      "final_loss": 1.6871124505996704,
+      "tail_allocated_growth_bytes": 0,
+      "growth_tolerance_bytes": 16777216,
+      "peak_allocated_bytes": 18385920,
+      "peak_reserved_bytes": 23068672
+    },
+    {
+      "name": "multi_chart_direct",
+      "status": "passed",
+      "iterations": 40,
+      "final_loss": 2.622727870941162,
+      "tail_allocated_growth_bytes": 0,
+      "growth_tolerance_bytes": 16777216,
+      "peak_allocated_bytes": 18541056,
+      "peak_reserved_bytes": 23068672
+    }
+  ],
+  "environment": {
+    "gpu": "NVIDIA GeForce RTX 3060",
+    "gpu_memory_bytes": 12486246400,
+    "driver": "580.142",
+    "cuda": "12.8",
+    "pytorch": "2.7.1+cu128",
+    "python": "3.11.13",
+    "os": "Linux-6.8.0-111-generic-x86_64-with-glibc2.35"
+  }
+}

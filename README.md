@@ -253,6 +253,31 @@ by the PyTorch frontend.
 
 ---
 
+## CUDA Training Reliability
+
+`ManifoldCNF.fit` is a single-process convenience API. For distributed
+training, wrap the complete `ManifoldCNF` in
+`torch.nn.parallel.DistributedDataParallel`, call the wrapped model to compute
+log likelihoods, and own the optimizer loop. DDP scales independent batches;
+it does not divide one ODE trajectory between GPUs. Multi-chart jobs must use
+`find_unused_parameters=True` because different ranks may route through
+different chart heads.
+
+Pass explicit device-local `torch.Generator` objects to `fit` and `sample` for
+repeatable random permutations, overlap times, and base samples. A repeated
+seed on one device is expected to reproduce results within that supported
+PyTorch/CUDA environment; bitwise identity across devices, PyTorch releases,
+or CUDA releases is not promised. Supported paths run with
+`torch.use_deterministic_algorithms(True)` in the tested version matrix, but
+future user callbacks may introduce operations with stricter backend limits.
+
+CUDA out-of-memory errors are reported without automatic batch-size changes or
+CPU fallback. Standard `state_dict` checkpoints can be loaded across CPU and
+CUDA with `torch.load(..., map_location=...)`; pass an optimizer to `fit` when
+its state must also be checkpointed for resumable training.
+
+---
+
 ## Repository Structure
 
 ```
@@ -292,3 +317,31 @@ geomflow/
 ## License
 
 MIT License.
+
+## GPU support
+
+`geomflow.torch` supports CPU and NVIDIA CUDA execution with PyTorch
+2.5 through 2.7. The header-only C++ API and the `_geomflow` pybind module
+remain CPU-only. They accept CPU scalar structures, not tensors.
+
+| API | CPU float32/64 | CUDA float32/64 | CUDA float16/bfloat16 |
+| --- | --- | --- | --- |
+| `geomflow.torch` single-chart | Yes | Yes | No |
+| `geomflow.torch` multi-chart | Yes | Yes | No |
+| Intrinsic adjoint, single-chart | Yes | Yes | No |
+| C++ and `_geomflow` APIs | Yes | No | No |
+
+Inputs, model parameters, metric outputs, and atlas runtime tensors must share
+a device and dtype. Runtime operators never move full tensors implicitly.
+Exact divergence is the likelihood default; stochastic divergence is explicit
+and approximate. Direct autograd is the reliable default and is required for
+multi-chart training. The intrinsic adjoint uses less memory but recomputes
+forward prefixes, supports first-order gradients only, and can be slower.
+Autocast is unsupported. GPU acceleration is expected only after enough batch,
+model, and integration work amortizes launch overhead; small batches may be
+faster on CPU.
+
+See [the GPU support contract](docs/gpu_support_contract.md) and
+[GPU troubleshooting](docs/gpu_troubleshooting.md). CUDA examples are
+`examples/python/cuda_single_chart.py` and
+`examples/python/cuda_multichart.py`.

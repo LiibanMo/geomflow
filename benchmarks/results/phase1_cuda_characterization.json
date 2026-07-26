@@ -1,0 +1,116 @@
+{
+  "environment": {
+    "platform": "Linux-5.4.0-216-generic-x86_64-with-glibc2.39",
+    "python": "3.12.13",
+    "torch": "2.12.0+cu126",
+    "cuda_runtime": "12.6",
+    "gpu": "NVIDIA GeForce RTX 3090",
+    "capability": [
+      8,
+      6
+    ]
+  },
+  "single_chart_backward": {
+    "loss_finite": true,
+    "loss_device": "cuda:0",
+    "loss_dtype": "torch.float64",
+    "input_gradient_present": true,
+    "input_gradient_finite": true,
+    "parameters": {
+      "net.0.weight": {
+        "present": true,
+        "finite": true,
+        "device": "cuda:0",
+        "dtype": "torch.float64"
+      },
+      "net.0.bias": {
+        "present": true,
+        "finite": true,
+        "device": "cuda:0",
+        "dtype": "torch.float64"
+      },
+      "net.2.weight": {
+        "present": true,
+        "finite": true,
+        "device": "cuda:0",
+        "dtype": "torch.float64"
+      },
+      "net.2.bias": {
+        "present": true,
+        "finite": true,
+        "device": "cuda:0",
+        "dtype": "torch.float64"
+      }
+    }
+  },
+  "multi_chart_forward": {
+    "state_device": "cuda:0",
+    "state_dtype": "torch.float64",
+    "divergence_device": "cuda:0",
+    "divergence_dtype": "torch.float64",
+    "finite": true
+  },
+  "sample_backed_membership": {
+    "mask_device": "cuda:0",
+    "aten_to_count": 3,
+    "aten_to_copy_count": 2,
+    "event_keys": [
+      "Memcpy DtoH (Device -> Pageable)",
+      "Memcpy HtoD (Pageable -> Device)",
+      "aten::_to_copy",
+      "aten::to",
+      "cudaMemcpyAsync"
+    ],
+    "source_contract": "x.detach().cpu().numpy() transfers the full query"
+  },
+  "fitter": {
+    "log_prob": {
+      "status": "succeeded",
+      "result": "tensor([-3.0701, -2.1106, -2.2555, -2.6746], device='cuda:0',\n       dtype=torch.float64, grad_fn=<AddBackward0>)"
+    },
+    "fit": {
+      "status": "succeeded",
+      "result": "[2.527711976897761]"
+    },
+    "sample": {
+      "status": "succeeded",
+      "result": "(tensor([[ 2.3389, -0.3366],\n        [-1.0674,  1.2722]], device='cuda:0', dtype=torch.float64,\n       grad_fn=<AddBackward0>), None)"
+    }
+  },
+  "cpu_metric_callback": {
+    "status": "succeeded",
+    "result": "tensor([[[1., 0.],\n         [0., 1.]],\n\n        [[1., 0.],\n         [0., 1.]]], dtype=torch.float64)"
+  },
+  "dtype_mismatch": {
+    "status": "failed",
+    "error_type": "RuntimeError",
+    "message": "mat1 and mat2 must have the same dtype, but got Double and Float"
+  },
+  "intrinsic_adjoint": {
+    "loss_abs_error": 0.0,
+    "input_gradient_present": true,
+    "input_gradient_max_abs_error": 0.0,
+    "parameters": {
+      "net.0.weight": {
+        "direct_present": true,
+        "adjoint_present": true,
+        "max_abs_error": 2.7755575615628914e-17
+      },
+      "net.0.bias": {
+        "direct_present": true,
+        "adjoint_present": true,
+        "max_abs_error": 1.3877787807814457e-17
+      },
+      "net.2.weight": {
+        "direct_present": true,
+        "adjoint_present": true,
+        "max_abs_error": 2.7755575615628914e-17
+      },
+      "net.2.bias": {
+        "direct_present": true,
+        "adjoint_present": true,
+        "max_abs_error": 0.0
+      }
+    }
+  }
+}

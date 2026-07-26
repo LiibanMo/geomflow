@@ -15,6 +15,8 @@ from typing import Callable
 
 import torch
 
+from ._utils import batched_jacobian
+
 
 def _coordinate_derivative(output: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
     """Differentiate a scalar batch output, including constant outputs."""
@@ -40,7 +42,7 @@ def christoffel(
     Parameters
     ----------
     metric : AnalyticMetric
-        Metric object providing ``.inverse(x)``, ``.derivative(x)``.
+        Metric object providing ``.solve(x, rhs)``, ``.derivative(x)``.
     x : Tensor
         Point(s) in chart coordinates, shape ``(..., dim)`` with
         ``requires_grad=True``.
@@ -50,27 +52,23 @@ def christoffel(
     Gamma : Tensor
         Shape ``(..., dim, dim, dim)``.  ``Gamma[..., k, i, j] = Γ^k_ij``.
     """
-    dim = metric.dim
-    g_inv = metric.inverse(x)  # (..., dim, dim)
     dg = metric.derivative(x)  # (..., dim, dim, dim)
-
-    Gamma = torch.zeros(*x.shape[:-1], dim, dim, dim, device=x.device, dtype=x.dtype)
-    for k in range(dim):
-        for i in range(dim):
-            for j in range(dim):
-                s = torch.zeros_like(x[..., 0])
-                for l in range(dim):
-                    s = s + g_inv[..., k, l] * (
-                        dg[..., j, l, i] + dg[..., i, l, j] - dg[..., i, j, l]
-                    )
-                Gamma[..., k, i, j] = 0.5 * s
-    return Gamma
+    first_kind = (
+        dg.permute(*range(dg.ndim - 3), -1, -3, -2)
+        + dg.transpose(-2, -1)
+        - dg
+    )
+    rhs = first_kind.movedim(-1, -3).flatten(-2)
+    return 0.5 * metric.solve(x, rhs).unflatten(-1, (metric.dim, metric.dim))
 
 
 def divergence(
     vf: Callable[[torch.Tensor], torch.Tensor],
     x: torch.Tensor,
     metric: "AnalyticMetric",  # type: ignore[name-defined]  # noqa: F821
+    *,
+    divergence_mode: str = "exact",
+    generator: torch.Generator | None = None,
 ) -> torch.Tensor:
     """Divergence of a vector field `vf` on the manifold.
 
@@ -94,18 +92,35 @@ def divergence(
     div : Tensor
         Scalar divergence, shape ``(...,)``.
     """
-    dim = metric.dim
-    sqrtg = metric.sqrt_det(x)  # (...,)
-    V = vf(x)  # (..., dim)
-    if V.shape != x.shape:
-        raise ValueError(f"vf returned shape {V.shape}; expected {x.shape}")
+    if divergence_mode not in {"exact", "hutchinson"}:
+        raise ValueError("divergence_mode must be 'exact' or 'hutchinson'")
 
-    div = torch.zeros_like(sqrtg)
-    for i in range(dim):
-        sqrtg_Vi = sqrtg * V[..., i]
-        d_i = _coordinate_derivative(sqrtg_Vi, x)
-        div = div + d_i[..., i]
-    return div / sqrtg
+    if x.device.type == "cpu" and divergence_mode == "exact":
+        sqrtg = metric.sqrt_det(x)
+        value = vf(x)
+        if value.shape != x.shape:
+            raise ValueError(f"vf returned shape {value.shape}; expected {x.shape}")
+        derivatives = [
+            _coordinate_derivative(sqrtg * value[..., i], x)[..., i]
+            for i in range(metric.dim)
+        ]
+        return torch.stack(derivatives, -1).sum(-1) / sqrtg
+
+    def volume_weighted_field(point: torch.Tensor) -> torch.Tensor:
+        value = vf(point)
+        if value.shape != point.shape:
+            raise ValueError(f"vf returned shape {value.shape}; expected {point.shape}")
+        return metric.sqrt_det(point).unsqueeze(-1) * value
+
+    sqrtg = metric.sqrt_det(x)
+    jacobian = batched_jacobian(volume_weighted_field, x)
+    if divergence_mode == "exact":
+        trace = jacobian.diagonal(dim1=-2, dim2=-1).sum(-1)
+    else:
+        probe = torch.empty_like(x).bernoulli_(0.5, generator=generator)
+        probe = probe.mul_(2.0).sub_(1.0)
+        trace = torch.einsum("...i,...ij,...j->...", probe, jacobian, probe)
+    return trace / sqrtg
 
 
 def gradient(
@@ -135,8 +150,7 @@ def gradient(
     if h.shape != x.shape[:-1]:
         raise ValueError(f"scalar_fn returned shape {h.shape}; expected {x.shape[:-1]}")
     dh = _coordinate_derivative(h, x)
-    g_inv = metric.inverse(x)  # (..., dim, dim)
-    return (g_inv * dh.unsqueeze(-2)).sum(dim=-1)  # Einstein sum over j
+    return metric.solve(x, dh)
 
 
 def covariant_derivative_tensor(
@@ -162,16 +176,12 @@ def covariant_derivative_tensor(
     nabla_V : Tensor
         Shape ``(..., dim, dim)`` where ``nabla_V[..., i, j] = ∇_j V^i``.
     """
-    dim = metric.dim
     V = vf(x)  # (..., dim)
     if V.shape != x.shape:
         raise ValueError(f"vf returned shape {V.shape}; expected {x.shape}")
     Gamma = christoffel(metric, x)  # (..., dim, dim, dim)
 
-    dV_rows: list[torch.Tensor] = []
-    for i in range(dim):
-        dV_rows.append(_coordinate_derivative(V[..., i], x))
-    dV = torch.stack(dV_rows, dim=-2)
+    dV = batched_jacobian(vf, x)
 
     Gamma_V = torch.einsum("...ikj,...k->...ij", Gamma, V)
 

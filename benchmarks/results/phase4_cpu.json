@@ -1,0 +1,1203 @@
+{
+  "schema_version": 1,
+  "run": {
+    "timestamp_utc": "2026-07-25T13:22:25.217662+00:00",
+    "git_revision": "5ebaca5d37c7bf29e80a19ed312b52e5d3914321",
+    "git_dirty": true,
+    "command": [
+      "benchmarks/run.py",
+      "--scenario",
+      "euclidean",
+      "sphere",
+      "torus",
+      "poincare",
+      "induced",
+      "sphere-atlas",
+      "--batch-size",
+      "1",
+      "64",
+      "--steps",
+      "8",
+      "--dtype",
+      "float32",
+      "float64",
+      "--device",
+      "cpu",
+      "--workload",
+      "forward",
+      "--warmup",
+      "1",
+      "--repetitions",
+      "3",
+      "--reference",
+      "--output",
+      "benchmarks/results/phase4_cpu.json",
+      "--fail-on-error"
+    ],
+    "hostname": "Mac.lan",
+    "os": "macOS-26.5.2-arm64-arm-64bit",
+    "machine": "arm64",
+    "cpu": "arm",
+    "python": "3.12.13",
+    "torch": "2.13.0",
+    "cuda_available": false,
+    "cuda_runtime": null,
+    "nvidia_driver": "unavailable",
+    "cudnn": null,
+    "gpu": []
+  },
+  "cases": [
+    {
+      "case_id": "euclidean-cpu-float32-b1-d2-w32x2-s8-forward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "euclidean",
+        "batch_size": 1,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float32",
+        "device": "cpu",
+        "divergence_mode": "exact",
+        "workload": "forward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 5.257541,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 5.257541
+        },
+        {
+          "forward_ms": 5.734292,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 5.734292
+        },
+        {
+          "forward_ms": 5.233208,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 5.233208
+        }
+      ],
+      "median_wall_ms": 5.257541,
+      "samples_per_second": 190.20298652925388,
+      "accepted_steps_per_second": 1521.623892234031,
+      "memory_samples": [],
+      "error": {
+        "state_max_abs_error": 7.022661141498077e-08,
+        "divergence_max_abs_error": 4.276663627400534e-09,
+        "max_abs_error": 7.022661141498077e-08
+      }
+    },
+    {
+      "case_id": "euclidean-cpu-float64-b1-d2-w32x2-s8-forward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "euclidean",
+        "batch_size": 1,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float64",
+        "device": "cpu",
+        "divergence_mode": "exact",
+        "workload": "forward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 5.366125,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 5.366125
+        },
+        {
+          "forward_ms": 5.507125,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 5.507125
+        },
+        {
+          "forward_ms": 5.518791,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 5.518791
+        }
+      ],
+      "median_wall_ms": 5.507125,
+      "samples_per_second": 181.582949361055,
+      "accepted_steps_per_second": 1452.66359488844,
+      "memory_samples": [],
+      "error": {
+        "state_max_abs_error": 0.0,
+        "divergence_max_abs_error": 0.0,
+        "max_abs_error": 0.0
+      }
+    },
+    {
+      "case_id": "euclidean-cpu-float32-b64-d2-w32x2-s8-forward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "euclidean",
+        "batch_size": 64,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float32",
+        "device": "cpu",
+        "divergence_mode": "exact",
+        "workload": "forward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 7.177917,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 7.177917
+        },
+        {
+          "forward_ms": 7.83725,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 7.83725
+        },
+        {
+          "forward_ms": 7.291917,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 7.291917
+        }
+      ],
+      "median_wall_ms": 7.291917,
+      "samples_per_second": 8776.841535634594,
+      "accepted_steps_per_second": 1097.1051919543243,
+      "memory_samples": [],
+      "error": {
+        "state_max_abs_error": 2.7388471757205934e-07,
+        "divergence_max_abs_error": 8.487621883102037e-09,
+        "max_abs_error": 2.7388471757205934e-07
+      }
+    },
+    {
+      "case_id": "euclidean-cpu-float64-b64-d2-w32x2-s8-forward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "euclidean",
+        "batch_size": 64,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float64",
+        "device": "cpu",
+        "divergence_mode": "exact",
+        "workload": "forward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 7.907083,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 7.907083
+        },
+        {
+          "forward_ms": 9.400625,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 9.400625
+        },
+        {
+          "forward_ms": 8.025958,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 8.025958
+        }
+      ],
+      "median_wall_ms": 8.025958,
+      "samples_per_second": 7974.125954808136,
+      "accepted_steps_per_second": 996.765744351017,
+      "memory_samples": [],
+      "error": {
+        "state_max_abs_error": 0.0,
+        "divergence_max_abs_error": 0.0,
+        "max_abs_error": 0.0
+      }
+    },
+    {
+      "case_id": "sphere-cpu-float32-b1-d2-w32x2-s8-forward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "sphere",
+        "batch_size": 1,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float32",
+        "device": "cpu",
+        "divergence_mode": "exact",
+        "workload": "forward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 6.441667,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 6.441667
+        },
+        {
+          "forward_ms": 6.939875,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 6.939875
+        },
+        {
+          "forward_ms": 6.345875,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 6.345875
+        }
+      ],
+      "median_wall_ms": 6.441667,
+      "samples_per_second": 155.2393192631659,
+      "accepted_steps_per_second": 1241.9145541053272,
+      "memory_samples": [],
+      "error": {
+        "state_max_abs_error": 1.3779940521985168e-08,
+        "divergence_max_abs_error": 7.724285044918844e-09,
+        "max_abs_error": 1.3779940521985168e-08
+      }
+    },
+    {
+      "case_id": "sphere-cpu-float64-b1-d2-w32x2-s8-forward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "sphere",
+        "batch_size": 1,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float64",
+        "device": "cpu",
+        "divergence_mode": "exact",
+        "workload": "forward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 6.383,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 6.383
+        },
+        {
+          "forward_ms": 6.65725,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 6.65725
+        },
+        {
+          "forward_ms": 6.435541,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 6.435541
+        }
+      ],
+      "median_wall_ms": 6.435541,
+      "samples_per_second": 155.3870917767442,
+      "accepted_steps_per_second": 1243.0967342139536,
+      "memory_samples": [],
+      "error": {
+        "state_max_abs_error": 0.0,
+        "divergence_max_abs_error": 0.0,
+        "max_abs_error": 0.0
+      }
+    },
+    {
+      "case_id": "sphere-cpu-float32-b64-d2-w32x2-s8-forward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "sphere",
+        "batch_size": 64,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float32",
+        "device": "cpu",
+        "divergence_mode": "exact",
+        "workload": "forward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 8.322292,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 8.322292
+        },
+        {
+          "forward_ms": 8.5515,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 8.5515
+        },
+        {
+          "forward_ms": 8.341542,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 8.341542
+        }
+      ],
+      "median_wall_ms": 8.341542,
+      "samples_per_second": 7672.442337399967,
+      "accepted_steps_per_second": 959.0552921749959,
+      "memory_samples": [],
+      "error": {
+        "state_max_abs_error": 8.022785136230226e-08,
+        "divergence_max_abs_error": 2.8029435383825074e-08,
+        "max_abs_error": 8.022785136230226e-08
+      }
+    },
+    {
+      "case_id": "sphere-cpu-float64-b64-d2-w32x2-s8-forward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "sphere",
+        "batch_size": 64,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float64",
+        "device": "cpu",
+        "divergence_mode": "exact",
+        "workload": "forward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 9.010709,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 9.010709
+        },
+        {
+          "forward_ms": 9.277917,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 9.277917
+        },
+        {
+          "forward_ms": 9.197042,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 9.197042
+        }
+      ],
+      "median_wall_ms": 9.197042,
+      "samples_per_second": 6958.759131468575,
+      "accepted_steps_per_second": 869.8448914335719,
+      "memory_samples": [],
+      "error": {
+        "state_max_abs_error": 0.0,
+        "divergence_max_abs_error": 0.0,
+        "max_abs_error": 0.0
+      }
+    },
+    {
+      "case_id": "torus-cpu-float32-b1-d2-w32x2-s8-forward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "torus",
+        "batch_size": 1,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float32",
+        "device": "cpu",
+        "divergence_mode": "exact",
+        "workload": "forward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 6.6995,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 6.6995
+        },
+        {
+          "forward_ms": 7.016042,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 7.016042
+        },
+        {
+          "forward_ms": 6.798792,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 6.798792
+        }
+      ],
+      "median_wall_ms": 6.798792,
+      "samples_per_second": 147.084952738663,
+      "accepted_steps_per_second": 1176.679621909304,
+      "memory_samples": [],
+      "error": {
+        "state_max_abs_error": 6.201584463738641e-07,
+        "divergence_max_abs_error": 1.739357762681193e-08,
+        "max_abs_error": 6.201584463738641e-07
+      }
+    },
+    {
+      "case_id": "torus-cpu-float64-b1-d2-w32x2-s8-forward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "torus",
+        "batch_size": 1,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float64",
+        "device": "cpu",
+        "divergence_mode": "exact",
+        "workload": "forward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 6.780292,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 6.780292
+        },
+        {
+          "forward_ms": 6.999666,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 6.999666
+        },
+        {
+          "forward_ms": 6.853083,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 6.853083
+        }
+      ],
+      "median_wall_ms": 6.853083,
+      "samples_per_second": 145.91972693165982,
+      "accepted_steps_per_second": 1167.3578154532786,
+      "memory_samples": [],
+      "error": {
+        "state_max_abs_error": 0.0,
+        "divergence_max_abs_error": 0.0,
+        "max_abs_error": 0.0
+      }
+    },
+    {
+      "case_id": "torus-cpu-float32-b64-d2-w32x2-s8-forward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "torus",
+        "batch_size": 64,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float32",
+        "device": "cpu",
+        "divergence_mode": "exact",
+        "workload": "forward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 8.744375,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 8.744375
+        },
+        {
+          "forward_ms": 8.927167,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 8.927167
+        },
+        {
+          "forward_ms": 8.911125,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 8.911125
+        }
+      ],
+      "median_wall_ms": 8.911125,
+      "samples_per_second": 7182.033693837759,
+      "accepted_steps_per_second": 897.7542117297198,
+      "memory_samples": [],
+      "error": {
+        "state_max_abs_error": 1.0884301762104087e-06,
+        "divergence_max_abs_error": 6.706130350336847e-08,
+        "max_abs_error": 1.0884301762104087e-06
+      }
+    },
+    {
+      "case_id": "torus-cpu-float64-b64-d2-w32x2-s8-forward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "torus",
+        "batch_size": 64,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float64",
+        "device": "cpu",
+        "divergence_mode": "exact",
+        "workload": "forward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 9.985042,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 9.985042
+        },
+        {
+          "forward_ms": 10.022917,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 10.022917
+        },
+        {
+          "forward_ms": 9.899833,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 9.899833
+        }
+      ],
+      "median_wall_ms": 9.985042,
+      "samples_per_second": 6409.587460924051,
+      "accepted_steps_per_second": 801.1984326155064,
+      "memory_samples": [],
+      "error": {
+        "state_max_abs_error": 0.0,
+        "divergence_max_abs_error": 0.0,
+        "max_abs_error": 0.0
+      }
+    },
+    {
+      "case_id": "poincare-cpu-float32-b1-d2-w32x2-s8-forward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "poincare",
+        "batch_size": 1,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float32",
+        "device": "cpu",
+        "divergence_mode": "exact",
+        "workload": "forward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 6.939917,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 6.939917
+        },
+        {
+          "forward_ms": 6.92425,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 6.92425
+        },
+        {
+          "forward_ms": 7.041208,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 7.041208
+        }
+      ],
+      "median_wall_ms": 6.939917,
+      "samples_per_second": 144.09394233389247,
+      "accepted_steps_per_second": 1152.7515386711398,
+      "memory_samples": [],
+      "error": {
+        "state_max_abs_error": 6.740444213892971e-08,
+        "divergence_max_abs_error": 8.778329685377173e-08,
+        "max_abs_error": 8.778329685377173e-08
+      }
+    },
+    {
+      "case_id": "poincare-cpu-float64-b1-d2-w32x2-s8-forward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "poincare",
+        "batch_size": 1,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float64",
+        "device": "cpu",
+        "divergence_mode": "exact",
+        "workload": "forward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 6.792958,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 6.792958
+        },
+        {
+          "forward_ms": 7.025166,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 7.025166
+        },
+        {
+          "forward_ms": 6.969875,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 6.969875
+        }
+      ],
+      "median_wall_ms": 6.969875,
+      "samples_per_second": 143.47459602934055,
+      "accepted_steps_per_second": 1147.7967682347244,
+      "memory_samples": [],
+      "error": {
+        "state_max_abs_error": 0.0,
+        "divergence_max_abs_error": 0.0,
+        "max_abs_error": 0.0
+      }
+    },
+    {
+      "case_id": "poincare-cpu-float32-b64-d2-w32x2-s8-forward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "poincare",
+        "batch_size": 64,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float32",
+        "device": "cpu",
+        "divergence_mode": "exact",
+        "workload": "forward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 8.949458,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 8.949458
+        },
+        {
+          "forward_ms": 8.952083,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 8.952083
+        },
+        {
+          "forward_ms": 8.833042,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 8.833042
+        }
+      ],
+      "median_wall_ms": 8.949458,
+      "samples_per_second": 7151.271060213926,
+      "accepted_steps_per_second": 893.9088825267407,
+      "memory_samples": [],
+      "error": {
+        "state_max_abs_error": 1.2321662523628873e-07,
+        "divergence_max_abs_error": 4.875185042330088e-07,
+        "max_abs_error": 4.875185042330088e-07
+      }
+    },
+    {
+      "case_id": "poincare-cpu-float64-b64-d2-w32x2-s8-forward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "poincare",
+        "batch_size": 64,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float64",
+        "device": "cpu",
+        "divergence_mode": "exact",
+        "workload": "forward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 9.599,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 9.599
+        },
+        {
+          "forward_ms": 9.684666,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 9.684666
+        },
+        {
+          "forward_ms": 9.483584,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 9.483584
+        }
+      ],
+      "median_wall_ms": 9.599,
+      "samples_per_second": 6667.36118345661,
+      "accepted_steps_per_second": 833.4201479320762,
+      "memory_samples": [],
+      "error": {
+        "state_max_abs_error": 0.0,
+        "divergence_max_abs_error": 0.0,
+        "max_abs_error": 0.0
+      }
+    },
+    {
+      "case_id": "induced-cpu-float32-b1-d2-w32x2-s8-forward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "induced",
+        "batch_size": 1,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float32",
+        "device": "cpu",
+        "divergence_mode": "exact",
+        "workload": "forward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 12.526042,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 12.526042
+        },
+        {
+          "forward_ms": 12.740291,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 12.740291
+        },
+        {
+          "forward_ms": 12.120166,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 12.120166
+        }
+      ],
+      "median_wall_ms": 12.526042,
+      "samples_per_second": 79.83367770920773,
+      "accepted_steps_per_second": 638.6694216736619,
+      "memory_samples": [],
+      "error": {
+        "state_max_abs_error": 1.3779940521985168e-08,
+        "divergence_max_abs_error": 2.898309925392084e-10,
+        "max_abs_error": 1.3779940521985168e-08
+      }
+    },
+    {
+      "case_id": "induced-cpu-float64-b1-d2-w32x2-s8-forward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "induced",
+        "batch_size": 1,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float64",
+        "device": "cpu",
+        "divergence_mode": "exact",
+        "workload": "forward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 12.128,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 12.128
+        },
+        {
+          "forward_ms": 12.561083,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 12.561083
+        },
+        {
+          "forward_ms": 12.228333,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 12.228333
+        }
+      ],
+      "median_wall_ms": 12.228333,
+      "samples_per_second": 81.77729540077131,
+      "accepted_steps_per_second": 654.2183632061705,
+      "memory_samples": [],
+      "error": {
+        "state_max_abs_error": 0.0,
+        "divergence_max_abs_error": 0.0,
+        "max_abs_error": 0.0
+      }
+    },
+    {
+      "case_id": "induced-cpu-float32-b64-d2-w32x2-s8-forward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "induced",
+        "batch_size": 64,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float32",
+        "device": "cpu",
+        "divergence_mode": "exact",
+        "workload": "forward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 17.615125,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 17.615125
+        },
+        {
+          "forward_ms": 17.40125,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 17.40125
+        },
+        {
+          "forward_ms": 16.849583,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 16.849583
+        }
+      ],
+      "median_wall_ms": 17.40125,
+      "samples_per_second": 3677.896702823073,
+      "accepted_steps_per_second": 459.73708785288414,
+      "memory_samples": [],
+      "error": {
+        "state_max_abs_error": 8.022785136230226e-08,
+        "divergence_max_abs_error": 1.8528941464479587e-08,
+        "max_abs_error": 8.022785136230226e-08
+      }
+    },
+    {
+      "case_id": "induced-cpu-float64-b64-d2-w32x2-s8-forward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "induced",
+        "batch_size": 64,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float64",
+        "device": "cpu",
+        "divergence_mode": "exact",
+        "workload": "forward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 17.193458,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 17.193458
+        },
+        {
+          "forward_ms": 18.345,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 18.345
+        },
+        {
+          "forward_ms": 17.86475,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 17.86475
+        }
+      ],
+      "median_wall_ms": 17.86475,
+      "samples_per_second": 3582.473866133027,
+      "accepted_steps_per_second": 447.8092332666284,
+      "memory_samples": [],
+      "error": {
+        "state_max_abs_error": 0.0,
+        "divergence_max_abs_error": 0.0,
+        "max_abs_error": 0.0
+      }
+    },
+    {
+      "case_id": "sphere-atlas-cpu-float32-b1-d2-w32x2-s8-forward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "sphere-atlas",
+        "batch_size": 1,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float32",
+        "device": "cpu",
+        "divergence_mode": "exact",
+        "workload": "forward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 6.612,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 6.612
+        },
+        {
+          "forward_ms": 6.805541,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 6.805541
+        },
+        {
+          "forward_ms": 6.664375,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 6.664375
+        }
+      ],
+      "median_wall_ms": 6.664375,
+      "samples_per_second": 150.05158023070433,
+      "accepted_steps_per_second": 1200.4126418456347,
+      "memory_samples": [],
+      "error": {
+        "state_max_abs_error": 1.3779940521985168e-08,
+        "divergence_max_abs_error": 7.724285044918844e-09,
+        "max_abs_error": 1.3779940521985168e-08
+      }
+    },
+    {
+      "case_id": "sphere-atlas-cpu-float64-b1-d2-w32x2-s8-forward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "sphere-atlas",
+        "batch_size": 1,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float64",
+        "device": "cpu",
+        "divergence_mode": "exact",
+        "workload": "forward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 6.720834,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 6.720834
+        },
+        {
+          "forward_ms": 6.946708,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 6.946708
+        },
+        {
+          "forward_ms": 6.687208,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 6.687208
+        }
+      ],
+      "median_wall_ms": 6.720834,
+      "samples_per_second": 148.7910577764605,
+      "accepted_steps_per_second": 1190.328462211684,
+      "memory_samples": [],
+      "error": {
+        "state_max_abs_error": 0.0,
+        "divergence_max_abs_error": 0.0,
+        "max_abs_error": 0.0
+      }
+    },
+    {
+      "case_id": "sphere-atlas-cpu-float32-b64-d2-w32x2-s8-forward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "sphere-atlas",
+        "batch_size": 64,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float32",
+        "device": "cpu",
+        "divergence_mode": "exact",
+        "workload": "forward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 8.478291,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 8.478291
+        },
+        {
+          "forward_ms": 8.763,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 8.763
+        },
+        {
+          "forward_ms": 8.664958,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 8.664958
+        }
+      ],
+      "median_wall_ms": 8.664958,
+      "samples_per_second": 7386.071577034764,
+      "accepted_steps_per_second": 923.2589471293455,
+      "memory_samples": [],
+      "error": {
+        "state_max_abs_error": 8.022785136230226e-08,
+        "divergence_max_abs_error": 2.8029435383825074e-08,
+        "max_abs_error": 8.022785136230226e-08
+      }
+    },
+    {
+      "case_id": "sphere-atlas-cpu-float64-b64-d2-w32x2-s8-forward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "sphere-atlas",
+        "batch_size": 64,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float64",
+        "device": "cpu",
+        "divergence_mode": "exact",
+        "workload": "forward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 9.521917,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 9.521917
+        },
+        {
+          "forward_ms": 9.450083,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 9.450083
+        },
+        {
+          "forward_ms": 9.43425,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 9.43425
+        }
+      ],
+      "median_wall_ms": 9.450083,
+      "samples_per_second": 6772.427289792058,
+      "accepted_steps_per_second": 846.5534112240073,
+      "memory_samples": [],
+      "error": {
+        "state_max_abs_error": 0.0,
+        "divergence_max_abs_error": 0.0,
+        "max_abs_error": 0.0
+      }
+    }
+  ]
+}

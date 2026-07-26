@@ -1,0 +1,114 @@
+{
+  "environment": {
+    "timestamp_utc": "2026-07-25T22:08:19.346986+00:00",
+    "git_revision": "unavailable",
+    "os": "Linux-6.8.0-47-generic-x86_64-with-glibc2.35",
+    "python": "3.11.11",
+    "torch": "2.6.0+cu124",
+    "cuda_runtime": "12.4",
+    "driver": "550.107.02",
+    "gpu": "NVIDIA RTX A4000"
+  },
+  "trajectories": [
+    {
+      "dtype": "float32",
+      "seconds": 3.5853041475638747,
+      "state": [
+        [
+          0.15346220135688782,
+          -0.1342988759279251
+        ],
+        [
+          -0.06504271179437637,
+          0.2160392552614212
+        ]
+      ],
+      "divergence": [
+        -0.4041244685649872,
+        -0.40603533387184143
+      ],
+      "loss": -0.7176694869995117,
+      "gradients": [
+        -0.05123034119606018,
+        -0.002121447119861841,
+        0.056027963757514954,
+        0.03710390254855156,
+        8.738926887512207,
+        -0.8580672144889832,
+        -0.9100865721702576,
+        9.553403854370117
+      ],
+      "finite": true
+    },
+    {
+      "dtype": "float64",
+      "seconds": 2.7583973575383425,
+      "state": [
+        [
+          0.15346213361754085,
+          -0.1342988510970611
+        ],
+        [
+          -0.06504274018378428,
+          0.21603920074511135
+        ]
+      ],
+      "divergence": [
+        -0.4041244683503694,
+        -0.40603538187986554
+      ],
+      "loss": -0.7176695480605946,
+      "gradients": [
+        -0.05123024899632477,
+        -0.0021217017657039665,
+        0.05602803310370522,
+        0.037103452080442245,
+        8.738926581848915,
+        -0.8580672835252123,
+        -0.9100874170130836,
+        9.553394999966631
+      ],
+      "finite": true
+    }
+  ],
+  "low_precision": [
+    {
+      "dtype": "float16",
+      "cholesky": {
+        "supported": false,
+        "error": "\"cholesky_cusolver\" not implemented for 'Half'"
+      },
+      "slogdet": {
+        "supported": false,
+        "error": "linalg.slogdet: Low precision dtypes not supported. Got Half"
+      },
+      "higher_order_autograd": {
+        "supported": true,
+        "finite": true
+      },
+      "production_policy": {
+        "accepted": false,
+        "error": "AnalyticMetric.contains: unsupported dtype torch.float16; expected torch.float32 or torch.float64; got device=cuda:0"
+      }
+    },
+    {
+      "dtype": "bfloat16",
+      "cholesky": {
+        "supported": false,
+        "error": "\"cholesky_cusolver\" not implemented for 'BFloat16'"
+      },
+      "slogdet": {
+        "supported": false,
+        "error": "linalg.slogdet: Low precision dtypes not supported. Got BFloat16"
+      },
+      "higher_order_autograd": {
+        "supported": true,
+        "finite": true
+      },
+      "production_policy": {
+        "accepted": false,
+        "error": "AnalyticMetric.contains: unsupported dtype torch.bfloat16; expected torch.float32 or torch.float64; got device=cuda:0"
+      }
+    }
+  ]
+}

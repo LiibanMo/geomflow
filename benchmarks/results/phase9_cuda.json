@@ -1,0 +1,22 @@
+{
+  "phase": 9,
+  "world_size": 2,
+  "status": "passed",
+  "checks": [
+    "single_chart_direct_ddp",
+    "single_chart_intrinsic_adjoint_ddp",
+    "multi_chart_rank_divergent_ddp",
+    "single_device_global_batch_equivalence",
+    "finite_reduced_gradients",
+    "rank_local_optimizer_state"
+  ],
+  "environment": {
+    "gpu": "NVIDIA GeForce RTX 3060",
+    "gpu_memory_bytes": 12629508096,
+    "driver": "535.154.05",
+    "cuda": "12.1",
+    "pytorch": "2.5.1+cu121",
+    "python": "3.11.10",
+    "os": "Linux-5.15.0-92-generic-x86_64-with-glibc2.35"
+  }
+}

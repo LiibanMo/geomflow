@@ -14,7 +14,8 @@ from .base_distribution import (
     StandardNormalCoordinateBase,
     validate_base_distribution,
 )
-from .integrator import integrate_rk4
+from ._schedule import FixedStepSchedule
+from .integrator import _augmented_rk4_step, integrate_rk4
 from .vector_field import (
     ManifoldVectorField,
     coordinate_jacobian_regularizer,
@@ -209,58 +210,100 @@ class IntrinsicAdjointFunction(torch.autograd.Function):
                 + res.divergence_integral
             ).mean()
 
-        ctx.save_for_backward(x_data, *parameters, *buffers)
+        ctx.save_for_backward(x_data, res.x_final, *parameters, *buffers)
         return loss
 
     @staticmethod
     def backward(ctx, grad_output):
-        saved_x, *saved_values = ctx.saved_tensors
+        saved_x, final_x, *saved_values = ctx.saved_tensors
         saved_parameters = saved_values[: ctx.parameter_count]
         saved_buffers = saved_values[ctx.parameter_count :]
+        replay_parameters = tuple(
+            parameter.detach().requires_grad_(True) for parameter in saved_parameters
+        )
+        field = _functional_field(
+            ctx.vf,
+            ctx.parameter_names,
+            replay_parameters,
+            ctx.buffer_names,
+            tuple(buffer.clone() for buffer in saved_buffers),
+        )
+        schedule = tuple(FixedStepSchedule(ctx.t1, ctx.t0, ctx.dt))
+        output_scale = grad_output.detach()
+
         with torch.enable_grad():
-            replay_x = saved_x.detach().requires_grad_(True)
-            replay_parameters = tuple(
-                parameter.detach().requires_grad_(True)
-                for parameter in saved_parameters
-            )
-            field = _functional_field(
-                ctx.vf,
-                ctx.parameter_names,
-                replay_parameters,
-                ctx.buffer_names,
-                tuple(buffer.clone() for buffer in saved_buffers),
-            )
-            result = integrate_rk4(
-                field,
-                ctx.metric,
-                replay_x,
-                t0=ctx.t1,
-                t1=ctx.t0,
-                dt=ctx.dt,
-                track_trajectory=False,
-            )
-            replay_loss = -(
-                ctx.base_distribution.log_prob_volume(
-                    result.x_final, ctx.metric
-                )
-                + result.divergence_integral
+            terminal = final_x.detach().requires_grad_(True)
+            terminal_loss = -ctx.base_distribution.log_prob_volume(
+                terminal, ctx.metric
             ).mean()
-            replay_inputs = (replay_x, *replay_parameters)
-            if replay_loss.requires_grad:
-                gradients = torch.autograd.grad(
-                    replay_loss,
-                    replay_inputs,
-                    grad_outputs=grad_output.detach(),
-                    allow_unused=True,
+            if terminal_loss.requires_grad:
+                (state_adjoint,) = torch.autograd.grad(
+                    terminal_loss, terminal, grad_outputs=output_scale
                 )
             else:
-                gradients = (None,) * len(replay_inputs)
+                state_adjoint = torch.zeros_like(terminal)
 
-        materialized = tuple(
-            torch.zeros_like(value) if gradient is None else gradient
-            for value, gradient in zip(replay_inputs, gradients)
-        )
-        grad_x, *parameter_gradients = materialized
+        sample_count = final_x.numel() // final_x.shape[-1]
+        integral_adjoint = final_x.new_full(
+            final_x.shape[:-1], -1.0 / sample_count
+        ) * output_scale
+        parameter_gradients = [torch.zeros_like(value) for value in replay_parameters]
+
+        for target_index in range(len(schedule) - 1, -1, -1):
+            with torch.no_grad():
+                state = ctx.metric.canonicalize(saved_x.detach().clone())
+                for replay_step in schedule[:target_index]:
+                    state, _ = _augmented_rk4_step(
+                        field,
+                        ctx.metric,
+                        state,
+                        replay_step.start,
+                        replay_step.size,
+                    )
+
+            with torch.enable_grad():
+                local_state = state.detach().requires_grad_(True)
+                step = schedule[target_index]
+                next_state, integral_increment = _augmented_rk4_step(
+                    field, ctx.metric, local_state, step.start, step.size
+                )
+                local_inputs = (local_state, *replay_parameters)
+                differentiable_outputs = []
+                differentiable_cotangents = []
+                for output, cotangent in (
+                    (next_state, state_adjoint),
+                    (integral_increment, integral_adjoint),
+                ):
+                    if output.requires_grad:
+                        differentiable_outputs.append(output)
+                        differentiable_cotangents.append(cotangent)
+                if differentiable_outputs:
+                    local_gradients = torch.autograd.grad(
+                        differentiable_outputs,
+                        local_inputs,
+                        grad_outputs=differentiable_cotangents,
+                        allow_unused=True,
+                    )
+                else:
+                    local_gradients = (None,) * len(local_inputs)
+            state_adjoint = (
+                torch.zeros_like(local_state)
+                if local_gradients[0] is None
+                else local_gradients[0]
+            )
+            for index, gradient in enumerate(local_gradients[1:]):
+                if gradient is not None:
+                    parameter_gradients[index] = parameter_gradients[index] + gradient
+
+        with torch.enable_grad():
+            input_leaf = saved_x.detach().requires_grad_(True)
+            canonical_input = ctx.metric.canonicalize(input_leaf.clone())
+            if canonical_input.requires_grad:
+                (grad_x,) = torch.autograd.grad(
+                    canonical_input, input_leaf, grad_outputs=state_adjoint
+                )
+            else:
+                grad_x = torch.zeros_like(input_leaf)
         return (
             grad_x,
             None,
@@ -270,7 +313,7 @@ class IntrinsicAdjointFunction(torch.autograd.Function):
             None,
             None,
             None,
-            *parameter_gradients,
+            *tuple(parameter_gradients),
         )
 
 
@@ -365,7 +408,9 @@ def intrinsic_adjoint_nll(
     The forward value is exactly :func:`cnf_nll` without regularizers. The
     vector-field parameters are explicit custom-autograd inputs in stable
     ``named_parameters()`` order. Geometry and base-distribution parameters
-    are fixed in this first supported scope.
+    are fixed in this first supported scope. Backward uses constant-memory
+    prefix replay and therefore has quadratic recomputation cost in the number
+    of accepted steps.
     """
     base = base_distribution
     if base is None:

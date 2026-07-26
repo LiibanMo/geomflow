@@ -117,6 +117,7 @@ def test_integrator_batch_shapes():
     print("  integrator batch-shape broadcasting OK")
 
 
+@pytest.mark.training
 def test_cnf_training():
     torch.manual_seed(42)
     dim = 2
@@ -146,6 +147,7 @@ def test_cnf_training():
     print("  CNF training OK")
 
 
+@pytest.mark.training
 def test_cnf_training_with_regularizers():
     """cnf_nll's built-in lipschitz_weight / weight_decay_weight path runs
     and still decreases NLL."""

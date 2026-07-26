@@ -63,7 +63,7 @@ jobs:
           cmake -B build -DBUILD_TESTS=ON -DBUILD_EXAMPLES=OFF
 
       - name: Build
-        run: cmake --build build --target geomflow_tests -j $(nproc 2>/dev/null || sysctl -n hw.logicalcpu)
+        run: cmake --build build --target geomflow_tests -j "$(nproc 2>/dev/null || sysctl -n hw.logicalcpu)"
 
       - name: Run tests
         run: ctest --test-dir build --output-on-failure -LE slow
@@ -250,14 +250,19 @@ jobs:
           wheels = list(dist.glob("*.whl"))
           sdists = list(dist.glob("*.tar.gz"))
           expected = os.environ["EXPECTED_VERSION"].removeprefix("v")
-          assert len(wheels) == 12, f"expected 12 wheels, found {len(wheels)}"
+          assert len(wheels) == 16, f"expected 16 wheels, found {len(wheels)}"
           assert len(sdists) == 1, f"expected one sdist, found {len(sdists)}"
           versions = {p.name.split("-")[1] for p in wheels + sdists}
           assert versions == {expected}, f"unexpected versions: {versions}"
           interpreters = collections.Counter(
               re.search(r"-(cp\d+)-", p.name).group(1) for p in wheels
           )
-          assert interpreters == {"cp312": 4, "cp313": 4, "cp314": 4}
+          assert interpreters == {
+              "cp311": 4,
+              "cp312": 4,
+              "cp313": 4,
+              "cp314": 4,
+          }
           for arch in ("x86_64", "aarch64", "arm64"):
               assert any(arch in p.name for p in wheels), f"missing {arch} wheel"
           PY

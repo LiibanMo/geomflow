@@ -238,6 +238,7 @@ def test_nonzero_divergence_is_scalar_across_identity_transition():
 
 
 @pytest.mark.slow
+@pytest.mark.training
 def test_multichart_sphere_training():
     torch.manual_seed(3)
     atlas, vf = _make_atlas(hidden_dim=32, seed=3)

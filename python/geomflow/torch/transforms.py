@@ -77,6 +77,7 @@ def transform_metric(
     G_beta : Tensor
         Metric in target chart β, shape ``(..., dim, dim)``.
     """
-    J_inv = torch.linalg.inv(J)
-    J_inv_T = J_inv.transpose(-2, -1)
-    return J_inv_T @ G @ J_inv
+    right = torch.linalg.solve(J.transpose(-2, -1), G.transpose(-2, -1)).transpose(
+        -2, -1
+    )
+    return torch.linalg.solve(J.transpose(-2, -1), right)
