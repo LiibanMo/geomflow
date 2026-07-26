@@ -1,0 +1,478 @@
+{
+  "schema_version": 1,
+  "run": {
+    "timestamp_utc": "2026-07-25T23:45:00.714270+00:00",
+    "git_revision": "unknown",
+    "git_dirty": true,
+    "command": [
+      "benchmarks/run.py",
+      "--scenario",
+      "euclidean",
+      "sphere-atlas",
+      "--batch-size",
+      "64",
+      "--dim",
+      "2",
+      "--hidden-width",
+      "32",
+      "--hidden-depth",
+      "2",
+      "--steps",
+      "16",
+      "--dtype",
+      "float32",
+      "--device",
+      "cpu",
+      "cuda",
+      "--workload",
+      "forward",
+      "backward",
+      "--warmup",
+      "1",
+      "--repetitions",
+      "2",
+      "--reference",
+      "--profile",
+      "--trace-dir",
+      "benchmarks/traces/phase10",
+      "--output",
+      "benchmarks/results/phase10_cuda.json",
+      "--fail-on-error"
+    ],
+    "hostname": "93d0924dee96",
+    "os": "Linux-6.8.0-136-generic-x86_64-with-glibc2.35",
+    "machine": "x86_64",
+    "cpu": "x86_64",
+    "python": "3.11.13",
+    "torch": "2.7.1+cu128",
+    "cuda_available": true,
+    "cuda_runtime": "12.8",
+    "nvidia_driver": "580.159.03",
+    "cudnn": 90701,
+    "gpu": [
+      {
+        "index": 0,
+        "name": "NVIDIA GeForce RTX 3060",
+        "total_memory_bytes": 12488343552,
+        "capability": [
+          8,
+          6
+        ]
+      }
+    ]
+  },
+  "cases": [
+    {
+      "case_id": "euclidean-cpu-float32-b64-d2-w32x2-s16-forward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "euclidean",
+        "batch_size": 64,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 16,
+        "dtype": "torch.float32",
+        "device": "cpu",
+        "divergence_mode": "exact",
+        "workload": "forward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 2,
+      "timing_samples": [
+        {
+          "forward_ms": 51.374745,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 51.374745
+        },
+        {
+          "forward_ms": 59.255903,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 59.255903
+        }
+      ],
+      "median_wall_ms": 55.315324000000004,
+      "samples_per_second": 1157.0030756757385,
+      "accepted_steps_per_second": 289.2507689189346,
+      "memory_samples": [],
+      "error": {
+        "state_max_abs_error": 6.100850149515225e-07,
+        "divergence_max_abs_error": 1.32443568612306e-08,
+        "max_abs_error": 6.100850149515225e-07
+      },
+      "profiler": {
+        "trace": "benchmarks/traces/phase10/euclidean-cpu-float32-b64-d2-w32x2-s16-forward-exact.json",
+        "aten_to_count": 545,
+        "aten_to_copy_count": 545
+      }
+    },
+    {
+      "case_id": "euclidean-cpu-float32-b64-d2-w32x2-s16-backward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "euclidean",
+        "batch_size": 64,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 16,
+        "dtype": "torch.float32",
+        "device": "cpu",
+        "divergence_mode": "exact",
+        "workload": "backward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 2,
+      "timing_samples": [
+        {
+          "forward_ms": 52.160357,
+          "backward_ms": 39.812451,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 91.972808
+        },
+        {
+          "forward_ms": 56.932276,
+          "backward_ms": 40.164734,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 97.09701000000001
+        }
+      ],
+      "median_wall_ms": 94.534909,
+      "samples_per_second": 676.9985889551128,
+      "accepted_steps_per_second": 169.2496472387782,
+      "memory_samples": [],
+      "error": {
+        "state_max_abs_error": 6.100850149515225e-07,
+        "divergence_max_abs_error": 1.32443568612306e-08,
+        "max_abs_error": 6.100850149515225e-07
+      },
+      "profiler": {
+        "trace": "benchmarks/traces/phase10/euclidean-cpu-float32-b64-d2-w32x2-s16-backward-exact.json",
+        "aten_to_count": 696,
+        "aten_to_copy_count": 694
+      }
+    },
+    {
+      "case_id": "euclidean-cuda-float32-b64-d2-w32x2-s16-forward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "euclidean",
+        "batch_size": 64,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 16,
+        "dtype": "torch.float32",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "forward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 2,
+      "timing_samples": [
+        {
+          "forward_ms": 169.19686889648438,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 169.19686889648438
+        },
+        {
+          "forward_ms": 177.466552734375,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 177.466552734375
+        }
+      ],
+      "median_wall_ms": 173.3317108154297,
+      "samples_per_second": 369.2342255142781,
+      "accepted_steps_per_second": 92.30855637856952,
+      "memory_samples": [
+        {
+          "allocated_bytes": 34429952,
+          "reserved_bytes": 39845888
+        },
+        {
+          "allocated_bytes": 50913792,
+          "reserved_bytes": 56623104
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 6.100850149515225e-07,
+        "divergence_max_abs_error": 1.32443568612306e-08,
+        "max_abs_error": 6.100850149515225e-07
+      },
+      "profiler": {
+        "trace": "benchmarks/traces/phase10/euclidean-cuda-float32-b64-d2-w32x2-s16-forward-exact.json",
+        "aten_to_count": 0,
+        "aten_to_copy_count": 0
+      }
+    },
+    {
+      "case_id": "euclidean-cuda-float32-b64-d2-w32x2-s16-backward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "euclidean",
+        "batch_size": 64,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 16,
+        "dtype": "torch.float32",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "backward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 2,
+      "timing_samples": [
+        {
+          "forward_ms": 188.82464599609375,
+          "backward_ms": 110.36003112792969,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 299.18467712402344
+        },
+        {
+          "forward_ms": 188.59596252441406,
+          "backward_ms": 110.26416015625,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 298.86012268066406
+        }
+      ],
+      "median_wall_ms": 299.02239990234375,
+      "samples_per_second": 214.03078839880038,
+      "accepted_steps_per_second": 53.507697099700096,
+      "memory_samples": [
+        {
+          "allocated_bytes": 40078336,
+          "reserved_bytes": 58720256
+        },
+        {
+          "allocated_bytes": 40080384,
+          "reserved_bytes": 58720256
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 6.100850149515225e-07,
+        "divergence_max_abs_error": 1.32443568612306e-08,
+        "max_abs_error": 6.100850149515225e-07
+      },
+      "profiler": {
+        "trace": "benchmarks/traces/phase10/euclidean-cuda-float32-b64-d2-w32x2-s16-backward-exact.json",
+        "aten_to_count": 2,
+        "aten_to_copy_count": 0
+      }
+    },
+    {
+      "case_id": "sphere-atlas-cpu-float32-b64-d2-w32x2-s16-forward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "sphere-atlas",
+        "batch_size": 64,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 16,
+        "dtype": "torch.float32",
+        "device": "cpu",
+        "divergence_mode": "exact",
+        "workload": "forward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 2,
+      "timing_samples": [
+        {
+          "forward_ms": 68.641657,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 68.641657
+        },
+        {
+          "forward_ms": 65.739621,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 65.739621
+        }
+      ],
+      "median_wall_ms": 67.190639,
+      "samples_per_second": 952.5136380977117,
+      "accepted_steps_per_second": 238.12840952442792,
+      "memory_samples": [],
+      "error": {
+        "state_max_abs_error": 1.1799861132644196e-07,
+        "divergence_max_abs_error": 2.4965491923767402e-08,
+        "max_abs_error": 1.1799861132644196e-07
+      },
+      "profiler": {
+        "trace": "benchmarks/traces/phase10/sphere-atlas-cpu-float32-b64-d2-w32x2-s16-forward-exact.json",
+        "aten_to_count": 1328,
+        "aten_to_copy_count": 1136
+      }
+    },
+    {
+      "case_id": "sphere-atlas-cpu-float32-b64-d2-w32x2-s16-backward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "sphere-atlas",
+        "batch_size": 64,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 16,
+        "dtype": "torch.float32",
+        "device": "cpu",
+        "divergence_mode": "exact",
+        "workload": "backward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 2,
+      "timing_samples": [
+        {
+          "forward_ms": 67.804078,
+          "backward_ms": 59.208547,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 127.01262500000001
+        },
+        {
+          "forward_ms": 67.459086,
+          "backward_ms": 60.02177,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 127.48085599999999
+        }
+      ],
+      "median_wall_ms": 127.2467405,
+      "samples_per_second": 502.95983809502764,
+      "accepted_steps_per_second": 125.73995952375691,
+      "memory_samples": [],
+      "error": {
+        "state_max_abs_error": 1.1799861132644196e-07,
+        "divergence_max_abs_error": 2.4965491923767402e-08,
+        "max_abs_error": 1.1799861132644196e-07
+      },
+      "profiler": {
+        "trace": "benchmarks/traces/phase10/sphere-atlas-cpu-float32-b64-d2-w32x2-s16-backward-exact.json",
+        "aten_to_count": 2183,
+        "aten_to_copy_count": 1797
+      }
+    },
+    {
+      "case_id": "sphere-atlas-cuda-float32-b64-d2-w32x2-s16-forward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "sphere-atlas",
+        "batch_size": 64,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 16,
+        "dtype": "torch.float32",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "forward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 2,
+      "timing_samples": [
+        {
+          "forward_ms": 272.65533447265625,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 272.65533447265625
+        },
+        {
+          "forward_ms": 269.938720703125,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 269.938720703125
+        }
+      ],
+      "median_wall_ms": 271.2970275878906,
+      "samples_per_second": 235.90380097056632,
+      "accepted_steps_per_second": 58.97595024264158,
+      "memory_samples": [
+        {
+          "allocated_bytes": 35532800,
+          "reserved_bytes": 58720256
+        },
+        {
+          "allocated_bytes": 53130240,
+          "reserved_bytes": 58720256
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 1.1799861132644196e-07,
+        "divergence_max_abs_error": 2.2744393618490122e-08,
+        "max_abs_error": 1.1799861132644196e-07
+      },
+      "profiler": {
+        "trace": "benchmarks/traces/phase10/sphere-atlas-cuda-float32-b64-d2-w32x2-s16-forward-exact.json",
+        "aten_to_count": 256,
+        "aten_to_copy_count": 0
+      }
+    },
+    {
+      "case_id": "sphere-atlas-cuda-float32-b64-d2-w32x2-s16-backward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "sphere-atlas",
+        "batch_size": 64,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 16,
+        "dtype": "torch.float32",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "backward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 2,
+      "timing_samples": [
+        {
+          "forward_ms": 276.50567626953125,
+          "backward_ms": 202.5780487060547,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 479.08372497558594
+        },
+        {
+          "forward_ms": 275.3788146972656,
+          "backward_ms": 202.7836151123047,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 478.1624298095703
+        }
+      ],
+      "median_wall_ms": 478.6230773925781,
+      "samples_per_second": 133.71691216532307,
+      "accepted_steps_per_second": 33.42922804133077,
+      "memory_samples": [
+        {
+          "allocated_bytes": 41508864,
+          "reserved_bytes": 62914560
+        },
+        {
+          "allocated_bytes": 41510912,
+          "reserved_bytes": 62914560
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 1.1799861132644196e-07,
+        "divergence_max_abs_error": 2.2744393618490122e-08,
+        "max_abs_error": 1.1799861132644196e-07
+      },
+      "profiler": {
+        "trace": "benchmarks/traces/phase10/sphere-atlas-cuda-float32-b64-d2-w32x2-s16-backward-exact.json",
+        "aten_to_count": 514,
+        "aten_to_copy_count": 0
+      }
+    }
+  ]
+}

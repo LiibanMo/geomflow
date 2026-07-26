@@ -1,0 +1,82 @@
+{
+  "run": {
+    "timestamp_utc": "2026-07-25T13:20:45.549079+00:00",
+    "os": "Linux-6.8.0-136-generic-x86_64-with-glibc2.35",
+    "python": "3.11.13",
+    "torch": "2.7.1+cu128",
+    "cuda_runtime": "12.8",
+    "device": "cuda",
+    "dtype": "torch.float32",
+    "batch_size": 256,
+    "dimension": 4,
+    "gpu": "NVIDIA GeForce RTX 3060"
+  },
+  "operators": [
+    {
+      "operator": "batched_jacobian",
+      "median_ms": 0.701406,
+      "timing_samples_ms": [
+        0.899494,
+        0.715334,
+        0.593683,
+        0.606882,
+        0.701406
+      ]
+    },
+    {
+      "operator": "metric_derivative",
+      "median_ms": 0.108335,
+      "timing_samples_ms": [
+        0.113521,
+        0.110768,
+        0.102752,
+        0.101522,
+        0.108335
+      ]
+    },
+    {
+      "operator": "christoffel",
+      "median_ms": 0.566699,
+      "timing_samples_ms": [
+        0.624913,
+        0.580482,
+        0.564114,
+        0.564579,
+        0.566699
+      ]
+    },
+    {
+      "operator": "divergence_forward",
+      "median_ms": 6.304089,
+      "timing_samples_ms": [
+        21.017909,
+        6.748006,
+        6.264056,
+        6.265035,
+        6.304089
+      ]
+    },
+    {
+      "operator": "gradient",
+      "median_ms": 0.66604,
+      "timing_samples_ms": [
+        0.707793,
+        0.663833,
+        0.69129,
+        0.66604,
+        0.607589
+      ]
+    },
+    {
+      "operator": "covariant_derivative",
+      "median_ms": 1.364119,
+      "timing_samples_ms": [
+        1.330716,
+        1.364119,
+        1.352614,
+        1.364207,
+        1.394323
+      ]
+    }
+  ]
+}

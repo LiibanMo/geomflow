@@ -1,4 +1,5 @@
 """Deterministic test policy and mandatory-skip enforcement."""
+import os
 
 import random
 
@@ -71,10 +72,20 @@ def _deterministic_cpu_test() -> None:
 
 def pytest_configure() -> None:
     _MANDATORY_SKIPS.clear()
+    if os.getenv("GEOMFLOW_REQUIRE_CUDA") == "1" and not torch.cuda.is_available():
+        raise pytest.UsageError(
+            "GEOMFLOW_REQUIRE_CUDA=1 but CUDA is unavailable; mandatory GPU validation cannot run"
+        )
 
 
 def pytest_runtest_logreport(report: pytest.TestReport) -> None:
-    if report.skipped and "optional" not in report.keywords:
+    cuda_required = os.getenv("GEOMFLOW_REQUIRE_CUDA") == "1"
+    skip_reason = str(report.longrepr).lower() if report.skipped else ""
+    unavailable_cuda = not cuda_required and "cuda" in skip_reason
+    optional = "optional" in report.keywords and not (
+        cuda_required and "gpu" in report.keywords
+    )
+    if report.skipped and not optional and not unavailable_cuda:
         _MANDATORY_SKIPS.append(report.nodeid)
 
 

@@ -1,0 +1,81 @@
+{
+  "run": {
+    "timestamp_utc": "2026-07-25T13:22:40.932499+00:00",
+    "os": "macOS-26.5.2-arm64-arm-64bit",
+    "python": "3.12.13",
+    "torch": "2.13.0",
+    "cuda_runtime": null,
+    "device": "cpu",
+    "dtype": "torch.float64",
+    "batch_size": 64,
+    "dimension": 4
+  },
+  "operators": [
+    {
+      "operator": "batched_jacobian",
+      "median_ms": 0.091709,
+      "timing_samples_ms": [
+        0.227167,
+        0.099041,
+        0.091625,
+        0.091709,
+        0.090166
+      ]
+    },
+    {
+      "operator": "metric_derivative",
+      "median_ms": 0.019791,
+      "timing_samples_ms": [
+        0.022875,
+        0.024083,
+        0.019791,
+        0.018833,
+        0.018167
+      ]
+    },
+    {
+      "operator": "christoffel",
+      "median_ms": 0.102958,
+      "timing_samples_ms": [
+        0.100792,
+        0.128916,
+        0.12325,
+        0.102958,
+        0.097083
+      ]
+    },
+    {
+      "operator": "divergence_forward",
+      "median_ms": 0.68175,
+      "timing_samples_ms": [
+        3.329708,
+        0.71175,
+        0.68175,
+        0.652167,
+        0.629333
+      ]
+    },
+    {
+      "operator": "gradient",
+      "median_ms": 0.070292,
+      "timing_samples_ms": [
+        0.08275,
+        0.073125,
+        0.070166,
+        0.070292,
+        0.069
+      ]
+    },
+    {
+      "operator": "covariant_derivative",
+      "median_ms": 0.209166,
+      "timing_samples_ms": [
+        0.20775,
+        0.213125,
+        0.210625,
+        0.209166,
+        0.209042
+      ]
+    }
+  ]
+}

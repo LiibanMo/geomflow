@@ -1,0 +1,4455 @@
+{
+  "schema_version": 1,
+  "run": {
+    "timestamp_utc": "2026-07-25T11:46:16.007827+00:00",
+    "git_revision": "unknown",
+    "git_dirty": true,
+    "command": [
+      "benchmarks/run.py",
+      "--scenario",
+      "euclidean",
+      "sphere",
+      "torus",
+      "poincare",
+      "induced",
+      "sphere-atlas",
+      "--batch-size",
+      "1",
+      "64",
+      "256",
+      "--steps",
+      "8",
+      "--dtype",
+      "float32",
+      "float64",
+      "--device",
+      "cuda",
+      "--workload",
+      "forward",
+      "backward",
+      "--warmup",
+      "1",
+      "--repetitions",
+      "3",
+      "--reference",
+      "--output",
+      "benchmarks/results/phase1_cuda.json",
+      "--fail-on-error"
+    ],
+    "hostname": "8744fe9fe450",
+    "os": "Linux-5.4.0-216-generic-x86_64-with-glibc2.39",
+    "machine": "x86_64",
+    "cpu": "x86_64",
+    "python": "3.12.13",
+    "torch": "2.12.0+cu126",
+    "cuda_available": true,
+    "cuda_runtime": "12.6",
+    "nvidia_driver": "580.95.05",
+    "cudnn": 91002,
+    "gpu": [
+      {
+        "index": 0,
+        "name": "NVIDIA GeForce RTX 3090",
+        "total_memory_bytes": 25296044032,
+        "capability": [
+          8,
+          6
+        ]
+      }
+    ]
+  },
+  "cases": [
+    {
+      "case_id": "euclidean-cuda-float32-b1-d2-w32x2-s8-forward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "euclidean",
+        "batch_size": 1,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float32",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "forward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 148.97048950195312,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 148.97048950195312
+        },
+        {
+          "forward_ms": 151.9974365234375,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 151.9974365234375
+        },
+        {
+          "forward_ms": 147.5266571044922,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 147.5266571044922
+        }
+      ],
+      "median_wall_ms": 148.97048950195312,
+      "samples_per_second": 6.712738901129066,
+      "accepted_steps_per_second": 53.70191120903253,
+      "memory_samples": [
+        {
+          "allocated_bytes": 17647616,
+          "reserved_bytes": 23068672
+        },
+        {
+          "allocated_bytes": 18238976,
+          "reserved_bytes": 23068672
+        },
+        {
+          "allocated_bytes": 18238976,
+          "reserved_bytes": 23068672
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 7.022661141498077e-08,
+        "divergence_max_abs_error": 4.276663627400534e-09,
+        "max_abs_error": 7.022661141498077e-08
+      }
+    },
+    {
+      "case_id": "euclidean-cuda-float32-b1-d2-w32x2-s8-backward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "euclidean",
+        "batch_size": 1,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float32",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "backward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 148.7073211669922,
+          "backward_ms": 130.59584045410156,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 279.30316162109375
+        },
+        {
+          "forward_ms": 151.97080993652344,
+          "backward_ms": 130.1964874267578,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 282.16729736328125
+        },
+        {
+          "forward_ms": 148.79437255859375,
+          "backward_ms": 135.05638122558594,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 283.8507537841797
+        }
+      ],
+      "median_wall_ms": 282.16729736328125,
+      "samples_per_second": 3.543996803827101,
+      "accepted_steps_per_second": 28.351974430616806,
+      "memory_samples": [
+        {
+          "allocated_bytes": 17672192,
+          "reserved_bytes": 23068672
+        },
+        {
+          "allocated_bytes": 17674240,
+          "reserved_bytes": 23068672
+        },
+        {
+          "allocated_bytes": 17674240,
+          "reserved_bytes": 23068672
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 7.022661141498077e-08,
+        "divergence_max_abs_error": 4.276663627400534e-09,
+        "max_abs_error": 7.022661141498077e-08
+      }
+    },
+    {
+      "case_id": "euclidean-cuda-float64-b1-d2-w32x2-s8-forward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "euclidean",
+        "batch_size": 1,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float64",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "forward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 150.71334838867188,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 150.71334838867188
+        },
+        {
+          "forward_ms": 152.14898681640625,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 152.14898681640625
+        },
+        {
+          "forward_ms": 150.42764282226562,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 150.42764282226562
+        }
+      ],
+      "median_wall_ms": 150.71334838867188,
+      "samples_per_second": 6.635112355284672,
+      "accepted_steps_per_second": 53.08089884227738,
+      "memory_samples": [
+        {
+          "allocated_bytes": 17652224,
+          "reserved_bytes": 23068672
+        },
+        {
+          "allocated_bytes": 18243584,
+          "reserved_bytes": 23068672
+        },
+        {
+          "allocated_bytes": 18243584,
+          "reserved_bytes": 23068672
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 0.0,
+        "divergence_max_abs_error": 3.469446951953614e-18,
+        "max_abs_error": 3.469446951953614e-18
+      }
+    },
+    {
+      "case_id": "euclidean-cuda-float64-b1-d2-w32x2-s8-backward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "euclidean",
+        "batch_size": 1,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float64",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "backward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 189.591552734375,
+          "backward_ms": 124.73753356933594,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 314.32908630371094
+        },
+        {
+          "forward_ms": 178.03366088867188,
+          "backward_ms": 131.4693145751953,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 309.5029754638672
+        },
+        {
+          "forward_ms": 178.6972198486328,
+          "backward_ms": 133.70265197753906,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 312.3998718261719
+        }
+      ],
+      "median_wall_ms": 312.3998718261719,
+      "samples_per_second": 3.2010256411258338,
+      "accepted_steps_per_second": 25.60820512900667,
+      "memory_samples": [
+        {
+          "allocated_bytes": 17698816,
+          "reserved_bytes": 23068672
+        },
+        {
+          "allocated_bytes": 17700864,
+          "reserved_bytes": 23068672
+        },
+        {
+          "allocated_bytes": 17700864,
+          "reserved_bytes": 23068672
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 0.0,
+        "divergence_max_abs_error": 3.469446951953614e-18,
+        "max_abs_error": 3.469446951953614e-18
+      }
+    },
+    {
+      "case_id": "euclidean-cuda-float32-b64-d2-w32x2-s8-forward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "euclidean",
+        "batch_size": 64,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float32",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "forward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 177.71827697753906,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 177.71827697753906
+        },
+        {
+          "forward_ms": 162.43609619140625,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 162.43609619140625
+        },
+        {
+          "forward_ms": 149.865478515625,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 149.865478515625
+        }
+      ],
+      "median_wall_ms": 162.43609619140625,
+      "samples_per_second": 394.00109643478334,
+      "accepted_steps_per_second": 49.25013705434792,
+      "memory_samples": [
+        {
+          "allocated_bytes": 25314816,
+          "reserved_bytes": 29360128
+        },
+        {
+          "allocated_bytes": 33557504,
+          "reserved_bytes": 37748736
+        },
+        {
+          "allocated_bytes": 33557504,
+          "reserved_bytes": 37748736
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 2.7388471757205934e-07,
+        "divergence_max_abs_error": 4.58826765470377e-09,
+        "max_abs_error": 2.7388471757205934e-07
+      }
+    },
+    {
+      "case_id": "euclidean-cuda-float32-b64-d2-w32x2-s8-backward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "euclidean",
+        "batch_size": 64,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float32",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "backward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 179.1498260498047,
+          "backward_ms": 136.61900329589844,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 315.7688293457031
+        },
+        {
+          "forward_ms": 182.33139038085938,
+          "backward_ms": 128.0010223388672,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 310.33241271972656
+        },
+        {
+          "forward_ms": 178.7125701904297,
+          "backward_ms": 139.04896545410156,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 317.76153564453125
+        }
+      ],
+      "median_wall_ms": 315.7688293457031,
+      "samples_per_second": 202.679916610556,
+      "accepted_steps_per_second": 25.3349895763195,
+      "memory_samples": [
+        {
+          "allocated_bytes": 25321472,
+          "reserved_bytes": 37748736
+        },
+        {
+          "allocated_bytes": 25323520,
+          "reserved_bytes": 37748736
+        },
+        {
+          "allocated_bytes": 25323520,
+          "reserved_bytes": 37748736
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 2.7388471757205934e-07,
+        "divergence_max_abs_error": 4.58826765470377e-09,
+        "max_abs_error": 2.7388471757205934e-07
+      }
+    },
+    {
+      "case_id": "euclidean-cuda-float64-b64-d2-w32x2-s8-forward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "euclidean",
+        "batch_size": 64,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float64",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "forward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 152.83506774902344,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 152.83506774902344
+        },
+        {
+          "forward_ms": 157.6458282470703,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 157.6458282470703
+        },
+        {
+          "forward_ms": 160.26316833496094,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 160.26316833496094
+        }
+      ],
+      "median_wall_ms": 157.6458282470703,
+      "samples_per_second": 405.9733182390088,
+      "accepted_steps_per_second": 50.7466647798761,
+      "memory_samples": [
+        {
+          "allocated_bytes": 33533440,
+          "reserved_bytes": 37748736
+        },
+        {
+          "allocated_bytes": 49969152,
+          "reserved_bytes": 54525952
+        },
+        {
+          "allocated_bytes": 49969152,
+          "reserved_bytes": 54525952
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 2.220446049250313e-16,
+        "divergence_max_abs_error": 1.3877787807814457e-17,
+        "max_abs_error": 2.220446049250313e-16
+      }
+    },
+    {
+      "case_id": "euclidean-cuda-float64-b64-d2-w32x2-s8-backward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "euclidean",
+        "batch_size": 64,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float64",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "backward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 152.8494110107422,
+          "backward_ms": 136.48077392578125,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 289.33018493652344
+        },
+        {
+          "forward_ms": 153.55494689941406,
+          "backward_ms": 135.9718475341797,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 289.52679443359375
+        },
+        {
+          "forward_ms": 158.7834930419922,
+          "backward_ms": 137.25491333007812,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 296.0384063720703
+        }
+      ],
+      "median_wall_ms": 289.52679443359375,
+      "samples_per_second": 221.05035261141995,
+      "accepted_steps_per_second": 27.631294076427494,
+      "memory_samples": [
+        {
+          "allocated_bytes": 33544704,
+          "reserved_bytes": 54525952
+        },
+        {
+          "allocated_bytes": 33548288,
+          "reserved_bytes": 54525952
+        },
+        {
+          "allocated_bytes": 33548288,
+          "reserved_bytes": 54525952
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 2.220446049250313e-16,
+        "divergence_max_abs_error": 1.3877787807814457e-17,
+        "max_abs_error": 2.220446049250313e-16
+      }
+    },
+    {
+      "case_id": "euclidean-cuda-float32-b256-d2-w32x2-s8-forward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "euclidean",
+        "batch_size": 256,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float32",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "forward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 174.129150390625,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 174.129150390625
+        },
+        {
+          "forward_ms": 186.23794555664062,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 186.23794555664062
+        },
+        {
+          "forward_ms": 179.4334716796875,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 179.4334716796875
+        }
+      ],
+      "median_wall_ms": 179.4334716796875,
+      "samples_per_second": 1426.7126283829243,
+      "accepted_steps_per_second": 44.584769636966385,
+      "memory_samples": [
+        {
+          "allocated_bytes": 50010624,
+          "reserved_bytes": 54525952
+        },
+        {
+          "allocated_bytes": 82882048,
+          "reserved_bytes": 88080384
+        },
+        {
+          "allocated_bytes": 82882048,
+          "reserved_bytes": 88080384
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 5.21473134451611e-07,
+        "divergence_max_abs_error": 9.92894585993831e-09,
+        "max_abs_error": 5.21473134451611e-07
+      }
+    },
+    {
+      "case_id": "euclidean-cuda-float32-b256-d2-w32x2-s8-backward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "euclidean",
+        "batch_size": 256,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float32",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "backward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 180.32742309570312,
+          "backward_ms": 136.8053741455078,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 317.13279724121094
+        },
+        {
+          "forward_ms": 179.8461456298828,
+          "backward_ms": 136.94566345214844,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 316.79180908203125
+        },
+        {
+          "forward_ms": 180.60595703125,
+          "backward_ms": 129.64556884765625,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 310.25152587890625
+        }
+      ],
+      "median_wall_ms": 316.79180908203125,
+      "samples_per_second": 808.1017016879701,
+      "accepted_steps_per_second": 25.253178177749067,
+      "memory_samples": [
+        {
+          "allocated_bytes": 50017280,
+          "reserved_bytes": 88080384
+        },
+        {
+          "allocated_bytes": 50024448,
+          "reserved_bytes": 88080384
+        },
+        {
+          "allocated_bytes": 50024448,
+          "reserved_bytes": 88080384
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 5.21473134451611e-07,
+        "divergence_max_abs_error": 9.92894585993831e-09,
+        "max_abs_error": 5.21473134451611e-07
+      }
+    },
+    {
+      "case_id": "euclidean-cuda-float64-b256-d2-w32x2-s8-forward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "euclidean",
+        "batch_size": 256,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float64",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "forward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 177.23388671875,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 177.23388671875
+        },
+        {
+          "forward_ms": 191.320068359375,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 191.320068359375
+        },
+        {
+          "forward_ms": 176.13311767578125,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 176.13311767578125
+        }
+      ],
+      "median_wall_ms": 177.23388671875,
+      "samples_per_second": 1444.4190371237687,
+      "accepted_steps_per_second": 45.13809491011777,
+      "memory_samples": [
+        {
+          "allocated_bytes": 82978816,
+          "reserved_bytes": 88080384
+        },
+        {
+          "allocated_bytes": 148721664,
+          "reserved_bytes": 153092096
+        },
+        {
+          "allocated_bytes": 148721664,
+          "reserved_bytes": 153092096
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 4.440892098500626e-16,
+        "divergence_max_abs_error": 1.3877787807814457e-17,
+        "max_abs_error": 4.440892098500626e-16
+      }
+    },
+    {
+      "case_id": "euclidean-cuda-float64-b256-d2-w32x2-s8-backward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "euclidean",
+        "batch_size": 256,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float64",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "backward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 177.02809143066406,
+          "backward_ms": 189.71340942382812,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 366.7415008544922
+        },
+        {
+          "forward_ms": 175.48390197753906,
+          "backward_ms": 189.16249084472656,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 364.6463928222656
+        },
+        {
+          "forward_ms": 176.71987915039062,
+          "backward_ms": 196.54348754882812,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 373.26336669921875
+        }
+      ],
+      "median_wall_ms": 366.7415008544922,
+      "samples_per_second": 698.0393530689349,
+      "accepted_steps_per_second": 21.813729783404217,
+      "memory_samples": [
+        {
+          "allocated_bytes": 82990080,
+          "reserved_bytes": 153092096
+        },
+        {
+          "allocated_bytes": 83004416,
+          "reserved_bytes": 153092096
+        },
+        {
+          "allocated_bytes": 83004416,
+          "reserved_bytes": 153092096
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 4.440892098500626e-16,
+        "divergence_max_abs_error": 1.3877787807814457e-17,
+        "max_abs_error": 4.440892098500626e-16
+      }
+    },
+    {
+      "case_id": "sphere-cuda-float32-b1-d2-w32x2-s8-forward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "sphere",
+        "batch_size": 1,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float32",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "forward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 231.81414794921875,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 231.81414794921875
+        },
+        {
+          "forward_ms": 238.40972900390625,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 238.40972900390625
+        },
+        {
+          "forward_ms": 229.94534301757812,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 229.94534301757812
+        }
+      ],
+      "median_wall_ms": 231.81414794921875,
+      "samples_per_second": 4.313800554654068,
+      "accepted_steps_per_second": 34.510404437232545,
+      "memory_samples": [
+        {
+          "allocated_bytes": 17924608,
+          "reserved_bytes": 153092096
+        },
+        {
+          "allocated_bytes": 18793984,
+          "reserved_bytes": 153092096
+        },
+        {
+          "allocated_bytes": 18793984,
+          "reserved_bytes": 153092096
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 1.3779940549740743e-08,
+        "divergence_max_abs_error": 7.1768761489288124e-09,
+        "max_abs_error": 1.3779940549740743e-08
+      }
+    },
+    {
+      "case_id": "sphere-cuda-float32-b1-d2-w32x2-s8-backward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "sphere",
+        "batch_size": 1,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float32",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "backward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 229.92076110839844,
+          "backward_ms": 316.8952331542969,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 546.8159942626953
+        },
+        {
+          "forward_ms": 228.9786834716797,
+          "backward_ms": 274.8538818359375,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 503.8325653076172
+        },
+        {
+          "forward_ms": 191.963134765625,
+          "backward_ms": 212.6868438720703,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 404.6499786376953
+        }
+      ],
+      "median_wall_ms": 503.8325653076172,
+      "samples_per_second": 1.9847863533581747,
+      "accepted_steps_per_second": 15.878290826865397,
+      "memory_samples": [
+        {
+          "allocated_bytes": 17948672,
+          "reserved_bytes": 153092096
+        },
+        {
+          "allocated_bytes": 17950720,
+          "reserved_bytes": 153092096
+        },
+        {
+          "allocated_bytes": 17950720,
+          "reserved_bytes": 153092096
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 1.3779940549740743e-08,
+        "divergence_max_abs_error": 7.1768761489288124e-09,
+        "max_abs_error": 1.3779940549740743e-08
+      }
+    },
+    {
+      "case_id": "sphere-cuda-float64-b1-d2-w32x2-s8-forward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "sphere",
+        "batch_size": 1,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float64",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "forward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 227.6689910888672,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 227.6689910888672
+        },
+        {
+          "forward_ms": 229.22547912597656,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 229.22547912597656
+        },
+        {
+          "forward_ms": 232.45516967773438,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 232.45516967773438
+        }
+      ],
+      "median_wall_ms": 229.22547912597656,
+      "samples_per_second": 4.3625167839672185,
+      "accepted_steps_per_second": 34.90013427173775,
+      "memory_samples": [
+        {
+          "allocated_bytes": 17929216,
+          "reserved_bytes": 153092096
+        },
+        {
+          "allocated_bytes": 18798592,
+          "reserved_bytes": 153092096
+        },
+        {
+          "allocated_bytes": 18798592,
+          "reserved_bytes": 153092096
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 0.0,
+        "divergence_max_abs_error": 0.0,
+        "max_abs_error": 0.0
+      }
+    },
+    {
+      "case_id": "sphere-cuda-float64-b1-d2-w32x2-s8-backward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "sphere",
+        "batch_size": 1,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float64",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "backward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 232.13568115234375,
+          "backward_ms": 319.5433044433594,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 551.6789855957031
+        },
+        {
+          "forward_ms": 231.2376251220703,
+          "backward_ms": 318.1189270019531,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 549.3565521240234
+        },
+        {
+          "forward_ms": 234.70693969726562,
+          "backward_ms": 322.3009338378906,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 557.0078735351562
+        }
+      ],
+      "median_wall_ms": 551.6789855957031,
+      "samples_per_second": 1.8126483446169328,
+      "accepted_steps_per_second": 14.501186756935462,
+      "memory_samples": [
+        {
+          "allocated_bytes": 17973248,
+          "reserved_bytes": 153092096
+        },
+        {
+          "allocated_bytes": 17975296,
+          "reserved_bytes": 153092096
+        },
+        {
+          "allocated_bytes": 17975296,
+          "reserved_bytes": 153092096
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 0.0,
+        "divergence_max_abs_error": 0.0,
+        "max_abs_error": 0.0
+      }
+    },
+    {
+      "case_id": "sphere-cuda-float32-b64-d2-w32x2-s8-forward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "sphere",
+        "batch_size": 64,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float32",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "forward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 231.55711364746094,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 231.55711364746094
+        },
+        {
+          "forward_ms": 229.42822265625,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 229.42822265625
+        },
+        {
+          "forward_ms": 236.47744750976562,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 236.47744750976562
+        }
+      ],
+      "median_wall_ms": 231.55711364746094,
+      "samples_per_second": 276.3896949304618,
+      "accepted_steps_per_second": 34.54871186630773,
+      "memory_samples": [
+        {
+          "allocated_bytes": 25825792,
+          "reserved_bytes": 153092096
+        },
+        {
+          "allocated_bytes": 34592256,
+          "reserved_bytes": 153092096
+        },
+        {
+          "allocated_bytes": 34592256,
+          "reserved_bytes": 153092096
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 6.365911908723376e-08,
+        "divergence_max_abs_error": 2.8029435383825074e-08,
+        "max_abs_error": 6.365911908723376e-08
+      }
+    },
+    {
+      "case_id": "sphere-cuda-float32-b64-d2-w32x2-s8-backward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "sphere",
+        "batch_size": 64,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float32",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "backward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 195.4140167236328,
+          "backward_ms": 222.66061401367188,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 418.0746307373047
+        },
+        {
+          "forward_ms": 197.18348693847656,
+          "backward_ms": 222.5418243408203,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 419.7253112792969
+        },
+        {
+          "forward_ms": 197.2295684814453,
+          "backward_ms": 222.82342529296875,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 420.05299377441406
+        }
+      ],
+      "median_wall_ms": 419.7253112792969,
+      "samples_per_second": 152.48067791035035,
+      "accepted_steps_per_second": 19.060084738793794,
+      "memory_samples": [
+        {
+          "allocated_bytes": 25834496,
+          "reserved_bytes": 153092096
+        },
+        {
+          "allocated_bytes": 25836544,
+          "reserved_bytes": 153092096
+        },
+        {
+          "allocated_bytes": 25836544,
+          "reserved_bytes": 153092096
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 6.365911908723376e-08,
+        "divergence_max_abs_error": 2.8029435383825074e-08,
+        "max_abs_error": 6.365911908723376e-08
+      }
+    },
+    {
+      "case_id": "sphere-cuda-float64-b64-d2-w32x2-s8-forward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "sphere",
+        "batch_size": 64,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float64",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "forward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 229.30738830566406,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 229.30738830566406
+        },
+        {
+          "forward_ms": 236.34226989746094,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 236.34226989746094
+        },
+        {
+          "forward_ms": 236.0432586669922,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 236.0432586669922
+        }
+      ],
+      "median_wall_ms": 236.0432586669922,
+      "samples_per_second": 271.136741466066,
+      "accepted_steps_per_second": 33.89209268325825,
+      "memory_samples": [
+        {
+          "allocated_bytes": 34313216,
+          "reserved_bytes": 153092096
+        },
+        {
+          "allocated_bytes": 51550720,
+          "reserved_bytes": 153092096
+        },
+        {
+          "allocated_bytes": 51550720,
+          "reserved_bytes": 153092096
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 5.551115123125783e-17,
+        "divergence_max_abs_error": 5.551115123125783e-17,
+        "max_abs_error": 5.551115123125783e-17
+      }
+    },
+    {
+      "case_id": "sphere-cuda-float64-b64-d2-w32x2-s8-backward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "sphere",
+        "batch_size": 64,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float64",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "backward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 227.40684509277344,
+          "backward_ms": 221.154296875,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 448.56114196777344
+        },
+        {
+          "forward_ms": 232.96511840820312,
+          "backward_ms": 228.6551055908203,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 461.62022399902344
+        },
+        {
+          "forward_ms": 228.13900756835938,
+          "backward_ms": 222.44863891601562,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 450.587646484375
+        }
+      ],
+      "median_wall_ms": 450.587646484375,
+      "samples_per_second": 142.0367391324372,
+      "accepted_steps_per_second": 17.75459239155465,
+      "memory_samples": [
+        {
+          "allocated_bytes": 34331648,
+          "reserved_bytes": 153092096
+        },
+        {
+          "allocated_bytes": 34335232,
+          "reserved_bytes": 153092096
+        },
+        {
+          "allocated_bytes": 34335232,
+          "reserved_bytes": 153092096
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 5.551115123125783e-17,
+        "divergence_max_abs_error": 5.551115123125783e-17,
+        "max_abs_error": 5.551115123125783e-17
+      }
+    },
+    {
+      "case_id": "sphere-cuda-float32-b256-d2-w32x2-s8-forward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "sphere",
+        "batch_size": 256,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float32",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "forward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 194.44122314453125,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 194.44122314453125
+        },
+        {
+          "forward_ms": 197.67706298828125,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 197.67706298828125
+        },
+        {
+          "forward_ms": 194.30604553222656,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 194.30604553222656
+        }
+      ],
+      "median_wall_ms": 194.44122314453125,
+      "samples_per_second": 1316.593240157264,
+      "accepted_steps_per_second": 41.1435387549145,
+      "memory_samples": [
+        {
+          "allocated_bytes": 51537920,
+          "reserved_bytes": 153092096
+        },
+        {
+          "allocated_bytes": 85980160,
+          "reserved_bytes": 153092096
+        },
+        {
+          "allocated_bytes": 85980160,
+          "reserved_bytes": 153092096
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 6.887881642825278e-08,
+        "divergence_max_abs_error": 2.8029435383825074e-08,
+        "max_abs_error": 6.887881642825278e-08
+      }
+    },
+    {
+      "case_id": "sphere-cuda-float32-b256-d2-w32x2-s8-backward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "sphere",
+        "batch_size": 256,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float32",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "backward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 194.62655639648438,
+          "backward_ms": 217.15968322753906,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 411.78623962402344
+        },
+        {
+          "forward_ms": 193.83091735839844,
+          "backward_ms": 219.79852294921875,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 413.6294403076172
+        },
+        {
+          "forward_ms": 204.87167358398438,
+          "backward_ms": 217.50169372558594,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 422.3733673095703
+        }
+      ],
+      "median_wall_ms": 413.6294403076172,
+      "samples_per_second": 618.9114580664573,
+      "accepted_steps_per_second": 19.34098306457679,
+      "memory_samples": [
+        {
+          "allocated_bytes": 51547136,
+          "reserved_bytes": 153092096
+        },
+        {
+          "allocated_bytes": 51554304,
+          "reserved_bytes": 153092096
+        },
+        {
+          "allocated_bytes": 51554304,
+          "reserved_bytes": 153092096
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 6.887881642825278e-08,
+        "divergence_max_abs_error": 2.8029435383825074e-08,
+        "max_abs_error": 6.887881642825278e-08
+      }
+    },
+    {
+      "case_id": "sphere-cuda-float64-b256-d2-w32x2-s8-forward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "sphere",
+        "batch_size": 256,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float64",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "forward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 227.08428955078125,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 227.08428955078125
+        },
+        {
+          "forward_ms": 225.65887451171875,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 225.65887451171875
+        },
+        {
+          "forward_ms": 230.80960083007812,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 230.80960083007812
+        }
+      ],
+      "median_wall_ms": 227.08428955078125,
+      "samples_per_second": 1127.3347024861116,
+      "accepted_steps_per_second": 35.22920945269099,
+      "memory_samples": [
+        {
+          "allocated_bytes": 86001152,
+          "reserved_bytes": 153092096
+        },
+        {
+          "allocated_bytes": 154852864,
+          "reserved_bytes": 159383552
+        },
+        {
+          "allocated_bytes": 154852864,
+          "reserved_bytes": 159383552
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 1.1102230246251565e-16,
+        "divergence_max_abs_error": 5.551115123125783e-17,
+        "max_abs_error": 1.1102230246251565e-16
+      }
+    },
+    {
+      "case_id": "sphere-cuda-float64-b256-d2-w32x2-s8-backward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "sphere",
+        "batch_size": 256,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float64",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "backward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 196.72679138183594,
+          "backward_ms": 223.77676391601562,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 420.50355529785156
+        },
+        {
+          "forward_ms": 195.94342041015625,
+          "backward_ms": 222.0984344482422,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 418.04185485839844
+        },
+        {
+          "forward_ms": 199.65235900878906,
+          "backward_ms": 235.79238891601562,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 435.4447479248047
+        }
+      ],
+      "median_wall_ms": 420.50355529785156,
+      "samples_per_second": 608.7939014419742,
+      "accepted_steps_per_second": 19.024809420061693,
+      "memory_samples": [
+        {
+          "allocated_bytes": 86016000,
+          "reserved_bytes": 159383552
+        },
+        {
+          "allocated_bytes": 86030336,
+          "reserved_bytes": 159383552
+        },
+        {
+          "allocated_bytes": 86030336,
+          "reserved_bytes": 159383552
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 1.1102230246251565e-16,
+        "divergence_max_abs_error": 5.551115123125783e-17,
+        "max_abs_error": 1.1102230246251565e-16
+      }
+    },
+    {
+      "case_id": "torus-cuda-float32-b1-d2-w32x2-s8-forward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "torus",
+        "batch_size": 1,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float32",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "forward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 245.06060791015625,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 245.06060791015625
+        },
+        {
+          "forward_ms": 242.79859924316406,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 242.79859924316406
+        },
+        {
+          "forward_ms": 244.70425415039062,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 244.70425415039062
+        }
+      ],
+      "median_wall_ms": 244.70425415039062,
+      "samples_per_second": 4.086565652370796,
+      "accepted_steps_per_second": 32.69252521896637,
+      "memory_samples": [
+        {
+          "allocated_bytes": 17891840,
+          "reserved_bytes": 159383552
+        },
+        {
+          "allocated_bytes": 18728448,
+          "reserved_bytes": 159383552
+        },
+        {
+          "allocated_bytes": 18728448,
+          "reserved_bytes": 159383552
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 6.201584463738641e-07,
+        "divergence_max_abs_error": 1.3668287328350015e-08,
+        "max_abs_error": 6.201584463738641e-07
+      }
+    },
+    {
+      "case_id": "torus-cuda-float32-b1-d2-w32x2-s8-backward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "torus",
+        "batch_size": 1,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float32",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "backward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 201.88262939453125,
+          "backward_ms": 214.32217407226562,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 416.2048034667969
+        },
+        {
+          "forward_ms": 204.17945861816406,
+          "backward_ms": 223.3896942138672,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 427.56915283203125
+        },
+        {
+          "forward_ms": 203.49644470214844,
+          "backward_ms": 230.16140747070312,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 433.65785217285156
+        }
+      ],
+      "median_wall_ms": 427.56915283203125,
+      "samples_per_second": 2.3388029594193993,
+      "accepted_steps_per_second": 18.710423675355194,
+      "memory_samples": [
+        {
+          "allocated_bytes": 17917440,
+          "reserved_bytes": 159383552
+        },
+        {
+          "allocated_bytes": 17919488,
+          "reserved_bytes": 159383552
+        },
+        {
+          "allocated_bytes": 17919488,
+          "reserved_bytes": 159383552
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 6.201584463738641e-07,
+        "divergence_max_abs_error": 1.3668287328350015e-08,
+        "max_abs_error": 6.201584463738641e-07
+      }
+    },
+    {
+      "case_id": "torus-cuda-float64-b1-d2-w32x2-s8-forward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "torus",
+        "batch_size": 1,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float64",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "forward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 245.88697814941406,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 245.88697814941406
+        },
+        {
+          "forward_ms": 243.5758056640625,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 243.5758056640625
+        },
+        {
+          "forward_ms": 247.22227478027344,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 247.22227478027344
+        }
+      ],
+      "median_wall_ms": 245.88697814941406,
+      "samples_per_second": 4.066909144706096,
+      "accepted_steps_per_second": 32.53527315764877,
+      "memory_samples": [
+        {
+          "allocated_bytes": 17896448,
+          "reserved_bytes": 159383552
+        },
+        {
+          "allocated_bytes": 18733056,
+          "reserved_bytes": 159383552
+        },
+        {
+          "allocated_bytes": 18733056,
+          "reserved_bytes": 159383552
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 0.0,
+        "divergence_max_abs_error": 6.938893903907228e-18,
+        "max_abs_error": 6.938893903907228e-18
+      }
+    },
+    {
+      "case_id": "torus-cuda-float64-b1-d2-w32x2-s8-backward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "torus",
+        "batch_size": 1,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float64",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "backward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 247.59091186523438,
+          "backward_ms": 336.7014465332031,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 584.2923583984375
+        },
+        {
+          "forward_ms": 249.29586791992188,
+          "backward_ms": 225.4940185546875,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 474.7898864746094
+        },
+        {
+          "forward_ms": 249.32044982910156,
+          "backward_ms": 330.12939453125,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 579.4498443603516
+        }
+      ],
+      "median_wall_ms": 579.4498443603516,
+      "samples_per_second": 1.725774904821813,
+      "accepted_steps_per_second": 13.806199238574504,
+      "memory_samples": [
+        {
+          "allocated_bytes": 17942016,
+          "reserved_bytes": 159383552
+        },
+        {
+          "allocated_bytes": 17944064,
+          "reserved_bytes": 159383552
+        },
+        {
+          "allocated_bytes": 17944064,
+          "reserved_bytes": 159383552
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 0.0,
+        "divergence_max_abs_error": 6.938893903907228e-18,
+        "max_abs_error": 6.938893903907228e-18
+      }
+    },
+    {
+      "case_id": "torus-cuda-float32-b64-d2-w32x2-s8-forward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "torus",
+        "batch_size": 64,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float32",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "forward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 245.05958557128906,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 245.05958557128906
+        },
+        {
+          "forward_ms": 242.35519409179688,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 242.35519409179688
+        },
+        {
+          "forward_ms": 247.09939575195312,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 247.09939575195312
+        }
+      ],
+      "median_wall_ms": 245.05958557128906,
+      "samples_per_second": 261.16097377216073,
+      "accepted_steps_per_second": 32.64512172152009,
+      "memory_samples": [
+        {
+          "allocated_bytes": 25890816,
+          "reserved_bytes": 159383552
+        },
+        {
+          "allocated_bytes": 34722816,
+          "reserved_bytes": 159383552
+        },
+        {
+          "allocated_bytes": 34722816,
+          "reserved_bytes": 159383552
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 1.0884301762104087e-06,
+        "divergence_max_abs_error": 6.706130350336847e-08,
+        "max_abs_error": 1.0884301762104087e-06
+      }
+    },
+    {
+      "case_id": "torus-cuda-float32-b64-d2-w32x2-s8-backward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "torus",
+        "batch_size": 64,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float32",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "backward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 244.32537841796875,
+          "backward_ms": 337.4090270996094,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 581.7344055175781
+        },
+        {
+          "forward_ms": 251.1226806640625,
+          "backward_ms": 337.3526916503906,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 588.4753723144531
+        },
+        {
+          "forward_ms": 248.774658203125,
+          "backward_ms": 341.5142517089844,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 590.2889099121094
+        }
+      ],
+      "median_wall_ms": 588.4753723144531,
+      "samples_per_second": 108.7556132524123,
+      "accepted_steps_per_second": 13.594451656551538,
+      "memory_samples": [
+        {
+          "allocated_bytes": 25901056,
+          "reserved_bytes": 159383552
+        },
+        {
+          "allocated_bytes": 25903104,
+          "reserved_bytes": 159383552
+        },
+        {
+          "allocated_bytes": 25903104,
+          "reserved_bytes": 159383552
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 1.0884301762104087e-06,
+        "divergence_max_abs_error": 6.706130350336847e-08,
+        "max_abs_error": 1.0884301762104087e-06
+      }
+    },
+    {
+      "case_id": "torus-cuda-float64-b64-d2-w32x2-s8-forward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "torus",
+        "batch_size": 64,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float64",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "forward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 245.56442260742188,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 245.56442260742188
+        },
+        {
+          "forward_ms": 244.1553955078125,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 244.1553955078125
+        },
+        {
+          "forward_ms": 246.108154296875,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 246.108154296875
+        }
+      ],
+      "median_wall_ms": 245.56442260742188,
+      "samples_per_second": 260.6240729843643,
+      "accepted_steps_per_second": 32.57800912304554,
+      "memory_samples": [
+        {
+          "allocated_bytes": 34540032,
+          "reserved_bytes": 159383552
+        },
+        {
+          "allocated_bytes": 52006912,
+          "reserved_bytes": 159383552
+        },
+        {
+          "allocated_bytes": 52006912,
+          "reserved_bytes": 159383552
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 8.881784197001252e-16,
+        "divergence_max_abs_error": 1.3877787807814457e-17,
+        "max_abs_error": 8.881784197001252e-16
+      }
+    },
+    {
+      "case_id": "torus-cuda-float64-b64-d2-w32x2-s8-backward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "torus",
+        "batch_size": 64,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float64",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "backward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 247.34310913085938,
+          "backward_ms": 340.9397888183594,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 588.2828979492188
+        },
+        {
+          "forward_ms": 248.4910125732422,
+          "backward_ms": 337.3619079589844,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 585.8529205322266
+        },
+        {
+          "forward_ms": 248.53709411621094,
+          "backward_ms": 333.8506164550781,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 582.3877105712891
+        }
+      ],
+      "median_wall_ms": 585.8529205322266,
+      "samples_per_second": 109.24243569846553,
+      "accepted_steps_per_second": 13.655304462308191,
+      "memory_samples": [
+        {
+          "allocated_bytes": 34558464,
+          "reserved_bytes": 159383552
+        },
+        {
+          "allocated_bytes": 34562048,
+          "reserved_bytes": 159383552
+        },
+        {
+          "allocated_bytes": 34562048,
+          "reserved_bytes": 159383552
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 8.881784197001252e-16,
+        "divergence_max_abs_error": 1.3877787807814457e-17,
+        "max_abs_error": 8.881784197001252e-16
+      }
+    },
+    {
+      "case_id": "torus-cuda-float32-b256-d2-w32x2-s8-forward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "torus",
+        "batch_size": 256,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float32",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "forward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 249.32659912109375,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 249.32659912109375
+        },
+        {
+          "forward_ms": 249.27027893066406,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 249.27027893066406
+        },
+        {
+          "forward_ms": 247.39942932128906,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 247.39942932128906
+        }
+      ],
+      "median_wall_ms": 249.27027893066406,
+      "samples_per_second": 1026.997687402628,
+      "accepted_steps_per_second": 32.09367773133212,
+      "memory_samples": [
+        {
+          "allocated_bytes": 51991040,
+          "reserved_bytes": 159383552
+        },
+        {
+          "allocated_bytes": 86892032,
+          "reserved_bytes": 159383552
+        },
+        {
+          "allocated_bytes": 86892032,
+          "reserved_bytes": 159383552
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 1.2996385514441045e-06,
+        "divergence_max_abs_error": 6.706130350336847e-08,
+        "max_abs_error": 1.2996385514441045e-06
+      }
+    },
+    {
+      "case_id": "torus-cuda-float32-b256-d2-w32x2-s8-backward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "torus",
+        "batch_size": 256,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float32",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "backward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 208.67788696289062,
+          "backward_ms": 233.7576904296875,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 442.4355773925781
+        },
+        {
+          "forward_ms": 207.65696716308594,
+          "backward_ms": 232.3619842529297,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 440.0189514160156
+        },
+        {
+          "forward_ms": 235.2394256591797,
+          "backward_ms": 341.81939697265625,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 577.0588226318359
+        }
+      ],
+      "median_wall_ms": 442.4355773925781,
+      "samples_per_second": 578.6153127845058,
+      "accepted_steps_per_second": 18.081728524515807,
+      "memory_samples": [
+        {
+          "allocated_bytes": 52006912,
+          "reserved_bytes": 159383552
+        },
+        {
+          "allocated_bytes": 52014080,
+          "reserved_bytes": 159383552
+        },
+        {
+          "allocated_bytes": 52014080,
+          "reserved_bytes": 159383552
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 1.2996385514441045e-06,
+        "divergence_max_abs_error": 6.706130350336847e-08,
+        "max_abs_error": 1.2996385514441045e-06
+      }
+    },
+    {
+      "case_id": "torus-cuda-float64-b256-d2-w32x2-s8-forward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "torus",
+        "batch_size": 256,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float64",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "forward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 247.97491455078125,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 247.97491455078125
+        },
+        {
+          "forward_ms": 249.01426696777344,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 249.01426696777344
+        },
+        {
+          "forward_ms": 246.7799072265625,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 246.7799072265625
+        }
+      ],
+      "median_wall_ms": 247.97491455078125,
+      "samples_per_second": 1032.3624890193291,
+      "accepted_steps_per_second": 32.261327781854035,
+      "memory_samples": [
+        {
+          "allocated_bytes": 86906880,
+          "reserved_bytes": 159383552
+        },
+        {
+          "allocated_bytes": 156676096,
+          "reserved_bytes": 161480704
+        },
+        {
+          "allocated_bytes": 156676096,
+          "reserved_bytes": 161480704
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 8.881784197001252e-16,
+        "divergence_max_abs_error": 2.7755575615628914e-17,
+        "max_abs_error": 8.881784197001252e-16
+      }
+    },
+    {
+      "case_id": "torus-cuda-float64-b256-d2-w32x2-s8-backward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "torus",
+        "batch_size": 256,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float64",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "backward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 249.30816650390625,
+          "backward_ms": 334.55615234375,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 583.8643188476562
+        },
+        {
+          "forward_ms": 250.0485076904297,
+          "backward_ms": 341.9873352050781,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 592.0358428955078
+        },
+        {
+          "forward_ms": 251.1656951904297,
+          "backward_ms": 341.0821228027344,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 592.2478179931641
+        }
+      ],
+      "median_wall_ms": 592.0358428955078,
+      "samples_per_second": 432.40625220926546,
+      "accepted_steps_per_second": 13.512695381539546,
+      "memory_samples": [
+        {
+          "allocated_bytes": 86934528,
+          "reserved_bytes": 161480704
+        },
+        {
+          "allocated_bytes": 86948864,
+          "reserved_bytes": 161480704
+        },
+        {
+          "allocated_bytes": 86948864,
+          "reserved_bytes": 161480704
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 8.881784197001252e-16,
+        "divergence_max_abs_error": 2.7755575615628914e-17,
+        "max_abs_error": 8.881784197001252e-16
+      }
+    },
+    {
+      "case_id": "poincare-cuda-float32-b1-d2-w32x2-s8-forward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "poincare",
+        "batch_size": 1,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float32",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "forward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 249.85498046875,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 249.85498046875
+        },
+        {
+          "forward_ms": 250.7130889892578,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 250.7130889892578
+        },
+        {
+          "forward_ms": 250.0526123046875,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 250.0526123046875
+        }
+      ],
+      "median_wall_ms": 250.0526123046875,
+      "samples_per_second": 3.99915838024322,
+      "accepted_steps_per_second": 31.99326704194576,
+      "memory_samples": [
+        {
+          "allocated_bytes": 17924608,
+          "reserved_bytes": 161480704
+        },
+        {
+          "allocated_bytes": 18793984,
+          "reserved_bytes": 161480704
+        },
+        {
+          "allocated_bytes": 18793984,
+          "reserved_bytes": 161480704
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 6.740444213892971e-08,
+        "divergence_max_abs_error": 8.778329685377173e-08,
+        "max_abs_error": 8.778329685377173e-08
+      }
+    },
+    {
+      "case_id": "poincare-cuda-float32-b1-d2-w32x2-s8-backward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "poincare",
+        "batch_size": 1,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float32",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "backward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 250.5154571533203,
+          "backward_ms": 323.852294921875,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 574.3677520751953
+        },
+        {
+          "forward_ms": 254.2018585205078,
+          "backward_ms": 322.9542541503906,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 577.1561126708984
+        },
+        {
+          "forward_ms": 250.91583251953125,
+          "backward_ms": 324.5025329589844,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 575.4183654785156
+        }
+      ],
+      "median_wall_ms": 575.4183654785156,
+      "samples_per_second": 1.7378659771632488,
+      "accepted_steps_per_second": 13.90292781730599,
+      "memory_samples": [
+        {
+          "allocated_bytes": 17948672,
+          "reserved_bytes": 161480704
+        },
+        {
+          "allocated_bytes": 17950720,
+          "reserved_bytes": 161480704
+        },
+        {
+          "allocated_bytes": 17950720,
+          "reserved_bytes": 161480704
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 6.740444213892971e-08,
+        "divergence_max_abs_error": 8.778329685377173e-08,
+        "max_abs_error": 8.778329685377173e-08
+      }
+    },
+    {
+      "case_id": "poincare-cuda-float64-b1-d2-w32x2-s8-forward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "poincare",
+        "batch_size": 1,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float64",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "forward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 211.38330078125,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 211.38330078125
+        },
+        {
+          "forward_ms": 209.5247344970703,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 209.5247344970703
+        },
+        {
+          "forward_ms": 211.74578857421875,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 211.74578857421875
+        }
+      ],
+      "median_wall_ms": 211.38330078125,
+      "samples_per_second": 4.73074266654039,
+      "accepted_steps_per_second": 37.84594133232312,
+      "memory_samples": [
+        {
+          "allocated_bytes": 17929216,
+          "reserved_bytes": 161480704
+        },
+        {
+          "allocated_bytes": 18798592,
+          "reserved_bytes": 161480704
+        },
+        {
+          "allocated_bytes": 18798592,
+          "reserved_bytes": 161480704
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 1.1102230246251565e-16,
+        "divergence_max_abs_error": 8.881784197001252e-16,
+        "max_abs_error": 8.881784197001252e-16
+      }
+    },
+    {
+      "case_id": "poincare-cuda-float64-b1-d2-w32x2-s8-backward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "poincare",
+        "batch_size": 1,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float64",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "backward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 212.12570190429688,
+          "backward_ms": 233.88671875,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 446.0124206542969
+        },
+        {
+          "forward_ms": 213.30227661132812,
+          "backward_ms": 222.10047912597656,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 435.4027557373047
+        },
+        {
+          "forward_ms": 211.8410186767578,
+          "backward_ms": 222.70156860351562,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 434.54258728027344
+        }
+      ],
+      "median_wall_ms": 435.4027557373047,
+      "samples_per_second": 2.2967240946985155,
+      "accepted_steps_per_second": 18.373792757588124,
+      "memory_samples": [
+        {
+          "allocated_bytes": 17973248,
+          "reserved_bytes": 161480704
+        },
+        {
+          "allocated_bytes": 17975296,
+          "reserved_bytes": 161480704
+        },
+        {
+          "allocated_bytes": 17975296,
+          "reserved_bytes": 161480704
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 1.1102230246251565e-16,
+        "divergence_max_abs_error": 8.881784197001252e-16,
+        "max_abs_error": 8.881784197001252e-16
+      }
+    },
+    {
+      "case_id": "poincare-cuda-float32-b64-d2-w32x2-s8-forward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "poincare",
+        "batch_size": 64,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float32",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "forward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 248.24627685546875,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 248.24627685546875
+        },
+        {
+          "forward_ms": 248.11622619628906,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 248.11622619628906
+        },
+        {
+          "forward_ms": 247.8376922607422,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 247.8376922607422
+        }
+      ],
+      "median_wall_ms": 248.11622619628906,
+      "samples_per_second": 257.94362981068593,
+      "accepted_steps_per_second": 32.24295372633574,
+      "memory_samples": [
+        {
+          "allocated_bytes": 25825792,
+          "reserved_bytes": 161480704
+        },
+        {
+          "allocated_bytes": 34592256,
+          "reserved_bytes": 161480704
+        },
+        {
+          "allocated_bytes": 34592256,
+          "reserved_bytes": 161480704
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 1.2321662523628873e-07,
+        "divergence_max_abs_error": 3.6830921468222755e-07,
+        "max_abs_error": 3.6830921468222755e-07
+      }
+    },
+    {
+      "case_id": "poincare-cuda-float32-b64-d2-w32x2-s8-backward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "poincare",
+        "batch_size": 64,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float32",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "backward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 251.3244171142578,
+          "backward_ms": 326.3324279785156,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 577.6568450927734
+        },
+        {
+          "forward_ms": 250.3505859375,
+          "backward_ms": 325.6934509277344,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 576.0440368652344
+        },
+        {
+          "forward_ms": 253.6243133544922,
+          "backward_ms": 327.267333984375,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 580.8916473388672
+        }
+      ],
+      "median_wall_ms": 577.6568450927734,
+      "samples_per_second": 110.79242035073851,
+      "accepted_steps_per_second": 13.849052543842314,
+      "memory_samples": [
+        {
+          "allocated_bytes": 25834496,
+          "reserved_bytes": 161480704
+        },
+        {
+          "allocated_bytes": 25836544,
+          "reserved_bytes": 161480704
+        },
+        {
+          "allocated_bytes": 25836544,
+          "reserved_bytes": 161480704
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 1.2321662523628873e-07,
+        "divergence_max_abs_error": 3.6830921468222755e-07,
+        "max_abs_error": 3.6830921468222755e-07
+      }
+    },
+    {
+      "case_id": "poincare-cuda-float64-b64-d2-w32x2-s8-forward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "poincare",
+        "batch_size": 64,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float64",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "forward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 252.05247497558594,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 252.05247497558594
+        },
+        {
+          "forward_ms": 251.19027709960938,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 251.19027709960938
+        },
+        {
+          "forward_ms": 253.58131408691406,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 253.58131408691406
+        }
+      ],
+      "median_wall_ms": 252.05247497558594,
+      "samples_per_second": 253.9153801453412,
+      "accepted_steps_per_second": 31.73942251816765,
+      "memory_samples": [
+        {
+          "allocated_bytes": 34313216,
+          "reserved_bytes": 161480704
+        },
+        {
+          "allocated_bytes": 51550720,
+          "reserved_bytes": 161480704
+        },
+        {
+          "allocated_bytes": 51550720,
+          "reserved_bytes": 161480704
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 1.1102230246251565e-16,
+        "divergence_max_abs_error": 2.220446049250313e-16,
+        "max_abs_error": 2.220446049250313e-16
+      }
+    },
+    {
+      "case_id": "poincare-cuda-float64-b64-d2-w32x2-s8-backward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "poincare",
+        "batch_size": 64,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float64",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "backward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 230.30271911621094,
+          "backward_ms": 225.41311645507812,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 455.71583557128906
+        },
+        {
+          "forward_ms": 214.74099731445312,
+          "backward_ms": 236.64845275878906,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 451.3894500732422
+        },
+        {
+          "forward_ms": 214.30271911621094,
+          "backward_ms": 231.85816955566406,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 446.160888671875
+        }
+      ],
+      "median_wall_ms": 451.3894500732422,
+      "samples_per_second": 141.7844391126452,
+      "accepted_steps_per_second": 17.72305488908065,
+      "memory_samples": [
+        {
+          "allocated_bytes": 34331648,
+          "reserved_bytes": 161480704
+        },
+        {
+          "allocated_bytes": 34335232,
+          "reserved_bytes": 161480704
+        },
+        {
+          "allocated_bytes": 34335232,
+          "reserved_bytes": 161480704
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 1.1102230246251565e-16,
+        "divergence_max_abs_error": 2.220446049250313e-16,
+        "max_abs_error": 2.220446049250313e-16
+      }
+    },
+    {
+      "case_id": "poincare-cuda-float32-b256-d2-w32x2-s8-forward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "poincare",
+        "batch_size": 256,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float32",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "forward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 211.96697998046875,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 211.96697998046875
+        },
+        {
+          "forward_ms": 209.6117706298828,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 209.6117706298828
+        },
+        {
+          "forward_ms": 213.8480682373047,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 213.8480682373047
+        }
+      ],
+      "median_wall_ms": 211.96697998046875,
+      "samples_per_second": 1207.7352803893727,
+      "accepted_steps_per_second": 37.7417275121679,
+      "memory_samples": [
+        {
+          "allocated_bytes": 51537920,
+          "reserved_bytes": 161480704
+        },
+        {
+          "allocated_bytes": 85980160,
+          "reserved_bytes": 161480704
+        },
+        {
+          "allocated_bytes": 85980160,
+          "reserved_bytes": 161480704
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 1.3121968289731e-07,
+        "divergence_max_abs_error": 6.306371909126085e-07,
+        "max_abs_error": 6.306371909126085e-07
+      }
+    },
+    {
+      "case_id": "poincare-cuda-float32-b256-d2-w32x2-s8-backward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "poincare",
+        "batch_size": 256,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float32",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "backward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 241.96710205078125,
+          "backward_ms": 329.90924072265625,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 571.8763427734375
+        },
+        {
+          "forward_ms": 252.9105987548828,
+          "backward_ms": 335.8730163574219,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 588.7836151123047
+        },
+        {
+          "forward_ms": 217.0460205078125,
+          "backward_ms": 238.83673095703125,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 455.88275146484375
+        }
+      ],
+      "median_wall_ms": 571.8763427734375,
+      "samples_per_second": 447.6492221351086,
+      "accepted_steps_per_second": 13.989038191722143,
+      "memory_samples": [
+        {
+          "allocated_bytes": 51547136,
+          "reserved_bytes": 161480704
+        },
+        {
+          "allocated_bytes": 51554304,
+          "reserved_bytes": 161480704
+        },
+        {
+          "allocated_bytes": 51554304,
+          "reserved_bytes": 161480704
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 1.3121968289731e-07,
+        "divergence_max_abs_error": 6.306371909126085e-07,
+        "max_abs_error": 6.306371909126085e-07
+      }
+    },
+    {
+      "case_id": "poincare-cuda-float64-b256-d2-w32x2-s8-forward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "poincare",
+        "batch_size": 256,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float64",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "forward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 215.5642852783203,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 215.5642852783203
+        },
+        {
+          "forward_ms": 215.25503540039062,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 215.25503540039062
+        },
+        {
+          "forward_ms": 215.3553924560547,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 215.3553924560547
+        }
+      ],
+      "median_wall_ms": 215.3553924560547,
+      "samples_per_second": 1188.7327133089514,
+      "accepted_steps_per_second": 37.14789729090473,
+      "memory_samples": [
+        {
+          "allocated_bytes": 86001152,
+          "reserved_bytes": 161480704
+        },
+        {
+          "allocated_bytes": 154852864,
+          "reserved_bytes": 161480704
+        },
+        {
+          "allocated_bytes": 154852864,
+          "reserved_bytes": 161480704
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 1.1102230246251565e-16,
+        "divergence_max_abs_error": 2.220446049250313e-16,
+        "max_abs_error": 2.220446049250313e-16
+      }
+    },
+    {
+      "case_id": "poincare-cuda-float64-b256-d2-w32x2-s8-backward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "poincare",
+        "batch_size": 256,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float64",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "backward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 211.7242889404297,
+          "backward_ms": 220.53273010253906,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 432.25701904296875
+        },
+        {
+          "forward_ms": 213.45791625976562,
+          "backward_ms": 222.9370880126953,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 436.39500427246094
+        },
+        {
+          "forward_ms": 228.28953552246094,
+          "backward_ms": 229.00941467285156,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 457.2989501953125
+        }
+      ],
+      "median_wall_ms": 436.39500427246094,
+      "samples_per_second": 586.6244972872507,
+      "accepted_steps_per_second": 18.332015540226585,
+      "memory_samples": [
+        {
+          "allocated_bytes": 86016000,
+          "reserved_bytes": 161480704
+        },
+        {
+          "allocated_bytes": 86030336,
+          "reserved_bytes": 161480704
+        },
+        {
+          "allocated_bytes": 86030336,
+          "reserved_bytes": 161480704
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 1.1102230246251565e-16,
+        "divergence_max_abs_error": 2.220446049250313e-16,
+        "max_abs_error": 2.220446049250313e-16
+      }
+    },
+    {
+      "case_id": "induced-cuda-float32-b1-d2-w32x2-s8-forward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "induced",
+        "batch_size": 1,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float32",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "forward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 443.7657470703125,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 443.7657470703125
+        },
+        {
+          "forward_ms": 452.242431640625,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 452.242431640625
+        },
+        {
+          "forward_ms": 447.4552307128906,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 447.4552307128906
+        }
+      ],
+      "median_wall_ms": 447.4552307128906,
+      "samples_per_second": 2.2348604538755508,
+      "accepted_steps_per_second": 17.878883631004406,
+      "memory_samples": [
+        {
+          "allocated_bytes": 18251776,
+          "reserved_bytes": 161480704
+        },
+        {
+          "allocated_bytes": 19448832,
+          "reserved_bytes": 161480704
+        },
+        {
+          "allocated_bytes": 19448832,
+          "reserved_bytes": 161480704
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 1.3779940549740743e-08,
+        "divergence_max_abs_error": 2.898309925392084e-10,
+        "max_abs_error": 1.3779940549740743e-08
+      }
+    },
+    {
+      "case_id": "induced-cuda-float32-b1-d2-w32x2-s8-backward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "induced",
+        "batch_size": 1,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float32",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "backward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 440.69989013671875,
+          "backward_ms": 362.8677062988281,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 803.5675964355469
+        },
+        {
+          "forward_ms": 452.25982666015625,
+          "backward_ms": 363.568115234375,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 815.8279418945312
+        },
+        {
+          "forward_ms": 443.57940673828125,
+          "backward_ms": 363.1964111328125,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 806.7758178710938
+        }
+      ],
+      "median_wall_ms": 806.7758178710938,
+      "samples_per_second": 1.239501702763951,
+      "accepted_steps_per_second": 9.916013622111608,
+      "memory_samples": [
+        {
+          "allocated_bytes": 18292224,
+          "reserved_bytes": 161480704
+        },
+        {
+          "allocated_bytes": 18294272,
+          "reserved_bytes": 161480704
+        },
+        {
+          "allocated_bytes": 18294272,
+          "reserved_bytes": 161480704
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 1.3779940549740743e-08,
+        "divergence_max_abs_error": 2.898309925392084e-10,
+        "max_abs_error": 1.3779940549740743e-08
+      }
+    },
+    {
+      "case_id": "induced-cuda-float64-b1-d2-w32x2-s8-forward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "induced",
+        "batch_size": 1,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float64",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "forward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 432.6983642578125,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 432.6983642578125
+        },
+        {
+          "forward_ms": 439.7332458496094,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 439.7332458496094
+        },
+        {
+          "forward_ms": 436.6796875,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 436.6796875
+        }
+      ],
+      "median_wall_ms": 436.6796875,
+      "samples_per_second": 2.2900080508095537,
+      "accepted_steps_per_second": 18.32006440647643,
+      "memory_samples": [
+        {
+          "allocated_bytes": 18256384,
+          "reserved_bytes": 161480704
+        },
+        {
+          "allocated_bytes": 19453440,
+          "reserved_bytes": 161480704
+        },
+        {
+          "allocated_bytes": 19453440,
+          "reserved_bytes": 161480704
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 0.0,
+        "divergence_max_abs_error": 0.0,
+        "max_abs_error": 0.0
+      }
+    },
+    {
+      "case_id": "induced-cuda-float64-b1-d2-w32x2-s8-backward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "induced",
+        "batch_size": 1,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float64",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "backward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 438.7082214355469,
+          "backward_ms": 353.6701354980469,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 792.3783569335938
+        },
+        {
+          "forward_ms": 438.1716613769531,
+          "backward_ms": 361.2774353027344,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 799.4490966796875
+        },
+        {
+          "forward_ms": 440.7828369140625,
+          "backward_ms": 363.64801025390625,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 804.4308471679688
+        }
+      ],
+      "median_wall_ms": 799.4490966796875,
+      "samples_per_second": 1.2508613796090966,
+      "accepted_steps_per_second": 10.006891036872773,
+      "memory_samples": [
+        {
+          "allocated_bytes": 18311168,
+          "reserved_bytes": 161480704
+        },
+        {
+          "allocated_bytes": 18313216,
+          "reserved_bytes": 161480704
+        },
+        {
+          "allocated_bytes": 18313216,
+          "reserved_bytes": 161480704
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 0.0,
+        "divergence_max_abs_error": 0.0,
+        "max_abs_error": 0.0
+      }
+    },
+    {
+      "case_id": "induced-cuda-float32-b64-d2-w32x2-s8-forward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "induced",
+        "batch_size": 64,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float32",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "forward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 429.8229675292969,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 429.8229675292969
+        },
+        {
+          "forward_ms": 429.4789123535156,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 429.4789123535156
+        },
+        {
+          "forward_ms": 432.2826232910156,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 432.2826232910156
+        }
+      ],
+      "median_wall_ms": 429.8229675292969,
+      "samples_per_second": 148.89851132870822,
+      "accepted_steps_per_second": 18.612313916088528,
+      "memory_samples": [
+        {
+          "allocated_bytes": 26330112,
+          "reserved_bytes": 161480704
+        },
+        {
+          "allocated_bytes": 35604480,
+          "reserved_bytes": 161480704
+        },
+        {
+          "allocated_bytes": 35604480,
+          "reserved_bytes": 161480704
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 6.365911908723376e-08,
+        "divergence_max_abs_error": 2.2146472128392602e-08,
+        "max_abs_error": 6.365911908723376e-08
+      }
+    },
+    {
+      "case_id": "induced-cuda-float32-b64-d2-w32x2-s8-backward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "induced",
+        "batch_size": 64,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float32",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "backward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 482.9450378417969,
+          "backward_ms": 505.8099060058594,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 988.7549438476562
+        },
+        {
+          "forward_ms": 421.8787841796875,
+          "backward_ms": 374.2637939453125,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 796.142578125
+        },
+        {
+          "forward_ms": 439.9134826660156,
+          "backward_ms": 364.6648254394531,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 804.5783081054688
+        }
+      ],
+      "median_wall_ms": 804.5783081054688,
+      "samples_per_second": 79.5447743933093,
+      "accepted_steps_per_second": 9.943096799163662,
+      "memory_samples": [
+        {
+          "allocated_bytes": 26351104,
+          "reserved_bytes": 161480704
+        },
+        {
+          "allocated_bytes": 26344960,
+          "reserved_bytes": 161480704
+        },
+        {
+          "allocated_bytes": 26350592,
+          "reserved_bytes": 161480704
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 6.365911908723376e-08,
+        "divergence_max_abs_error": 2.2146472128392602e-08,
+        "max_abs_error": 6.365911908723376e-08
+      }
+    },
+    {
+      "case_id": "induced-cuda-float64-b64-d2-w32x2-s8-forward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "induced",
+        "batch_size": 64,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float64",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "forward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 483.4590759277344,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 483.4590759277344
+        },
+        {
+          "forward_ms": 406.719482421875,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 406.719482421875
+        },
+        {
+          "forward_ms": 409.8426818847656,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 409.8426818847656
+        }
+      ],
+      "median_wall_ms": 409.8426818847656,
+      "samples_per_second": 156.15747902507312,
+      "accepted_steps_per_second": 19.51968487813414,
+      "memory_samples": [
+        {
+          "allocated_bytes": 35302912,
+          "reserved_bytes": 161480704
+        },
+        {
+          "allocated_bytes": 53539840,
+          "reserved_bytes": 161480704
+        },
+        {
+          "allocated_bytes": 53539840,
+          "reserved_bytes": 161480704
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 5.551115123125783e-17,
+        "divergence_max_abs_error": 2.7755575615628914e-17,
+        "max_abs_error": 5.551115123125783e-17
+      }
+    },
+    {
+      "case_id": "induced-cuda-float64-b64-d2-w32x2-s8-backward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "induced",
+        "batch_size": 64,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float64",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "backward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 485.2377624511719,
+          "backward_ms": 519.13525390625,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 1004.3730163574219
+        },
+        {
+          "forward_ms": 484.16461181640625,
+          "backward_ms": 519.8673706054688,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 1004.031982421875
+        },
+        {
+          "forward_ms": 482.44635009765625,
+          "backward_ms": 515.4908447265625,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 997.9371948242188
+        }
+      ],
+      "median_wall_ms": 1004.031982421875,
+      "samples_per_second": 63.74298938727274,
+      "accepted_steps_per_second": 7.967873673409093,
+      "memory_samples": [
+        {
+          "allocated_bytes": 35339264,
+          "reserved_bytes": 161480704
+        },
+        {
+          "allocated_bytes": 35342848,
+          "reserved_bytes": 161480704
+        },
+        {
+          "allocated_bytes": 35342848,
+          "reserved_bytes": 161480704
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 5.551115123125783e-17,
+        "divergence_max_abs_error": 2.7755575615628914e-17,
+        "max_abs_error": 5.551115123125783e-17
+      }
+    },
+    {
+      "case_id": "induced-cuda-float32-b256-d2-w32x2-s8-forward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "induced",
+        "batch_size": 256,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float32",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "forward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 404.3284606933594,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 404.3284606933594
+        },
+        {
+          "forward_ms": 394.96600341796875,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 394.96600341796875
+        },
+        {
+          "forward_ms": 437.9586486816406,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 437.9586486816406
+        }
+      ],
+      "median_wall_ms": 404.3284606933594,
+      "samples_per_second": 633.1486028982488,
+      "accepted_steps_per_second": 19.785893840570274,
+      "memory_samples": [
+        {
+          "allocated_bytes": 53615616,
+          "reserved_bytes": 161480704
+        },
+        {
+          "allocated_bytes": 90155008,
+          "reserved_bytes": 161480704
+        },
+        {
+          "allocated_bytes": 90155008,
+          "reserved_bytes": 161480704
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 6.887881642825278e-08,
+        "divergence_max_abs_error": 2.2146472128392602e-08,
+        "max_abs_error": 6.887881642825278e-08
+      }
+    },
+    {
+      "case_id": "induced-cuda-float32-b256-d2-w32x2-s8-backward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "induced",
+        "batch_size": 256,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float32",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "backward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 387.4959411621094,
+          "backward_ms": 369.2666931152344,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 756.7626342773438
+        },
+        {
+          "forward_ms": 396.189697265625,
+          "backward_ms": 374.3631286621094,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 770.5528259277344
+        },
+        {
+          "forward_ms": 401.22265625,
+          "backward_ms": 362.4509582519531,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 763.6736145019531
+        }
+      ],
+      "median_wall_ms": 763.6736145019531,
+      "samples_per_second": 335.2217428213179,
+      "accepted_steps_per_second": 10.475679463166184,
+      "memory_samples": [
+        {
+          "allocated_bytes": 53669376,
+          "reserved_bytes": 161480704
+        },
+        {
+          "allocated_bytes": 53676544,
+          "reserved_bytes": 161480704
+        },
+        {
+          "allocated_bytes": 53676544,
+          "reserved_bytes": 161480704
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 6.887881642825278e-08,
+        "divergence_max_abs_error": 2.2146472128392602e-08,
+        "max_abs_error": 6.887881642825278e-08
+      }
+    },
+    {
+      "case_id": "induced-cuda-float64-b256-d2-w32x2-s8-forward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "induced",
+        "batch_size": 256,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float64",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "forward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 391.32672119140625,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 391.32672119140625
+        },
+        {
+          "forward_ms": 392.4449157714844,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 392.4449157714844
+        },
+        {
+          "forward_ms": 427.4646911621094,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 427.4646911621094
+        }
+      ],
+      "median_wall_ms": 392.4449157714844,
+      "samples_per_second": 652.3208473646414,
+      "accepted_steps_per_second": 20.385026480145044,
+      "memory_samples": [
+        {
+          "allocated_bytes": 89959936,
+          "reserved_bytes": 161480704
+        },
+        {
+          "allocated_bytes": 162809344,
+          "reserved_bytes": 167772160
+        },
+        {
+          "allocated_bytes": 162809344,
+          "reserved_bytes": 167772160
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 1.1102230246251565e-16,
+        "divergence_max_abs_error": 2.7755575615628914e-17,
+        "max_abs_error": 1.1102230246251565e-16
+      }
+    },
+    {
+      "case_id": "induced-cuda-float64-b256-d2-w32x2-s8-backward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "induced",
+        "batch_size": 256,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float64",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "backward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 475.8681640625,
+          "backward_ms": 446.3984680175781,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 922.2666320800781
+        },
+        {
+          "forward_ms": 464.4341735839844,
+          "backward_ms": 513.5943603515625,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 978.0285339355469
+        },
+        {
+          "forward_ms": 477.65093994140625,
+          "backward_ms": 514.4524536132812,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 992.1033935546875
+        }
+      ],
+      "median_wall_ms": 978.0285339355469,
+      "samples_per_second": 261.7510544092885,
+      "accepted_steps_per_second": 8.179720450290265,
+      "memory_samples": [
+        {
+          "allocated_bytes": 90066944,
+          "reserved_bytes": 167772160
+        },
+        {
+          "allocated_bytes": 90081280,
+          "reserved_bytes": 167772160
+        },
+        {
+          "allocated_bytes": 90081280,
+          "reserved_bytes": 167772160
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 1.1102230246251565e-16,
+        "divergence_max_abs_error": 2.7755575615628914e-17,
+        "max_abs_error": 1.1102230246251565e-16
+      }
+    },
+    {
+      "case_id": "sphere-atlas-cuda-float32-b1-d2-w32x2-s8-forward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "sphere-atlas",
+        "batch_size": 1,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float32",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "forward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 229.33197021484375,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 229.33197021484375
+        },
+        {
+          "forward_ms": 216.69683837890625,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 216.69683837890625
+        },
+        {
+          "forward_ms": 237.7216033935547,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 237.7216033935547
+        }
+      ],
+      "median_wall_ms": 229.33197021484375,
+      "samples_per_second": 4.360491034299211,
+      "accepted_steps_per_second": 34.88392827439369,
+      "memory_samples": [
+        {
+          "allocated_bytes": 17937408,
+          "reserved_bytes": 167772160
+        },
+        {
+          "allocated_bytes": 18814976,
+          "reserved_bytes": 167772160
+        },
+        {
+          "allocated_bytes": 18814976,
+          "reserved_bytes": 167772160
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 1.3779940549740743e-08,
+        "divergence_max_abs_error": 7.1768761489288124e-09,
+        "max_abs_error": 1.3779940549740743e-08
+      }
+    },
+    {
+      "case_id": "sphere-atlas-cuda-float32-b1-d2-w32x2-s8-backward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "sphere-atlas",
+        "batch_size": 1,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float32",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "backward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 236.0965118408203,
+          "backward_ms": 217.39622497558594,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 453.49273681640625
+        },
+        {
+          "forward_ms": 238.89305114746094,
+          "backward_ms": 217.24159240722656,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 456.1346435546875
+        },
+        {
+          "forward_ms": 238.69850158691406,
+          "backward_ms": 225.22265625,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 463.92115783691406
+        }
+      ],
+      "median_wall_ms": 456.1346435546875,
+      "samples_per_second": 2.192335123258636,
+      "accepted_steps_per_second": 17.53868098606909,
+      "memory_samples": [
+        {
+          "allocated_bytes": 17945088,
+          "reserved_bytes": 167772160
+        },
+        {
+          "allocated_bytes": 17955328,
+          "reserved_bytes": 167772160
+        },
+        {
+          "allocated_bytes": 17955328,
+          "reserved_bytes": 167772160
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 1.3779940549740743e-08,
+        "divergence_max_abs_error": 7.1768761489288124e-09,
+        "max_abs_error": 1.3779940549740743e-08
+      }
+    },
+    {
+      "case_id": "sphere-atlas-cuda-float64-b1-d2-w32x2-s8-forward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "sphere-atlas",
+        "batch_size": 1,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float64",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "forward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 238.86746215820312,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 238.86746215820312
+        },
+        {
+          "forward_ms": 238.17625427246094,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 238.17625427246094
+        },
+        {
+          "forward_ms": 235.58041381835938,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 235.58041381835938
+        }
+      ],
+      "median_wall_ms": 238.17625427246094,
+      "samples_per_second": 4.198571360753928,
+      "accepted_steps_per_second": 33.58857088603143,
+      "memory_samples": [
+        {
+          "allocated_bytes": 17946624,
+          "reserved_bytes": 167772160
+        },
+        {
+          "allocated_bytes": 18824192,
+          "reserved_bytes": 167772160
+        },
+        {
+          "allocated_bytes": 18824192,
+          "reserved_bytes": 167772160
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 0.0,
+        "divergence_max_abs_error": 0.0,
+        "max_abs_error": 0.0
+      }
+    },
+    {
+      "case_id": "sphere-atlas-cuda-float64-b1-d2-w32x2-s8-backward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "sphere-atlas",
+        "batch_size": 1,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float64",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "backward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 243.4580535888672,
+          "backward_ms": 321.3127746582031,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 564.7708282470703
+        },
+        {
+          "forward_ms": 243.47955322265625,
+          "backward_ms": 319.5094909667969,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 562.9890441894531
+        },
+        {
+          "forward_ms": 244.73703002929688,
+          "backward_ms": 314.85748291015625,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 559.5945129394531
+        }
+      ],
+      "median_wall_ms": 562.9890441894531,
+      "samples_per_second": 1.7762334992499196,
+      "accepted_steps_per_second": 14.209867993999357,
+      "memory_samples": [
+        {
+          "allocated_bytes": 17970176,
+          "reserved_bytes": 167772160
+        },
+        {
+          "allocated_bytes": 17980416,
+          "reserved_bytes": 167772160
+        },
+        {
+          "allocated_bytes": 17980416,
+          "reserved_bytes": 167772160
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 0.0,
+        "divergence_max_abs_error": 0.0,
+        "max_abs_error": 0.0
+      }
+    },
+    {
+      "case_id": "sphere-atlas-cuda-float32-b64-d2-w32x2-s8-forward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "sphere-atlas",
+        "batch_size": 64,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float32",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "forward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 245.3534698486328,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 245.3534698486328
+        },
+        {
+          "forward_ms": 245.4589385986328,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 245.4589385986328
+        },
+        {
+          "forward_ms": 245.27667236328125,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 245.27667236328125
+        }
+      ],
+      "median_wall_ms": 245.3534698486328,
+      "samples_per_second": 260.8481552736297,
+      "accepted_steps_per_second": 32.60601940920371,
+      "memory_samples": [
+        {
+          "allocated_bytes": 25838592,
+          "reserved_bytes": 167772160
+        },
+        {
+          "allocated_bytes": 34613248,
+          "reserved_bytes": 167772160
+        },
+        {
+          "allocated_bytes": 34613248,
+          "reserved_bytes": 167772160
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 6.365911908723376e-08,
+        "divergence_max_abs_error": 2.8029435383825074e-08,
+        "max_abs_error": 6.365911908723376e-08
+      }
+    },
+    {
+      "case_id": "sphere-atlas-cuda-float32-b64-d2-w32x2-s8-backward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "sphere-atlas",
+        "batch_size": 64,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float32",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "backward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 244.2362823486328,
+          "backward_ms": 325.4118347167969,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 569.6481170654297
+        },
+        {
+          "forward_ms": 244.15948486328125,
+          "backward_ms": 323.346435546875,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 567.5059204101562
+        },
+        {
+          "forward_ms": 244.67864990234375,
+          "backward_ms": 221.1584014892578,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 465.83705139160156
+        }
+      ],
+      "median_wall_ms": 567.5059204101562,
+      "samples_per_second": 112.77415388679113,
+      "accepted_steps_per_second": 14.09676923584889,
+      "memory_samples": [
+        {
+          "allocated_bytes": 25856000,
+          "reserved_bytes": 167772160
+        },
+        {
+          "allocated_bytes": 25866240,
+          "reserved_bytes": 167772160
+        },
+        {
+          "allocated_bytes": 25866240,
+          "reserved_bytes": 167772160
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 6.365911908723376e-08,
+        "divergence_max_abs_error": 2.8029435383825074e-08,
+        "max_abs_error": 6.365911908723376e-08
+      }
+    },
+    {
+      "case_id": "sphere-atlas-cuda-float64-b64-d2-w32x2-s8-forward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "sphere-atlas",
+        "batch_size": 64,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float64",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "forward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 205.23622131347656,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 205.23622131347656
+        },
+        {
+          "forward_ms": 205.90489196777344,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 205.90489196777344
+        },
+        {
+          "forward_ms": 205.88441467285156,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 205.88441467285156
+        }
+      ],
+      "median_wall_ms": 205.88441467285156,
+      "samples_per_second": 310.8540299259437,
+      "accepted_steps_per_second": 38.85675374074296,
+      "memory_samples": [
+        {
+          "allocated_bytes": 34337280,
+          "reserved_bytes": 167772160
+        },
+        {
+          "allocated_bytes": 51591168,
+          "reserved_bytes": 167772160
+        },
+        {
+          "allocated_bytes": 51591168,
+          "reserved_bytes": 167772160
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 5.551115123125783e-17,
+        "divergence_max_abs_error": 5.551115123125783e-17,
+        "max_abs_error": 5.551115123125783e-17
+      }
+    },
+    {
+      "case_id": "sphere-atlas-cuda-float64-b64-d2-w32x2-s8-backward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "sphere-atlas",
+        "batch_size": 64,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float64",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "backward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 207.65286254882812,
+          "backward_ms": 221.01708984375,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 428.6699523925781
+        },
+        {
+          "forward_ms": 218.0167694091797,
+          "backward_ms": 228.44825744628906,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 446.46502685546875
+        },
+        {
+          "forward_ms": 209.0762176513672,
+          "backward_ms": 220.65151977539062,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 429.7277374267578
+        }
+      ],
+      "median_wall_ms": 429.7277374267578,
+      "samples_per_second": 148.9315080828546,
+      "accepted_steps_per_second": 18.616438510356826,
+      "memory_samples": [
+        {
+          "allocated_bytes": 34369024,
+          "reserved_bytes": 167772160
+        },
+        {
+          "allocated_bytes": 34388992,
+          "reserved_bytes": 167772160
+        },
+        {
+          "allocated_bytes": 34388992,
+          "reserved_bytes": 167772160
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 5.551115123125783e-17,
+        "divergence_max_abs_error": 5.551115123125783e-17,
+        "max_abs_error": 5.551115123125783e-17
+      }
+    },
+    {
+      "case_id": "sphere-atlas-cuda-float32-b256-d2-w32x2-s8-forward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "sphere-atlas",
+        "batch_size": 256,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float32",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "forward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 207.26885986328125,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 207.26885986328125
+        },
+        {
+          "forward_ms": 205.7144317626953,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 205.7144317626953
+        },
+        {
+          "forward_ms": 242.41561889648438,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 242.41561889648438
+        }
+      ],
+      "median_wall_ms": 207.26885986328125,
+      "samples_per_second": 1235.1107646795704,
+      "accepted_steps_per_second": 38.597211396236574,
+      "memory_samples": [
+        {
+          "allocated_bytes": 51570176,
+          "reserved_bytes": 167772160
+        },
+        {
+          "allocated_bytes": 86045184,
+          "reserved_bytes": 167772160
+        },
+        {
+          "allocated_bytes": 86045184,
+          "reserved_bytes": 167772160
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 6.887881642825278e-08,
+        "divergence_max_abs_error": 2.8029435383825074e-08,
+        "max_abs_error": 6.887881642825278e-08
+      }
+    },
+    {
+      "case_id": "sphere-atlas-cuda-float32-b256-d2-w32x2-s8-backward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "sphere-atlas",
+        "batch_size": 256,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float32",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "backward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 246.64883422851562,
+          "backward_ms": 325.5213928222656,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 572.1702270507812
+        },
+        {
+          "forward_ms": 248.24525451660156,
+          "backward_ms": 325.1783752441406,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 573.4236297607422
+        },
+        {
+          "forward_ms": 249.96966552734375,
+          "backward_ms": 326.0928039550781,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 576.0624694824219
+        }
+      ],
+      "median_wall_ms": 573.4236297607422,
+      "samples_per_second": 446.44131618157166,
+      "accepted_steps_per_second": 13.951291130674115,
+      "memory_samples": [
+        {
+          "allocated_bytes": 51615744,
+          "reserved_bytes": 167772160
+        },
+        {
+          "allocated_bytes": 51655680,
+          "reserved_bytes": 167772160
+        },
+        {
+          "allocated_bytes": 51655680,
+          "reserved_bytes": 167772160
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 6.887881642825278e-08,
+        "divergence_max_abs_error": 2.8029435383825074e-08,
+        "max_abs_error": 6.887881642825278e-08
+      }
+    },
+    {
+      "case_id": "sphere-atlas-cuda-float64-b256-d2-w32x2-s8-forward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "sphere-atlas",
+        "batch_size": 256,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float64",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "forward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 247.9349822998047,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 247.9349822998047
+        },
+        {
+          "forward_ms": 246.98880004882812,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 246.98880004882812
+        },
+        {
+          "forward_ms": 247.82745361328125,
+          "backward_ms": 0.0,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 247.82745361328125
+        }
+      ],
+      "median_wall_ms": 247.82745361328125,
+      "samples_per_second": 1032.9767597074676,
+      "accepted_steps_per_second": 32.280523740858364,
+      "memory_samples": [
+        {
+          "allocated_bytes": 86063616,
+          "reserved_bytes": 167772160
+        },
+        {
+          "allocated_bytes": 154980864,
+          "reserved_bytes": 167772160
+        },
+        {
+          "allocated_bytes": 154980864,
+          "reserved_bytes": 167772160
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 1.1102230246251565e-16,
+        "divergence_max_abs_error": 5.551115123125783e-17,
+        "max_abs_error": 1.1102230246251565e-16
+      }
+    },
+    {
+      "case_id": "sphere-atlas-cuda-float64-b256-d2-w32x2-s8-backward-exact",
+      "status": "passed",
+      "parameters": {
+        "scenario": "sphere-atlas",
+        "batch_size": 256,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 8,
+        "dtype": "torch.float64",
+        "device": "cuda",
+        "divergence_mode": "exact",
+        "workload": "backward",
+        "seed": 0
+      },
+      "warmup": 1,
+      "repetitions": 3,
+      "timing_samples": [
+        {
+          "forward_ms": 241.68243408203125,
+          "backward_ms": 229.0206756591797,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 470.70310974121094
+        },
+        {
+          "forward_ms": 240.9932861328125,
+          "backward_ms": 227.78060913085938,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 468.7738952636719
+        },
+        {
+          "forward_ms": 241.91795349121094,
+          "backward_ms": 221.02426147460938,
+          "optimizer_step_ms": 0.0,
+          "wall_ms": 462.9422149658203
+        }
+      ],
+      "median_wall_ms": 468.7738952636719,
+      "samples_per_second": 546.1054947524485,
+      "accepted_steps_per_second": 17.065796711014016,
+      "memory_samples": [
+        {
+          "allocated_bytes": 86152192,
+          "reserved_bytes": 167772160
+        },
+        {
+          "allocated_bytes": 86232064,
+          "reserved_bytes": 167772160
+        },
+        {
+          "allocated_bytes": 86232064,
+          "reserved_bytes": 167772160
+        }
+      ],
+      "error": {
+        "state_max_abs_error": 1.1102230246251565e-16,
+        "divergence_max_abs_error": 5.551115123125783e-17,
+        "max_abs_error": 1.1102230246251565e-16
+      }
+    }
+  ]
+}
