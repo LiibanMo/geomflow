@@ -116,8 +116,8 @@ jobs:
           set -Eeuo pipefail
           export RUNNER_ALLOW_RUNASROOT=1
           install_dir=/opt/actions-runner
-          mkdir -p \"\$install_dir\"
-          cd \"\$install_dir\"
+          mkdir -p "\$install_dir"
+          cd "\$install_dir"
           curl --fail --location --retry 5 --silent --show-error \
             --output runner.tar.gz \
             https://github.com/actions/runner/releases/download/v${ACTIONS_RUNNER_VERSION}/actions-runner-linux-x64-${ACTIONS_RUNNER_VERSION}.tar.gz
@@ -237,7 +237,7 @@ jobs:
         run: |
           set -Eeuo pipefail
           python -m pip install --disable-pip-version-check vastai
-          vastai --api-key "$VAST_API_KEY" destroy instance "$INSTANCE_ID" -y
+          vastai --api-key "$VAST_API_KEY" destroy instance "$INSTANCE_ID" -y || true
           for _ in {1..12}; do
             instances="$(vastai --api-key "$VAST_API_KEY" show instances --raw)"
             if ! jq -e --argjson id "$INSTANCE_ID" 'any(.[]; .id == $id)' <<<"$instances" >/dev/null; then
