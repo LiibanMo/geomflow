@@ -47,25 +47,33 @@ requires a hardware-stable runner.
 ## Ephemeral Vast.ai CI setup
 
 `.github/workflows/cuda-vast.yml` can create an on-demand ephemeral runner for
-manual and nightly validation. Repository administrators must complete two
+manual and nightly validation. Repository administrators must complete three
 one-time settings before enabling it:
 
 1. Add `VAST_API_KEY` as a repository Actions secret. Use a restricted Vast.ai
    key that can search, create, inspect, and destroy instances but cannot access
    billing, account, team, or SSH-key administration.
-2. Create the GitHub Actions environment `vast-gpu`, add the repository owner
+2. Add `GH_RUNNER_ADMIN_TOKEN` as a repository Actions secret. Use a
+   fine-grained personal access token restricted to this repository with
+   Administration write permission so the workflow can register and remove
+   self-hosted runners.
+3. Create the GitHub Actions environment `vast-gpu`, add the repository owner
    as a required reviewer, and restrict deployment branches to the default
-   branch. The secret must remain repository-scoped so the unconditional
-   cleanup job can destroy an instance without requesting a second approval.
+   branch. Both secrets must remain repository-scoped so the unconditional
+   cleanup job can destroy the instance and remove a stale runner registration
+   without requesting a second approval.
 
 The workflow accepts only manual dispatches and schedules, allocates the full
 GPU host, requires verified European offers with reliability at least 0.995,
 and caps total hourly cost at USD 0.20 for one GPU or USD 0.40 for two GPUs.
 The PyTorch container and GitHub runner archive are digest-verified. The runner
-is uniquely labelled, update-disabled, and ephemeral. A GitHub-hosted cleanup
-job destroys and verifies removal of the Vast.ai instance after success or
-failure. Workflow cancellation should still be followed by checking the Vast.ai
-console because GitHub can terminate an `always()` cleanup job during a forced
+is uniquely labelled, update-disabled, and ephemeral. Update-disabled runner
+pins must be refreshed within 30 days of a GitHub runner release; the version
+and Linux x64 checksum are available from the repository runner-downloads API.
+A GitHub-hosted cleanup job destroys and verifies removal of the Vast.ai
+instance and removes any stale runner registration after success or failure.
+Workflow cancellation should still be followed by checking the Vast.ai console
+because GitHub can terminate an `always()` cleanup job during a forced
 cancellation.
 
 ## Known limitations
