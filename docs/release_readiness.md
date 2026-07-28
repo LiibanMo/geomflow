@@ -39,10 +39,11 @@ tail allocated-memory growth. Evidence is stored in
 
 The Vast.ai workflow creates a uniquely labelled self-hosted runner for each
 run. Repository administrators must make CPU/Linux/macOS and CUDA jobs required
-where appropriate and approve any infrastructure-outage exception. Arbitrary
-ephemeral cloud hardware is valid for release-candidate correctness evidence
-but not for longitudinal performance regression thresholds; that gate still
-requires a hardware-stable runner.
+where appropriate and approve any infrastructure-outage exception. Performance
+regression evidence uses paired runs of the frozen Phase 1 revision and release
+candidate on the same ephemeral host. The shared host, container, runtime,
+benchmark matrix, and warm-up control the comparison without requiring a
+permanently rented runner.
 
 ## Ephemeral Vast.ai CI setup
 

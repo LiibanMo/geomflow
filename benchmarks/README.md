@@ -45,6 +45,12 @@ Benchmark JSON is a run artifact. Preserve release-candidate results outside
 ephemeral CI storage together with profiler traces. Do not compare runs from
 different hardware or software environments as regressions.
 
+Phase 10 performs a paired regression check on one ephemeral release host. It
+checks out the frozen Phase 1 revision, benchmarks it, restores the candidate
+wheel, and repeats the same matrix before the host is destroyed. This controls
+the hardware and software environment without requiring a permanently rented
+GPU runner.
+
 Run isolated differential-operator forward/backward timings with:
 
 ```bash
