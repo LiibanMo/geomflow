@@ -191,7 +191,8 @@ jobs:
       - name: Run paired Phase 1 performance regression gate
         run: |
           git worktree add --detach /tmp/geomflow-phase1 19cf027bd80d336112d9674474d8596d6b4209f3
-          python -m pip install --force-reinstall --no-deps -e /tmp/geomflow-phase1
+          python -m pip install --force-reinstall --no-deps \
+            --ignore-requires-python -e /tmp/geomflow-phase1
           python /tmp/geomflow-phase1/benchmarks/run.py \
             --scenario euclidean sphere-atlas --batch-size 256 --dim 2 \
             --hidden-width 32 --hidden-depth 2 --steps 16 \
