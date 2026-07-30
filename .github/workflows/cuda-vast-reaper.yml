@@ -1,0 +1,192 @@
+name: CUDA / Vast.ai stale lease reaper
+
+on:
+  schedule:
+    - cron: '7,17,27,37,47,57 * * * *'
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: cuda-vast-reaper
+  cancel-in-progress: false
+
+env:
+  VAST_REAPER_AGE_SECONDS: '4500'
+  VASTAI_VERSION: '1.5.0'
+
+jobs:
+  reap:
+    name: Reap expired geomflow Vast.ai leases
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Install pinned Vast.ai CLI
+        run: >-
+          python -m pip install --disable-pip-version-check --no-input
+          "vastai==${VASTAI_VERSION}"
+
+      - name: Destroy and verify expired managed instances
+        env:
+          GH_RUNNER_ADMIN_TOKEN: ${{ secrets.GH_RUNNER_ADMIN_TOKEN }}
+          VAST_API_KEY: ${{ secrets.VAST_API_KEY }}
+        run: |
+          set -Eeuo pipefail
+          : "${GH_RUNNER_ADMIN_TOKEN:?GH_RUNNER_ADMIN_TOKEN is not configured as a repository secret}"
+          : "${VAST_API_KEY:?VAST_API_KEY is not configured as a repository secret}"
+          curl_args=(
+            --silent --show-error --location
+            --retry 4 --retry-all-errors --retry-delay 2 --retry-max-time 30
+            --connect-timeout 5 --max-time 30
+          )
+          gh_headers=(
+            --header "Authorization: Bearer ${GH_RUNNER_ADMIN_TOKEN}"
+            --header 'Accept: application/vnd.github+json'
+            --header 'X-GitHub-Api-Version: 2022-11-28'
+          )
+          vast() {
+            env -u GH_RUNNER_ADMIN_TOKEN timeout 45s \
+              vastai --api-key "$VAST_API_KEY" --retry 4 "$@"
+          }
+          managed_instances() {
+            local instances
+            instances="$(vast show instances --raw)" || return
+            jq -cer '[.[] | select(
+              ((.label // "") | test("^geomflow-vast-[0-9]+-[0-9]+$"))
+            )]' <<<"$instances"
+          }
+          exact_runner_ids() {
+            local count label=$1 page=1 response
+            while :; do
+              response="$(curl "${curl_args[@]}" --fail-with-body \
+                "${gh_headers[@]}" --get \
+                --data-urlencode "name=${label}" \
+                --data-urlencode 'per_page=100' \
+                --data-urlencode "page=${page}" \
+                "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/runners")" || return
+              jq -r --arg name "$label" \
+                '.runners[] | select(.name == $name) | .id' <<<"$response"
+              count="$(jq -er '.runners | length' <<<"$response")" || return
+              (( count == 100 )) || break
+              page=$((page + 1))
+            done
+          }
+          managed_runners() {
+            local combined='[]' count matches page=1 response
+            while :; do
+              response="$(curl "${curl_args[@]}" --fail-with-body \
+                "${gh_headers[@]}" --get --data-urlencode 'per_page=100' \
+                --data-urlencode "page=${page}" \
+                "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/runners")" || return
+              matches="$(jq -cer '[.runners[] | select(
+                (.name | test("^geomflow-vast-[0-9]+-[0-9]+$"))
+              )]' <<<"$response")" || return
+              combined="$(jq -cn --argjson left "$combined" --argjson right "$matches" \
+                '$left + $right | unique_by(.id)')" || return
+              count="$(jq -er '.runners | length' <<<"$response")" || return
+              (( count == 100 )) || break
+              page=$((page + 1))
+            done
+            printf '%s\n' "$combined"
+          }
+          remove_runner_registrations() {
+            local body code failed=0 ids label=$1 runner_id
+            ids="$(exact_runner_ids "$label")" || return
+            while IFS= read -r runner_id; do
+              [[ -n "$runner_id" ]] || continue
+              body="$(mktemp)"
+              code="$(curl "${curl_args[@]}" "${gh_headers[@]}" \
+                --request DELETE --output "$body" --write-out '%{http_code}' \
+                "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/runners/${runner_id}")" || {
+                  rm -f "$body"
+                  failed=1
+                  continue
+                }
+              if [[ "$code" != '204' && "$code" != '404' ]]; then
+                cat "$body" >&2
+                rm -f "$body"
+                failed=1
+                continue
+              fi
+              rm -f "$body"
+              echo "Removed expired runner registration ${runner_id} (${label})"
+            done <<<"$ids"
+            (( failed == 0 ))
+          }
+          verify_runner_absent() {
+            local ids label=$1
+            for _ in {1..6}; do
+              ids="$(exact_runner_ids "$label")" || return
+              [[ -z "$ids" ]] && return 0
+              sleep 5
+            done
+            echo "Runner registrations for ${label} still exist" >&2
+            return 1
+          }
+
+          now="$(date +%s)"
+          cutoff=$((now - VAST_REAPER_AGE_SECONDS))
+          reap_failed=0
+          instances="$(managed_instances)"
+          unknown_age="$(jq -cer '[.[] | select((.start_date | tonumber?) == null)]' \
+            <<<"$instances")"
+          if [[ "$(jq -r 'length' <<<"$unknown_age")" != '0' ]]; then
+            echo "Managed instances have unknown ages: ${unknown_age}" >&2
+            reap_failed=1
+          fi
+          stale="$(jq -cer --argjson cutoff "$cutoff" '[.[] |
+            (.start_date | tonumber?) as $start |
+            select($start != null and $start <= $cutoff)
+          ]' <<<"$instances")"
+          labels="$(jq -r '.[].label' <<<"$stale")"
+
+          runners="$(managed_runners)"
+          while IFS=$'\t' read -r label run_id; do
+            [[ -n "$label" ]] || continue
+            if jq -e --arg label "$label" 'any(.[]; .label == $label)' \
+              <<<"$instances" >/dev/null; then
+              continue
+            fi
+            run="$(curl "${curl_args[@]}" --fail-with-body "${gh_headers[@]}" \
+              "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}")" || {
+                echo "Could not determine age of orphan runner ${label}" >&2
+                reap_failed=1
+                continue
+              }
+            created="$(date -d "$(jq -er '.created_at' <<<"$run")" +%s)"
+            if (( created <= cutoff )); then
+              labels="${labels}"$'\n'"${label}"
+            fi
+          done < <(jq -r '.[] | [.name, (.name | capture("^geomflow-vast-(?<run>[0-9]+)-").run)] | @tsv' <<<"$runners")
+          labels="$(sort -u <<<"$labels")"
+
+          stale_ids="$(jq -c '[.[].id] | unique' <<<"$stale")"
+          for _ in {1..12}; do
+            remaining="$(managed_instances)"
+            if ! jq -e --argjson ids "$stale_ids" \
+              'any(.[]; .id as $id | any($ids[]; . == $id))' \
+              <<<"$remaining" >/dev/null; then
+              break
+            fi
+            while IFS= read -r instance; do
+              [[ -n "$instance" ]] || continue
+              vast destroy instance "$instance" -y || true
+            done < <(jq -r --argjson ids "$stale_ids" \
+              '.[] | select(.id as $id | any($ids[]; . == $id)) | .id' \
+              <<<"$remaining")
+            sleep 5
+          done
+          remaining="$(managed_instances)"
+          if jq -e --argjson ids "$stale_ids" \
+            'any(.[]; .id as $id | any($ids[]; . == $id))' \
+            <<<"$remaining" >/dev/null; then
+            echo 'Expired Vast.ai instances remain after reaping' >&2
+            reap_failed=1
+          fi
+
+          while IFS= read -r label; do
+            [[ -n "$label" ]] || continue
+            remove_runner_registrations "$label" || true
+            verify_runner_absent "$label" || reap_failed=1
+          done <<<"$labels"
+          (( reap_failed == 0 ))

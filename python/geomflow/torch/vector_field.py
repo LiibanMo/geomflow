@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import torch
 import torch.nn as nn
+from torch.nn.modules import module as module_hooks
 import warnings
 
 from .operators import covariant_derivative_tensor
@@ -12,6 +13,15 @@ from ._utils import validate_tensor_module_compatibility
 
 _NONSMOOTH_ACTIVATIONS = (nn.ReLU, nn.ReLU6, nn.LeakyReLU, nn.PReLU, nn.RReLU, nn.Hardtanh)
 _KNOWN_SMOOTH_ACTIVATIONS = (nn.Tanh, nn.Sigmoid, nn.SiLU, nn.Softplus, nn.GELU)
+
+
+def _has_global_execution_hooks() -> bool:
+    return bool(
+        module_hooks._global_forward_hooks
+        or module_hooks._global_forward_pre_hooks
+        or module_hooks._global_backward_hooks
+        or module_hooks._global_backward_pre_hooks
+    )
 
 
 def _validate_activation(activation: type[nn.Module]) -> None:
@@ -88,11 +98,32 @@ class ManifoldVectorField(nn.Module):
                 f"device={x.device}, dtype={x.dtype}; got "
                 f"device={t.device}, dtype={t.dtype}"
             )
+        return self._forward_unchecked(t, x)
+
+    def _forward_unchecked(self, t: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
+        """Evaluate after the caller has validated placement and dtype."""
         if t.dim() == x.dim() - 1:
             t = t.unsqueeze(-1)
         coordinates = torch.cat([torch.sin(x), torch.cos(x)], dim=-1) if self.periodic else x
         tx = torch.cat([t, coordinates], dim=-1)
         return self.net(tx)
+
+    def _solver_forward(self, t: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
+        """Use the fast path only when no custom dispatch or hooks are bypassed."""
+        has_hooks = bool(
+            self._forward_hooks
+            or self._forward_pre_hooks
+            or self._backward_hooks
+            or self._backward_pre_hooks
+        )
+        if (
+            type(self) is ManifoldVectorField
+            and not has_hooks
+            and not _has_global_execution_hooks()
+            and getattr(self, "_compiled_call_impl", None) is None
+        ):
+            return self._forward_unchecked(t, x)
+        return self(t, x)
 
 
 def weight_decay_loss(vf: ManifoldVectorField) -> torch.Tensor:

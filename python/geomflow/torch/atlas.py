@@ -13,6 +13,7 @@ from .analytic_metric import AnalyticMetric
 
 DomainPredicate = Callable[[torch.Tensor], torch.Tensor]
 TransitionMap = Callable[[torch.Tensor], torch.Tensor]
+TransitionJacobian = Callable[[torch.Tensor], torch.Tensor]
 
 
 class ChartDomainError(ValueError):
@@ -25,6 +26,7 @@ class Transition:
 
     map: TransitionMap
     source_domain: DomainPredicate
+    jacobian: TransitionJacobian | None = None
 
 
 @dataclass(frozen=True)
@@ -178,7 +180,11 @@ class Chart:
         if target_id not in self.transitions:
             return torch.zeros(x.shape[:-1], device=x.device, dtype=torch.bool)
         mask = self.transitions[target_id].source_domain(x)
-        return self.contains(x) & self._validate_mask("transition domain", mask, x)
+        return (
+            self.contains(x)
+            & self.analytic_metric.contains(x)
+            & self._validate_mask("transition domain", mask, x)
+        )
 
     def transition_to(self, target_id: int, x: torch.Tensor) -> torch.Tensor:
         """Map coordinates after requiring every point to lie in the overlap."""
@@ -188,6 +194,10 @@ class Chart:
             raise ChartDomainError(
                 f"coordinates are outside overlap {self.chart_id}->{target_id}"
             )
+        return self._transition_unchecked(target_id, x)
+
+    def _transition_unchecked(self, target_id: int, x: torch.Tensor) -> torch.Tensor:
+        """Apply a transition whose source-overlap mask was already accepted."""
         mapped = self.transitions[target_id].map(x)
         if not isinstance(mapped, torch.Tensor):
             raise TypeError("transition map must return a torch.Tensor")
@@ -209,7 +219,27 @@ class Chart:
             raise ChartDomainError(
                 f"coordinates are outside overlap {self.chart_id}->{target_id}"
             )
-        return batched_jacobian(self.transitions[target_id].map, x)
+        return self._jacobian_unchecked(target_id, x)
+
+    def _jacobian_unchecked(self, target_id: int, x: torch.Tensor) -> torch.Tensor:
+        """Differentiate a transition whose source overlap was already accepted."""
+        transition = self.transitions[target_id]
+        if transition.jacobian is not None:
+            value = transition.jacobian(x)
+            expected = x.shape + (self.dim,)
+            if value.shape != expected:
+                raise ValueError(
+                    f"transition jacobian: expected shape {tuple(expected)}; "
+                    f"got {tuple(value.shape)}"
+                )
+            if value.device != x.device or value.dtype != x.dtype:
+                raise ValueError(
+                    "transition jacobian: expected "
+                    f"device={x.device}, dtype={x.dtype}; got "
+                    f"device={value.device}, dtype={value.dtype}"
+                )
+            return value
+        return batched_jacobian(transition.map, x)
 
 
 class Atlas:
@@ -251,13 +281,21 @@ class Atlas:
             raise ValueError("atlas queries require a non-empty batch")
         candidates: dict[int, torch.Tensor] = {}
         source = self[source_chart]
-        if source.contains(x).all():
+        if (source.contains(x) & source.analytic_metric.contains(x)).all():
             candidates[source_chart] = x
         for target in sorted(source.transitions):
             if not source.can_transition_to(target, x).all():
                 continue
-            mapped = source.transition_to(target, x)
-            if self[target].contains(mapped).all():
+            mapped = (
+                source._transition_unchecked(target, x)
+                if type(source) is Chart
+                else source.transition_to(target, x)
+            )
+            target_chart = self[target]
+            if (
+                target_chart.contains(mapped)
+                & target_chart.analytic_metric.contains(mapped)
+            ).all():
                 candidates[target] = mapped
         if not candidates:
             raise ChartDomainError("no chart covers the complete batch")

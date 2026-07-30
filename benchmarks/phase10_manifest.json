@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "baseline_revision": "19cf027bd80d336112d9674474d8596d6b4209f3",
+  "scenarios": [
+    "euclidean",
+    "sphere-atlas"
+  ],
+  "workloads": [
+    "forward",
+    "backward"
+  ],
+  "regression_batches": [
+    256,
+    512
+  ],
+  "crossover_batches": [
+    1,
+    64,
+    256,
+    512,
+    1024,
+    2048,
+    4096
+  ],
+  "dimension": 2,
+  "hidden_width": 32,
+  "hidden_depth": 2,
+  "steps": 16,
+  "dtype": "float32",
+  "device_execution": "eager direct autograd",
+  "divergence": "exact intrinsic component gradients",
+  "seed": 0,
+  "warmup": 3,
+  "quartets": 10,
+  "cpu_order": [
+    "ABBA",
+    "BAAB"
+  ],
+  "cpu_cuda_order": [
+    "CGGC",
+    "GCCG"
+  ],
+  "timing": "host wall time synchronized at measurement boundaries",
+  "confidence": "deterministic percentile block bootstrap of medians",
+  "bootstrap_seed": 0,
+  "bootstrap_resamples": 20000
+}

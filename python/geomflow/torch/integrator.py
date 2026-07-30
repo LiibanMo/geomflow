@@ -13,7 +13,7 @@ from ._utils import (
 )
 from ._schedule import FixedStepSchedule, checkpoint_due, validate_checkpoint_interval
 from .analytic_metric import AnalyticMetric
-from .operators import divergence
+from .operators import _divergence_from_value
 from .vector_field import ManifoldVectorField
 
 
@@ -64,7 +64,8 @@ def _augmented_rk4_step(
     stage_callback: Callable[[float, torch.Tensor], None] | None = None,
 ) -> tuple[torch.Tensor, torch.Tensor]:
     """Advance one intrinsic augmented RK4 step."""
-    build_graph = torch.is_grad_enabled()
+    build_graph = torch.is_grad_enabled() and not torch.is_inference_mode_enabled()
+    field_call = vf._solver_forward if type(vf) is ManifoldVectorField else vf
 
     def augmented_rhs(
         stage_time: float, state: torch.Tensor
@@ -72,26 +73,27 @@ def _augmented_rk4_step(
         metric.validate_points(state)
         if stage_callback is not None:
             stage_callback(stage_time, state)
-        time_tensor = torch.full(
-            state.shape[:-1], stage_time, device=state.device, dtype=state.dtype
-        )
-        field_value = vf(time_tensor, state)
         if not compute_divergence:
+            time_tensor = state.new_full(state.shape[:-1], stage_time)
+            field_value = field_call(time_tensor, state)
             return field_value, state.new_zeros(state.shape[:-1])
 
-        with torch.enable_grad():
+        with torch.inference_mode(False), torch.enable_grad():
             divergence_state = state
-            if not divergence_state.requires_grad:
+            if divergence_state.is_inference() or not divergence_state.requires_grad:
                 divergence_state = divergence_state.clone().requires_grad_(True)
+            time_tensor = divergence_state.new_full(
+                divergence_state.shape[:-1], stage_time
+            )
+            field_value = field_call(time_tensor, divergence_state)
 
-            def field_at_state(value: torch.Tensor) -> torch.Tensor:
-                value_time = torch.full(
-                    value.shape[:-1], stage_time, device=value.device, dtype=value.dtype
-                )
-                return vf(value_time, value)
-
-            divergence_value = divergence(field_at_state, divergence_state, metric)
+            divergence_value = _divergence_from_value(
+                field_value,
+                divergence_state,
+                metric,
+            )
             if not build_graph:
+                field_value = field_value.detach()
                 divergence_value = divergence_value.detach()
         return field_value, divergence_value
 

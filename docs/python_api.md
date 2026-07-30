@@ -23,8 +23,8 @@ adjoint computations.
 ## Coordinates And Geometry
 
 An `AnalyticMetric` has dimension `dim` and provides the metric tensor
-`g[..., i, j]`. Optional closed-form callbacks may provide its inverse,
-volume density, and coordinate derivative:
+`g[..., i, j]`. Optional closed-form callbacks may provide its inverse, volume
+density, coordinate derivative, and the coordinate gradient of log volume:
 
 ```python
 metric = AnalyticMetric(
@@ -33,6 +33,7 @@ metric = AnalyticMetric(
     inverse_fn=inverse_fn,
     sqrt_det_fn=sqrt_det_fn,
     derivative_fn=derivative_fn,
+    log_volume_gradient_fn=log_volume_gradient_fn,
 )
 ```
 
@@ -71,6 +72,10 @@ in performance-sensitive code.
 evaluation; pass a device-compatible `torch.Generator` for reproducibility.
 This mode is a stochastic approximation and any likelihood built from it is
 approximate. Exact divergence remains the likelihood reference and default.
+When `log_volume_gradient_fn` is supplied, exact divergence uses the equivalent
+intrinsic identity `trace(DV) + V^i partial_i log sqrt(det g)` and avoids
+differentiating a weighted field. Built-in metrics provide this callback where
+a closed form is available; generic metrics retain the volume-weighted formula.
 
 They implement
 

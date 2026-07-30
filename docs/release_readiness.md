@@ -14,7 +14,7 @@ jobs as required checks.
 | GPU-013--014, divergence | `tests/test_phase4_vectorized_operators.py` | Automated |
 | GPU-015, direct autograd reference | `tests/test_direct_autograd_cnf.py`, `tests/test_adjoint.py` | Automated |
 | GPU-016, no CUDA extension | wheel metadata and dependency inspection | CXX-only package |
-| GPU-017, evidence before claims | `.github/workflows/cuda.yml`, this report | Policy enforced |
+| GPU-017, evidence before claims | `.github/workflows/cuda-vast.yml`, this report | Policy enforced |
 
 ## Mandatory release evidence
 
@@ -23,9 +23,16 @@ jobs as required checks.
 - Two-GPU DDP validation from the wheel.
 - Environment JSON containing GPU, driver, CUDA, Python, PyTorch, OS, and Git revision.
 - Single-chart and multi-chart memory-soak results.
-- Direct/adjoint and eager/compiled parity results.
+- Direct/adjoint and eager/TorchDynamo-eager parity results.
 - Profiler evidence of zero materializing full-tensor host transfers.
 - Same-runner CPU/CUDA performance comparison against the frozen scenarios.
+
+The release workflow evaluates correctness, endpoint, DDP, soak, profile,
+memory, chart-control, and compiler-decision evidence before enforcing the
+uploaded artifact in a separate GitHub-hosted verdict job. Baseline CPU, candidate CPU, and
+candidate CUDA timing use isolated persistent workers and drift-balanced
+quartets. A failed or inconclusive performance decision blocks release only
+after its raw evidence has been uploaded.
 
 The July 2026 release-candidate run on a verified Norwegian 2x RTX 3060 host
 passed 253 built-wheel tests with zero skips under both PyTorch 2.5.1/CUDA 12.4
@@ -37,13 +44,14 @@ tail allocated-memory growth. Evidence is stored in
 
 ## Infrastructure gates
 
-The Vast.ai workflow creates a uniquely labelled self-hosted runner for each
-run. Repository administrators must make CPU/Linux/macOS and CUDA jobs required
-where appropriate and approve any infrastructure-outage exception. Performance
-regression evidence uses paired runs of the frozen Phase 1 revision and release
-candidate on the same ephemeral host. The shared host, container, runtime,
-benchmark matrix, and warm-up control the comparison without requiring a
-permanently rented runner.
+The Vast.ai workflow creates a uniquely labelled self-hosted runner for each run
+attempt. Repository administrators must require the `2x RTX 3060 release
+verdict` check for release candidates and approve any infrastructure-outage
+exception. A one-GPU run reports a distinct `Single-GPU lifecycle verdict` and
+cannot satisfy the two-GPU check. Performance regression evidence uses paired
+runs of the frozen Phase 1 revision and release candidate on the same ephemeral
+host. The shared host, container, runtime, benchmark matrix, and warm-up control
+the comparison without requiring a permanently rented runner.
 
 ## Ephemeral Vast.ai CI setup
 
@@ -66,16 +74,34 @@ one-time settings before enabling it:
 
 The workflow accepts only manual dispatches and schedules, allocates the full
 GPU host, requires verified European offers with reliability at least 0.995,
-and caps total hourly cost at USD 0.20 for one GPU or USD 0.40 for two GPUs.
+and caps the machine rate at USD 0.20/hour for one GPU or USD 0.40/hour for two.
+Scheduled one-GPU runs are nightly correctness checks. A manual two-GPU run is
+the release-candidate mode and additionally requires DDP, scoped profiling,
+memory scaling, and paired performance evidence before it can pass.
 The PyTorch container and GitHub runner archive are digest-verified. The runner
-is uniquely labelled, update-disabled, and ephemeral. Update-disabled runner
-pins must be refreshed within 30 days of a GitHub runner release; the version
-and Linux x64 checksum are available from the repository runner-downloads API.
-A GitHub-hosted cleanup job destroys and verifies removal of the Vast.ai
-instance and removes any stale runner registration after success or failure.
-Workflow cancellation should still be followed by checking the Vast.ai console
-because GitHub can terminate an `always()` cleanup job during a forced
-cancellation.
+uses GitHub's one-job JIT configuration and a deterministic
+`geomflow-vast-<run-id>-<run-attempt>` name. The pinned runner version and Linux
+x64 checksum must be refreshed within 30 days of a GitHub runner release.
+
+After environment authorization, provisioning and a GitHub-hosted billing
+watchdog start independently. The watchdog discovers contracts by exact label,
+enforces a 65-minute lease from the Vast.ai start time, detects an offline
+runner or a CUDA job left queued without assignment, and verifies instance and
+runner removal before cancelling a failed run. The unconditional cleanup job
+performs the same exact-label verification without relying on provision outputs.
+`.github/workflows/cuda-vast-reaper.yml` runs every ten minutes and removes
+managed contracts older than 75 minutes if the original workflow is lost or
+force-cancelled. It also reconciles old managed runner registrations that have
+no corresponding instance.
+
+Ephemeral allocations cannot be reused by a partial job rerun. Start a fresh
+manual dispatch, or use **Re-run all jobs** so authorization and provisioning
+execute for the new run attempt. Never use **Re-run failed jobs** or rerun only
+the CUDA job.
+
+The scheduled reaper still depends on the GitHub Actions control plane. During
+a prolonged GitHub outage, check the Vast.ai console for labels beginning with
+`geomflow-vast-` and destroy any contract beyond the 65-minute lease.
 
 ## Known limitations
 
@@ -83,7 +109,8 @@ cancellation.
 - The intrinsic adjoint is single-chart and first-order only; backward replay
   reduces memory at the cost of potentially substantial recomputation.
 - Multi-chart training uses direct autograd.
-- `torch.compile` is optional and limited to supported single-chart kernels;
-  eager CUDA remains the default.
+- `compile=True` currently means TorchDynamo with `backend="eager"`; it is not
+  TorchInductor acceleration. Eager CUDA remains the default. The bounded
+  TorchInductor candidate is accepted only if the separate compiler gate passes.
 - The header-only C++ and pybind APIs are CPU-only.
 - MPS is best-effort, not production-supported.

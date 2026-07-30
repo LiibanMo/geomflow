@@ -11,9 +11,7 @@ on:
         options: ['1', '2']
         default: '1'
 
-permissions:
-  contents: read
-  actions: write
+permissions: {}
 
 concurrency:
   group: cuda-vast
@@ -25,92 +23,227 @@ env:
   VAST_MIN_RELIABILITY: '0.995'
   VAST_MAX_SINGLE_GPU_DPH: '0.20'
   VAST_MAX_TWO_GPU_DPH: '0.40'
+  VAST_MAX_INET_DOWN_COST: '0.02'
+  VAST_MAX_INET_UP_COST: '0.02'
+  VAST_LEASE_SECONDS: '3900'
+  VAST_OFFLINE_CHECKS: '10'
+  VAST_PROVISION_GRACE_SECONDS: '1200'
+  VAST_QUEUE_CHECKS: '10'
+  VAST_WATCHDOG_INTERVAL_SECONDS: '30'
+  VASTAI_VERSION: '1.5.0'
   ACTIONS_RUNNER_VERSION: '2.336.0'
   ACTIONS_RUNNER_SHA256: 04cf0be1aff4c3ec3554466c39124ca250e3effd8873bb7e8d68535aa9505d5d
 
 jobs:
+  authorize:
+    name: Authorize Vast.ai allocation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    environment: vast-gpu
+    outputs:
+      gpu_count: ${{ steps.authorize.outputs.gpu_count }}
+      run_attempt: ${{ steps.authorize.outputs.run_attempt }}
+    env:
+      REQUESTED_GPU_COUNT: ${{ github.event_name == 'workflow_dispatch' && inputs.gpu_count || '1' }}
+    steps:
+      - name: Record authorized request
+        id: authorize
+        run: |
+          set -Eeuo pipefail
+          {
+            echo "gpu_count=${REQUESTED_GPU_COUNT}"
+            echo "run_attempt=${GITHUB_RUN_ATTEMPT}"
+          } >> "$GITHUB_OUTPUT"
+
   provision:
     name: Provision approved Vast.ai runner
+    if: needs.authorize.outputs.run_attempt == github.run_attempt
+    needs: authorize
     runs-on: ubuntu-24.04
     timeout-minutes: 15
-    environment: vast-gpu
     outputs:
       gpu_count: ${{ steps.provision.outputs.gpu_count }}
       instance_id: ${{ steps.provision.outputs.instance_id }}
-      runner_label: ${{ steps.provision.outputs.runner_label }}
-    env:
-      GH_RUNNER_ADMIN_TOKEN: ${{ secrets.GH_RUNNER_ADMIN_TOKEN }}
-      VAST_API_KEY: ${{ secrets.VAST_API_KEY }}
-      REQUESTED_GPU_COUNT: ${{ github.event_name == 'workflow_dispatch' && inputs.gpu_count || '1' }}
+      run_attempt: ${{ steps.provision.outputs.run_attempt }}
     steps:
       - name: Install Vast.ai CLI
-        run: python -m pip install --disable-pip-version-check vastai
+        run: >-
+          python -m pip install --disable-pip-version-check --no-input
+          "vastai==${VASTAI_VERSION}"
 
       - name: Provision ephemeral runner
         id: provision
         shell: bash
+        env:
+          GH_RUNNER_ADMIN_TOKEN: ${{ secrets.GH_RUNNER_ADMIN_TOKEN }}
+          REQUESTED_GPU_COUNT: ${{ needs.authorize.outputs.gpu_count }}
+          RUNNER_LABEL: geomflow-vast-${{ github.run_id }}-${{ github.run_attempt }}
+          VAST_API_KEY: ${{ secrets.VAST_API_KEY }}
         run: |
           set -Eeuo pipefail
           : "${GH_RUNNER_ADMIN_TOKEN:?GH_RUNNER_ADMIN_TOKEN is not configured as a repository secret}"
+          : "${VAST_API_KEY:?VAST_API_KEY is not configured as a repository secret}"
           instance_id=''
-          runner_label=''
-          # shellcheck disable=SC2329 # Invoked by the EXIT trap callback.
-          remove_runner_registration() {
-            local runner_id
-            runner_id="$(curl --fail --silent --show-error \
-              --header "Authorization: Bearer ${GH_RUNNER_ADMIN_TOKEN}" \
-              --header 'Accept: application/vnd.github+json' \
-              --header 'X-GitHub-Api-Version: 2022-11-28' \
-              "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/runners?per_page=100" \
-              | jq -r --arg name "$runner_label" \
-                'first(.runners[] | select(.name == $name) | .id) // empty')"
-            if [[ -n "$runner_id" ]]; then
-              curl --fail --silent --show-error \
-                --request DELETE \
-                --header "Authorization: Bearer ${GH_RUNNER_ADMIN_TOKEN}" \
-                --header 'Accept: application/vnd.github+json' \
-                --header 'X-GitHub-Api-Version: 2022-11-28' \
-                "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/runners/${runner_id}"
-              echo "Removed GitHub runner registration ${runner_label}"
+          teardown_verified=0
+          curl_args=(
+            --silent --show-error --location
+            --retry 4 --retry-all-errors --retry-delay 2 --retry-max-time 30
+            --connect-timeout 5 --max-time 30
+          )
+          gh_headers=(
+            --header "Authorization: Bearer ${GH_RUNNER_ADMIN_TOKEN}"
+            --header 'Accept: application/vnd.github+json'
+            --header 'X-GitHub-Api-Version: 2022-11-28'
+          )
+          # shellcheck disable=SC2329 # Called by lifecycle helpers and the EXIT trap.
+          vast() {
+            env -u GH_RUNNER_ADMIN_TOKEN timeout 45s \
+              vastai --api-key "$VAST_API_KEY" --retry 4 "$@"
+          }
+          # shellcheck disable=SC2329 # Called by lifecycle helpers and the EXIT trap.
+          target_instances() {
+            local instances
+            instances="$(vast show instances --raw)" || return
+            jq -cer --arg label "$RUNNER_LABEL" --arg id "$instance_id" '
+              map(select(
+                .label == $label or
+                ($id != "" and (.id | tostring) == $id)
+              ))
+            ' <<<"$instances"
+          }
+          # shellcheck disable=SC2329 # Called by the EXIT-trap teardown.
+          destroy_instances() {
+            local failed=0 instances instance
+            instances="$(target_instances)" || return
+            while IFS= read -r instance; do
+              [[ -n "$instance" ]] || continue
+              echo "Destroying Vast.ai instance ${instance} for ${RUNNER_LABEL}"
+              vast destroy instance "$instance" -y || failed=1
+            done < <(jq -r '.[].id' <<<"$instances")
+            (( failed == 0 ))
+          }
+          # shellcheck disable=SC2329 # Called by the EXIT-trap teardown.
+          verify_instances_absent() {
+            local instances
+            for _ in {1..12}; do
+              instances="$(target_instances)" || return
+              if [[ "$(jq -r 'length' <<<"$instances")" == '0' ]]; then
+                return 0
+              fi
+              sleep 5
+            done
+            echo "Vast.ai instances for ${RUNNER_LABEL} still exist" >&2
+            return 1
+          }
+          # shellcheck disable=SC2329 # Called by lifecycle helpers and the EXIT trap.
+          exact_runner_ids() {
+            local count page=1 response
+            while :; do
+              response="$(curl "${curl_args[@]}" --fail-with-body \
+                "${gh_headers[@]}" --get \
+                --data-urlencode "name=${RUNNER_LABEL}" \
+                --data-urlencode 'per_page=100' \
+                --data-urlencode "page=${page}" \
+                "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/runners")" || return
+              jq -er --arg name "$RUNNER_LABEL" \
+                '.runners[] | select(.name == $name) | .id' <<<"$response" || true
+              count="$(jq -er '.runners | length' <<<"$response")" || return
+              (( count == 100 )) || break
+              page=$((page + 1))
+            done
+          }
+          # shellcheck disable=SC2329 # Called by the EXIT-trap teardown.
+          remove_runner_registrations() {
+            local body code failed=0 ids runner_id
+            ids="$(exact_runner_ids)" || return
+            while IFS= read -r runner_id; do
+              [[ -n "$runner_id" ]] || continue
+              body="$(mktemp)"
+              code="$(curl "${curl_args[@]}" "${gh_headers[@]}" \
+                --request DELETE --output "$body" --write-out '%{http_code}' \
+                "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/runners/${runner_id}")" || {
+                  rm -f "$body"
+                  failed=1
+                  continue
+                }
+              if [[ "$code" != '204' && "$code" != '404' ]]; then
+                cat "$body" >&2
+                rm -f "$body"
+                failed=1
+                continue
+              fi
+              rm -f "$body"
+              echo "Removed GitHub runner registration ${runner_id} (${RUNNER_LABEL})"
+            done <<<"$ids"
+            (( failed == 0 ))
+          }
+          # shellcheck disable=SC2329 # Called by the EXIT-trap teardown.
+          verify_runners_absent() {
+            local ids
+            for _ in {1..6}; do
+              ids="$(exact_runner_ids)" || return
+              [[ -z "$ids" ]] && return 0
+              sleep 5
+            done
+            echo "Runner registrations for ${RUNNER_LABEL} still exist" >&2
+            return 1
+          }
+          # shellcheck disable=SC2329 # Called by the EXIT trap.
+          teardown() {
+            local failed=0
+            [[ "$teardown_verified" == '0' ]] || return 0
+            destroy_instances || true
+            verify_instances_absent || failed=1
+            remove_runner_registrations || true
+            verify_runners_absent || failed=1
+            if (( failed == 0 )); then
+              teardown_verified=1
+              return 0
             fi
+            return 1
           }
           # shellcheck disable=SC2329 # Invoked by the EXIT trap.
-          destroy_on_error() {
-            status=$?
-            trap - EXIT
-            if [[ $status -ne 0 && -n "$instance_id" ]]; then
-              echo "Vast.ai container logs for failed instance ${instance_id}:" >&2
-              vastai --api-key "$VAST_API_KEY" logs "$instance_id" --tail 1000 || true
-              vastai --api-key "$VAST_API_KEY" destroy instance "$instance_id" -y || true
-            fi
-            if [[ $status -ne 0 && -n "$runner_label" ]]; then
-              remove_runner_registration || true
+          on_exit() {
+            local status=$?
+            trap - EXIT INT TERM
+            if (( status != 0 )); then
+              teardown || status=1
             fi
             exit "$status"
           }
-          trap destroy_on_error EXIT
+          trap on_exit EXIT
+          trap 'exit 130' INT
+          trap 'exit 143' TERM
 
           if [[ "$REQUESTED_GPU_COUNT" == '2' ]]; then
             max_dph="$VAST_MAX_TWO_GPU_DPH"
+            gpu_filter=' gpu_name=RTX_3060'
           else
             max_dph="$VAST_MAX_SINGLE_GPU_DPH"
+            gpu_filter=''
           fi
-          runner_label="geomflow-vast-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
-          query="external=false rentable=true verified=true reliability>=${VAST_MIN_RELIABILITY} num_gpus=${REQUESTED_GPU_COUNT} gpu_frac=1 gpu_ram>=12 disk_space>=${VAST_DISK_GB} inet_down>=200 cuda_vers>=12.4 geolocation in [GB,IE,FR,DE,NL,BE,NO,SE,DK,FI,PL,CZ,AT,CH,ES,PT,IT]"
-          offers="$(vastai --api-key "$VAST_API_KEY" search offers "$query" --storage "$VAST_DISK_GB" --order dph --limit 50 --raw)"
+          query="external=false rentable=true rented=false verified=true reliability>=${VAST_MIN_RELIABILITY} num_gpus=${REQUESTED_GPU_COUNT} gpu_frac=1 gpu_ram>=12 cpu_arch=amd64 cpu_cores_effective>=8 disk_space>=${VAST_DISK_GB} inet_down>=200 inet_down_cost<=${VAST_MAX_INET_DOWN_COST} inet_up_cost<=${VAST_MAX_INET_UP_COST} cuda_vers>=12.4 geolocation in [GB,IE,FR,DE,NL,BE,NO,SE,DK,FI,PL,CZ,AT,CH,ES,PT,IT]${gpu_filter}"
+          offers="$(vast search offers "$query" --storage "$VAST_DISK_GB" \
+            --order dph --limit 50 --raw)"
           offer="$(jq -cer --argjson cap "$max_dph" 'map(select(.dph_total <= $cap)) | sort_by(.dph_total) | first' <<<"$offers")"
           offer_id="$(jq -er '.id' <<<"$offer")"
           hourly="$(jq -er '.dph_total' <<<"$offer")"
           echo "Selected offer ${offer_id}: $(jq -r '.geolocation + ", " + .gpu_name' <<<"$offer"), reliability $(jq -r '.reliability' <<<"$offer"), USD ${hourly}/hour"
 
-          registration_token="$(curl --fail-with-body --silent --show-error \
+          jit_request="$(jq -cn --arg name "$RUNNER_LABEL" '{
+            name: $name,
+            runner_group_id: 1,
+            labels: ["self-hosted", "linux", "x64", $name, "cuda", "vast-ai"],
+            work_folder: "_work"
+          }')"
+          jit_response="$(curl "${curl_args[@]}" --fail-with-body \
             --request POST \
-            --header "Authorization: Bearer ${GH_RUNNER_ADMIN_TOKEN}" \
-            --header 'Accept: application/vnd.github+json' \
-            --header 'X-GitHub-Api-Version: 2022-11-28' \
-            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/runners/registration-token" \
-            | jq -er '.token')"
-          echo "::add-mask::${registration_token}"
+            "${gh_headers[@]}" \
+            --header 'Content-Type: application/json' \
+            --data "$jit_request" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/runners/generate-jitconfig")"
+          jit_config="$(jq -er '.encoded_jit_config' <<<"$jit_response")"
+          echo "::add-mask::${jit_config}"
 
           runner_script="$(cat <<RUNNER
           set -Eeuo pipefail
@@ -119,46 +252,48 @@ jobs:
           mkdir -p "\$install_dir"
           cd "\$install_dir"
           curl --fail --location --retry 5 --silent --show-error \
+            --connect-timeout 10 --max-time 120 \
             --output runner.tar.gz \
             https://github.com/actions/runner/releases/download/v${ACTIONS_RUNNER_VERSION}/actions-runner-linux-x64-${ACTIONS_RUNNER_VERSION}.tar.gz
           echo '${ACTIONS_RUNNER_SHA256}  runner.tar.gz' | sha256sum --check
           tar -xzf runner.tar.gz
           rm runner.tar.gz
           ./bin/installdependencies.sh
-          ./config.sh --unattended --ephemeral --disableupdate \
-            --url https://github.com/${GITHUB_REPOSITORY} \
-            --token ${registration_token} \
-            --name ${runner_label} \
-            --labels ${runner_label},cuda,vast-ai \
-            --work _work
-          exec ./run.sh
+          exec ./run.sh --jitconfig '${jit_config}'
           RUNNER
           )"
-          encoded_script="$(printf '%s' "$runner_script" | base64 -w 0)"
-          created="$(vastai --api-key "$VAST_API_KEY" create instance "$offer_id" \
+          encoded_script="$(printf '%s' "$runner_script" | gzip -9 | base64 -w 0)"
+          echo "::add-mask::${encoded_script}"
+          if (( ${#encoded_script} > 3800 )); then
+            echo "Compressed runner bootstrap exceeds Vast.ai onstart limit" >&2
+            exit 1
+          fi
+          created="$(env -u GH_RUNNER_ADMIN_TOKEN timeout 90s \
+            vastai --api-key "$VAST_API_KEY" --retry 2 create instance "$offer_id" \
             --image "$VAST_IMAGE" \
             --disk "$VAST_DISK_GB" \
-            --label "$runner_label" \
+            --label "$RUNNER_LABEL" \
             --ssh \
             --cancel-unavail \
-            --onstart-cmd "printf '%s' '${encoded_script}' | base64 -d > /tmp/geomflow-runner.sh; chmod 700 /tmp/geomflow-runner.sh; exec /tmp/geomflow-runner.sh" \
+            --onstart-cmd "printf '%s' '${encoded_script}' | base64 -d | gzip -d > /tmp/geomflow-runner.sh; chmod 700 /tmp/geomflow-runner.sh; exec /tmp/geomflow-runner.sh" \
             --raw)"
           instance_id="$(jq -er '.new_contract' <<<"$created")"
           {
             echo "gpu_count=${REQUESTED_GPU_COUNT}"
             echo "instance_id=${instance_id}"
-            echo "runner_label=${runner_label}"
+            echo "run_attempt=${GITHUB_RUN_ATTEMPT}"
           } >> "$GITHUB_OUTPUT"
 
           for _ in {1..60}; do
-            if curl --fail --silent --show-error \
-              --header "Authorization: Bearer ${GH_RUNNER_ADMIN_TOKEN}" \
-              --header 'Accept: application/vnd.github+json' \
-              --header 'X-GitHub-Api-Version: 2022-11-28' \
-              "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/runners?per_page=100" \
-              | jq -e --arg label "$runner_label" \
-                '.runners[] | select(.status == "online") | any(.labels[]; .name == $label)' >/dev/null; then
-              echo "Runner ${runner_label} is online"
+            runners="$(curl "${curl_args[@]}" --fail-with-body \
+              "${gh_headers[@]}" --get \
+              --data-urlencode "name=${RUNNER_LABEL}" \
+              --data-urlencode 'per_page=100' \
+              "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/runners")" || true
+            if jq -e --arg name "$RUNNER_LABEL" \
+              'any(.runners[]?; .name == $name and .status == "online")' \
+              <<<"${runners:-{}}" >/dev/null; then
+              echo "Runner ${RUNNER_LABEL} is online"
               exit 0
             fi
             sleep 10
@@ -167,15 +302,18 @@ jobs:
           exit 1
 
   cuda:
-    name: Built wheel / CUDA / PyTorch endpoints
-    needs: provision
-    runs-on: [self-hosted, linux, x64, '${{ needs.provision.outputs.runner_label }}']
+    name: ${{ needs.authorize.outputs.gpu_count == '2' && '2x RTX 3060 CUDA evidence' || 'Single-GPU CUDA correctness' }}
+    if: needs.provision.outputs.run_attempt == github.run_attempt
+    needs: [authorize, provision]
+    permissions:
+      contents: read
+    runs-on: [self-hosted, linux, x64, 'geomflow-vast-${{ github.run_id }}-${{ github.run_attempt }}']
     timeout-minutes: 50
     env:
       GEOMFLOW_REQUIRE_CUDA: '1'
       SETUPTOOLS_SCM_PRETEND_VERSION: 0.0.dev0
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 0
           persist-credentials: false
@@ -188,29 +326,6 @@ jobs:
           python -m build --wheel
           python -m pip install --force-reinstall --no-deps dist/*.whl
 
-      - name: Run paired Phase 1 performance regression gate
-        run: |
-          git worktree add --detach /tmp/geomflow-phase1 19cf027bd80d336112d9674474d8596d6b4209f3
-          python -m pip install --force-reinstall --no-deps \
-            --ignore-requires-python -e /tmp/geomflow-phase1
-          python /tmp/geomflow-phase1/benchmarks/run.py \
-            --scenario euclidean sphere-atlas --batch-size 256 --dim 2 \
-            --hidden-width 32 --hidden-depth 2 --steps 16 \
-            --dtype float32 --device cpu --workload forward backward \
-            --warmup 3 --repetitions 5 --reference \
-            --output benchmarks/results/ci-vast-phase1-baseline.json --fail-on-error
-          python -m pip install --force-reinstall --no-deps dist/*.whl
-          python benchmarks/run.py \
-            --scenario euclidean sphere-atlas --batch-size 256 --dim 2 \
-            --hidden-width 32 --hidden-depth 2 --steps 16 \
-            --dtype float32 --device cpu cuda --workload forward backward \
-            --warmup 3 --repetitions 5 --reference \
-            --output benchmarks/results/ci-vast-phase10-candidate.json --fail-on-error
-          python benchmarks/phase10_regression.py \
-            --baseline benchmarks/results/ci-vast-phase1-baseline.json \
-            --candidate benchmarks/results/ci-vast-phase10-candidate.json \
-            --output benchmarks/results/ci-vast-phase10-regression.json
-
       - name: Validate maximum PyTorch endpoint
         env:
           GEOMFLOW_ENV_OUTPUT: benchmarks/results/ci-vast-torch27-environment.json
@@ -218,6 +333,20 @@ jobs:
           python -c 'import torch; assert torch.__version__.startswith("2.7.")'
           python scripts/gpu_environment.py
           python -m pytest -m 'not distributed' -ra --junitxml=benchmarks/results/ci-vast-torch27.xml
+
+      - name: Validate exact two-GPU release hardware
+        if: needs.authorize.outputs.gpu_count == '2'
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("benchmarks/results/ci-vast-torch27-environment.json")
+          devices = json.loads(path.read_text())["devices"]
+          expected = "NVIDIA GeForce RTX 3060"
+          if len(devices) != 2 or any(device.get("name") != expected for device in devices):
+              raise SystemExit(f"expected exactly two {expected} devices, got {devices}")
+          PY
 
       - name: Run single-chart and multi-chart memory soak
         run: python benchmarks/phase10_soak.py --iterations 40 --output benchmarks/results/ci-vast-soak.json
@@ -230,69 +359,620 @@ jobs:
         env:
           GEOMFLOW_ENV_OUTPUT: benchmarks/results/ci-vast-torch25-environment.json
         run: |
-          python -m pip install --force-reinstall torch==2.5.1 --index-url https://download.pytorch.org/whl/cu124
+          python -m pip install --no-cache-dir --force-reinstall torch==2.5.1 \
+            --index-url https://download.pytorch.org/whl/cu124
           python -c 'import torch; assert torch.__version__.startswith("2.5.")'
           python scripts/gpu_environment.py
           python -m pytest -m 'not distributed' -ra --junitxml=benchmarks/results/ci-vast-torch25.xml
 
+      - name: Restore maximum PyTorch endpoint for performance
+        if: needs.provision.outputs.gpu_count == '2'
+        run: |
+          python -m pip install --no-cache-dir --force-reinstall torch==2.7.1 \
+            --index-url https://download.pytorch.org/whl/cu128
+          python -m pip install --force-reinstall --no-deps dist/*.whl
+
+      - name: Profile exact-divergence hot paths
+        if: needs.provision.outputs.gpu_count == '2'
+        continue-on-error: true
+        run: |
+          python benchmarks/phase10_profile.py \
+            --output benchmarks/results/ci-vast-profile.json \
+            --trace-dir benchmarks/results/ci-vast-traces
+
+      - name: Validate direct-autograd memory scaling
+        if: needs.provision.outputs.gpu_count == '2'
+        continue-on-error: true
+        run: python benchmarks/phase10_resources.py --output benchmarks/results/ci-vast-resources.json
+
+      - name: Validate intrinsic-adjoint memory scaling
+        if: needs.provision.outputs.gpu_count == '2'
+        continue-on-error: true
+        run: python benchmarks/phase6_adjoint.py --output benchmarks/results/ci-vast-adjoint.json
+
+      - name: Validate multi-chart control and transition workloads
+        if: needs.provision.outputs.gpu_count == '2'
+        continue-on-error: true
+        run: python benchmarks/phase10_multichart.py --output benchmarks/results/ci-vast-multichart.json
+
+      - name: Evaluate TorchInductor decision gate
+        if: needs.provision.outputs.gpu_count == '2'
+        continue-on-error: true
+        run: python benchmarks/phase10_compiler.py --output benchmarks/results/ci-vast-compiler.json
+
+      - name: Prepare isolated baseline and candidate workers
+        if: needs.provision.outputs.gpu_count == '2'
+        run: |
+          git worktree add --detach /tmp/geomflow-phase1 19cf027bd80d336112d9674474d8596d6b4209f3
+          python -m build --wheel --outdir /tmp/geomflow-phase1-dist /tmp/geomflow-phase1
+          python -m pip install --target /tmp/geomflow-baseline-package --no-deps \
+            --ignore-requires-python /tmp/geomflow-phase1-dist/*.whl
+          python -m pip install --target /tmp/geomflow-candidate-package \
+            --no-deps dist/*.whl
+
+      - name: Run paired Phase 1 performance regression gate
+        id: performance
+        if: needs.provision.outputs.gpu_count == '2'
+        continue-on-error: true
+        run: |
+          python benchmarks/phase10_paired.py \
+            --baseline-python "$(command -v python)" \
+            --candidate-python "$(command -v python)" \
+            --baseline-package-root /tmp/geomflow-baseline-package \
+            --candidate-package-root /tmp/geomflow-candidate-package \
+            --baseline-revision 19cf027bd80d336112d9674474d8596d6b4209f3 \
+            --candidate-revision "$GITHUB_SHA" \
+            --baseline-wheel /tmp/geomflow-phase1-dist/*.whl \
+            --candidate-wheel dist/*.whl \
+            --output benchmarks/results/ci-vast-phase10-paired.json
+
       - name: Upload CUDA evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: cuda-vast-${{ github.run_id }}-${{ github.run_attempt }}
-          path: benchmarks/results/ci-vast-*
-          if-no-files-found: warn
-          retention-days: 30
+          path: |
+            benchmarks/results/ci-vast-*.json
+            benchmarks/results/ci-vast-*.xml
+          if-no-files-found: error
+          retention-days: 90
 
-  cleanup:
-    name: Destroy Vast.ai instance
-    if: always()
-    needs: [provision, cuda]
+      - name: Upload CUDA profiler traces
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: cuda-vast-traces-${{ github.run_id }}-${{ github.run_attempt }}
+          path: benchmarks/results/ci-vast-traces
+          if-no-files-found: warn
+          retention-days: 14
+
+  billing-watchdog:
+    name: Vast.ai billing watchdog
+    if: ${{ always() && needs.authorize.result == 'success' }}
+    needs: authorize
+    permissions:
+      actions: write
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
-    env:
-      GH_RUNNER_ADMIN_TOKEN: ${{ secrets.GH_RUNNER_ADMIN_TOKEN }}
-      VAST_API_KEY: ${{ secrets.VAST_API_KEY }}
-      INSTANCE_ID: ${{ needs.provision.outputs.instance_id }}
-      RUNNER_LABEL: ${{ needs.provision.outputs.runner_label }}
+    timeout-minutes: 90
+    outputs:
+      run_attempt: ${{ steps.watchdog.outputs.run_attempt }}
+      verified: ${{ steps.watchdog.outputs.verified }}
     steps:
-      - name: Destroy and verify instance
-        if: env.INSTANCE_ID != ''
+      - name: Enforce instance lifetime and offline-runner cleanup
+        id: watchdog
+        env:
+          AUTHORIZED_ATTEMPT: ${{ needs.authorize.outputs.run_attempt }}
+          GH_ACTIONS_TOKEN: ${{ github.token }}
+          GH_RUNNER_ADMIN_TOKEN: ${{ secrets.GH_RUNNER_ADMIN_TOKEN }}
+          RUNNER_LABEL: geomflow-vast-${{ github.run_id }}-${{ github.run_attempt }}
+          VAST_API_KEY: ${{ secrets.VAST_API_KEY }}
         run: |
           set -Eeuo pipefail
-          python -m pip install --disable-pip-version-check vastai
-          vastai --api-key "$VAST_API_KEY" destroy instance "$INSTANCE_ID" -y || true
-          for _ in {1..12}; do
-            instances="$(vastai --api-key "$VAST_API_KEY" show instances --raw)"
-            if ! jq -e --argjson id "$INSTANCE_ID" 'any(.[]; .id == $id)' <<<"$instances" >/dev/null; then
-              echo "Destroyed Vast.ai instance ${INSTANCE_ID}"
-              exit 0
+          cancel_on_exit=1
+          teardown_verified=0
+          offline_checks=0
+          queue_checks=0
+          first_instance_seen=''
+          curl_args=(
+            --silent --show-error --location
+            --retry 4 --retry-all-errors --retry-delay 2 --retry-max-time 30
+            --connect-timeout 5 --max-time 30
+          )
+          vast_headers=(
+            --header "Authorization: Bearer ${VAST_API_KEY}"
+            --header 'Accept: application/json'
+          )
+          runner_headers=(
+            --header "Authorization: Bearer ${GH_RUNNER_ADMIN_TOKEN}"
+            --header 'Accept: application/vnd.github+json'
+            --header 'X-GitHub-Api-Version: 2022-11-28'
+          )
+          actions_headers=(
+            --header "Authorization: Bearer ${GH_ACTIONS_TOKEN}"
+            --header 'Accept: application/vnd.github+json'
+            --header 'X-GitHub-Api-Version: 2022-11-28'
+          )
+          vast_instances() {
+            local combined='[]' page response token=''
+            while :; do
+              query=(
+                --get --data-urlencode 'limit=25'
+                --data-urlencode 'select_cols=["id","label","start_date","dph_total"]'
+              )
+              [[ -z "$token" ]] || query+=(--data-urlencode "after_token=${token}")
+              response="$(curl "${curl_args[@]}" --fail-with-body \
+                "${vast_headers[@]}" "${query[@]}" \
+                'https://console.vast.ai/api/v1/instances/')" || return
+              page="$(jq -cer --arg label "$RUNNER_LABEL" '
+                .instances | map(select(.label == $label))
+              ' <<<"$response")" || return
+              combined="$(jq -cn --argjson left "$combined" --argjson right "$page" \
+                '$left + $right | unique_by(.id)')" || return
+              token="$(jq -er '.next_token // ""' <<<"$response")" || return
+              [[ -n "$token" ]] || break
+            done
+            printf '%s\n' "$combined"
+          }
+          exact_runners() {
+            local combined='[]' count matches page=1 response
+            while :; do
+              response="$(curl "${curl_args[@]}" --fail-with-body \
+                "${runner_headers[@]}" --get \
+                --data-urlencode "name=${RUNNER_LABEL}" \
+                --data-urlencode 'per_page=100' \
+                --data-urlencode "page=${page}" \
+                "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/runners")" || return
+              matches="$(jq -cer --arg name "$RUNNER_LABEL" \
+                '[.runners[] | select(.name == $name)]' <<<"$response")" || return
+              combined="$(jq -cn --argjson left "$combined" --argjson right "$matches" \
+                '$left + $right | unique_by(.id)')" || return
+              count="$(jq -er '.runners | length' <<<"$response")" || return
+              (( count == 100 )) || break
+              page=$((page + 1))
+            done
+            printf '%s\n' "$combined"
+          }
+          workflow_jobs() {
+            curl "${curl_args[@]}" --fail-with-body "${actions_headers[@]}" \
+              "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/attempts/${GITHUB_RUN_ATTEMPT}/jobs?per_page=100"
+          }
+          destroy_instances() {
+            local body code failed=0 instance instances
+            instances="$(vast_instances)" || return
+            while IFS= read -r instance; do
+              [[ -n "$instance" ]] || continue
+              body="$(mktemp)"
+              code="$(curl "${curl_args[@]}" "${vast_headers[@]}" \
+                --request DELETE --output "$body" --write-out '%{http_code}' \
+                "https://console.vast.ai/api/v0/instances/${instance}/")" || {
+                  rm -f "$body"
+                  failed=1
+                  continue
+                }
+              if [[ ! "$code" =~ ^2[0-9][0-9]$ && "$code" != '404' ]]; then
+                cat "$body" >&2
+                rm -f "$body"
+                failed=1
+                continue
+              fi
+              rm -f "$body"
+              echo "Destroyed Vast.ai instance ${instance} (${RUNNER_LABEL})"
+            done < <(jq -r '.[].id' <<<"$instances")
+            (( failed == 0 ))
+          }
+          verify_instances_absent() {
+            local instances
+            for _ in {1..12}; do
+              instances="$(vast_instances)" || return
+              [[ "$(jq -r 'length' <<<"$instances")" == '0' ]] && return 0
+              sleep 5
+            done
+            echo "Vast.ai instances for ${RUNNER_LABEL} still exist" >&2
+            return 1
+          }
+          remove_runner_registrations() {
+            local body code failed=0 runner_id runners
+            runners="$(exact_runners)" || return
+            while IFS= read -r runner_id; do
+              [[ -n "$runner_id" ]] || continue
+              body="$(mktemp)"
+              code="$(curl "${curl_args[@]}" "${runner_headers[@]}" \
+                --request DELETE --output "$body" --write-out '%{http_code}' \
+                "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/runners/${runner_id}")" || {
+                  rm -f "$body"
+                  failed=1
+                  continue
+                }
+              if [[ "$code" != '204' && "$code" != '404' ]]; then
+                cat "$body" >&2
+                rm -f "$body"
+                failed=1
+                continue
+              fi
+              rm -f "$body"
+              echo "Removed GitHub runner registration ${runner_id} (${RUNNER_LABEL})"
+            done < <(jq -r '.[].id' <<<"$runners")
+            (( failed == 0 ))
+          }
+          verify_runners_absent() {
+            local runners
+            for _ in {1..6}; do
+              runners="$(exact_runners)" || return
+              [[ "$(jq -r 'length' <<<"$runners")" == '0' ]] && return 0
+              sleep 5
+            done
+            echo "Runner registrations for ${RUNNER_LABEL} still exist" >&2
+            return 1
+          }
+          teardown() {
+            local failed=0
+            [[ "$teardown_verified" == '0' ]] || return 0
+            destroy_instances || true
+            verify_instances_absent || failed=1
+            remove_runner_registrations || true
+            verify_runners_absent || failed=1
+            if (( failed == 0 )); then
+              teardown_verified=1
+              return 0
             fi
-            sleep 5
-          done
-          echo "Vast.ai instance ${INSTANCE_ID} still exists after cleanup" >&2
-          exit 1
+            return 1
+          }
+          record_verified() {
+            {
+              echo "run_attempt=${GITHUB_RUN_ATTEMPT}"
+              echo 'verified=true'
+            } >> "$GITHUB_OUTPUT"
+          }
+          cancel_run() {
+            local body code
+            body="$(mktemp)"
+            code="$(curl "${curl_args[@]}" "${actions_headers[@]}" \
+              --request POST --output "$body" --write-out '%{http_code}' \
+              "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/cancel")" || {
+                rm -f "$body"
+                return 1
+              }
+            if [[ "$code" != '202' && "$code" != '409' ]]; then
+              cat "$body" >&2
+              rm -f "$body"
+              return 1
+            fi
+            rm -f "$body"
+          }
+          emergency_stop() {
+            echo "$1" >&2
+            teardown
+            record_verified
+            cancel_run
+            cancel_on_exit=0
+            return 1
+          }
+          on_exit() {
+            local status=$?
+            trap - EXIT INT TERM
+            if [[ "$teardown_verified" == '0' ]]; then
+              teardown || status=1
+            fi
+            if (( status != 0 && cancel_on_exit != 0 && teardown_verified != 0 )); then
+              cancel_run || status=1
+            fi
+            exit "$status"
+          }
+          trap on_exit EXIT
+          trap 'exit 130' INT
+          trap 'exit 143' TERM
 
-      - name: Remove stale runner registration
-        if: ${{ always() && env.RUNNER_LABEL != '' }}
+          : "${GH_ACTIONS_TOKEN:?GitHub Actions token is unavailable}"
+          : "${GH_RUNNER_ADMIN_TOKEN:?GH_RUNNER_ADMIN_TOKEN is not configured as a repository secret}"
+          : "${VAST_API_KEY:?VAST_API_KEY is not configured as a repository secret}"
+          started_at="$(date +%s)"
+          if [[ "$AUTHORIZED_ATTEMPT" != "$GITHUB_RUN_ATTEMPT" ]]; then
+            echo "Partial reruns cannot reuse an ephemeral Vast.ai allocation" >&2
+            cancel_on_exit=0
+            exit 1
+          fi
+
+          while :; do
+            now="$(date +%s)"
+            instances="$(vast_instances)"
+            if [[ "$(jq -r 'length' <<<"$instances")" != '0' ]]; then
+              [[ -n "$first_instance_seen" ]] || first_instance_seen="$now"
+              lease_start="$(jq -r '[.[].start_date | select(type == "number")] | min // 0 | floor' <<<"$instances")"
+              [[ "$lease_start" != '0' ]] || lease_start="$first_instance_seen"
+              if (( now >= lease_start + VAST_LEASE_SECONDS )); then
+                emergency_stop "Vast.ai lease deadline exceeded for ${RUNNER_LABEL}"
+              fi
+            elif [[ -z "$first_instance_seen" ]] && \
+              (( now >= started_at + VAST_PROVISION_GRACE_SECONDS )); then
+              emergency_stop "No Vast.ai instance appeared within the provisioning grace period"
+            fi
+
+            jobs="$(workflow_jobs)"
+            runners="$(exact_runners)"
+            provision_status="$(jq -r '
+              first(.jobs[] | select(.name == "Provision approved Vast.ai runner") | .status) // "missing"
+            ' <<<"$jobs")"
+            provision_conclusion="$(jq -r '
+              first(.jobs[] | select(.name == "Provision approved Vast.ai runner") | .conclusion) // ""
+            ' <<<"$jobs")"
+            cuda_job="$(jq -c --arg label "$RUNNER_LABEL" '
+              first(.jobs[] | select(any(.labels[]?; . == $label))) // {}
+            ' <<<"$jobs")"
+            cuda_status="$(jq -r '.status // "missing"' <<<"$cuda_job")"
+            cuda_conclusion="$(jq -r '.conclusion // ""' <<<"$cuda_job")"
+            cuda_runner_id="$(jq -r '.runner_id // 0' <<<"$cuda_job")"
+
+            if [[ "$cuda_status" == 'completed' ]]; then
+              teardown
+              record_verified
+              if [[ "$cuda_conclusion" == 'success' ]]; then
+                echo "CUDA job completed and lifecycle teardown is verified"
+                exit 0
+              fi
+              echo "CUDA job concluded ${cuda_conclusion}; teardown is verified" >&2
+              cancel_on_exit=0
+              exit 1
+            fi
+            if [[ "$provision_status" == 'completed' && "$provision_conclusion" != 'success' ]]; then
+              echo "Provisioning concluded ${provision_conclusion}; tearing down" >&2
+              cancel_on_exit=0
+              exit 1
+            fi
+
+            if [[ "$provision_status" == 'completed' ]]; then
+              if jq -e 'any(.[]; .status == "online")' <<<"$runners" >/dev/null; then
+                offline_checks=0
+              else
+                offline_checks=$((offline_checks + 1))
+              fi
+              if [[ "$cuda_status" =~ ^(queued|waiting|requested|pending)$ ]] && \
+                [[ "$cuda_runner_id" == '0' || -z "$cuda_runner_id" ]]; then
+                queue_checks=$((queue_checks + 1))
+              else
+                queue_checks=0
+              fi
+              if (( offline_checks >= VAST_OFFLINE_CHECKS )); then
+                emergency_stop "Runner ${RUNNER_LABEL} remained offline or missing"
+              fi
+              if (( queue_checks >= VAST_QUEUE_CHECKS )); then
+                emergency_stop "CUDA job remained queued without a runner assignment"
+              fi
+            fi
+            sleep "$VAST_WATCHDOG_INTERVAL_SECONDS"
+          done
+
+  cleanup:
+    name: Verified Vast.ai cleanup
+    if: always()
+    needs: [authorize, provision, cuda]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    outputs:
+      run_attempt: ${{ steps.cleanup.outputs.run_attempt }}
+      verified: ${{ steps.cleanup.outputs.verified }}
+    steps:
+      - name: Install pinned Vast.ai CLI
+        run: >-
+          python -m pip install --disable-pip-version-check --no-input
+          "vastai==${VASTAI_VERSION}"
+
+      - name: Destroy instances and remove runner registrations
+        id: cleanup
+        env:
+          GH_RUNNER_ADMIN_TOKEN: ${{ secrets.GH_RUNNER_ADMIN_TOKEN }}
+          INSTANCE_ID: ${{ needs.provision.outputs.instance_id }}
+          RUNNER_LABEL: geomflow-vast-${{ github.run_id }}-${{ github.run_attempt }}
+          VAST_API_KEY: ${{ secrets.VAST_API_KEY }}
         run: |
           set -Eeuo pipefail
           : "${GH_RUNNER_ADMIN_TOKEN:?GH_RUNNER_ADMIN_TOKEN is not configured as a repository secret}"
-          runners="$(curl --fail --silent --show-error \
-            --header "Authorization: Bearer ${GH_RUNNER_ADMIN_TOKEN}" \
-            --header 'Accept: application/vnd.github+json' \
-            --header 'X-GitHub-Api-Version: 2022-11-28' \
-            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/runners?per_page=100")"
-          runner_id="$(jq -r --arg name "$RUNNER_LABEL" \
-            'first(.runners[] | select(.name == $name) | .id) // empty' <<<"$runners")"
-          if [[ -z "$runner_id" ]]; then
-            echo "Runner registration ${RUNNER_LABEL} is already absent"
-            exit 0
-          fi
-          curl --fail --silent --show-error \
-            --request DELETE \
-            --header "Authorization: Bearer ${GH_RUNNER_ADMIN_TOKEN}" \
-            --header 'Accept: application/vnd.github+json' \
-            --header 'X-GitHub-Api-Version: 2022-11-28' \
-            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/runners/${runner_id}"
-          echo "Removed GitHub runner registration ${RUNNER_LABEL}"
+          : "${VAST_API_KEY:?VAST_API_KEY is not configured as a repository secret}"
+          curl_args=(
+            --silent --show-error --location
+            --retry 4 --retry-all-errors --retry-delay 2 --retry-max-time 30
+            --connect-timeout 5 --max-time 30
+          )
+          gh_headers=(
+            --header "Authorization: Bearer ${GH_RUNNER_ADMIN_TOKEN}"
+            --header 'Accept: application/vnd.github+json'
+            --header 'X-GitHub-Api-Version: 2022-11-28'
+          )
+          vast() {
+            env -u GH_RUNNER_ADMIN_TOKEN timeout 45s \
+              vastai --api-key "$VAST_API_KEY" --retry 4 "$@"
+          }
+          target_instances() {
+            local instances
+            instances="$(vast show instances --raw)" || return
+            jq -cer --arg label "$RUNNER_LABEL" --arg id "$INSTANCE_ID" '
+              map(select(
+                .label == $label or
+                ($id != "" and (.id | tostring) == $id)
+              ))
+            ' <<<"$instances"
+          }
+          destroy_instances() {
+            local failed=0 instance instances remaining
+            instances="$(target_instances)" || return
+            while IFS= read -r instance; do
+              [[ -n "$instance" ]] || continue
+              if ! vast destroy instance "$instance" -y; then
+                remaining="$(target_instances)" || return
+                if jq -e --arg id "$instance" \
+                  'any(.[]; (.id | tostring) == $id)' <<<"$remaining" >/dev/null; then
+                  failed=1
+                  continue
+                fi
+              fi
+              echo "Destroyed Vast.ai instance ${instance} (${RUNNER_LABEL})"
+            done < <(jq -r '.[].id' <<<"$instances")
+            (( failed == 0 ))
+          }
+          verify_instances_absent() {
+            local instances
+            for _ in {1..12}; do
+              instances="$(target_instances)" || return
+              [[ "$(jq -r 'length' <<<"$instances")" == '0' ]] && return 0
+              sleep 5
+            done
+            echo "Vast.ai instances for ${RUNNER_LABEL} still exist" >&2
+            return 1
+          }
+          exact_runner_ids() {
+            local count page=1 response
+            while :; do
+              response="$(curl "${curl_args[@]}" --fail-with-body \
+                "${gh_headers[@]}" --get \
+                --data-urlencode "name=${RUNNER_LABEL}" \
+                --data-urlencode 'per_page=100' \
+                --data-urlencode "page=${page}" \
+                "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/runners")" || return
+              jq -r --arg name "$RUNNER_LABEL" \
+                '.runners[] | select(.name == $name) | .id' <<<"$response"
+              count="$(jq -er '.runners | length' <<<"$response")" || return
+              (( count == 100 )) || break
+              page=$((page + 1))
+            done
+          }
+          remove_runner_registrations() {
+            local body code failed=0 ids runner_id
+            ids="$(exact_runner_ids)" || return
+            while IFS= read -r runner_id; do
+              [[ -n "$runner_id" ]] || continue
+              body="$(mktemp)"
+              code="$(curl "${curl_args[@]}" "${gh_headers[@]}" \
+                --request DELETE --output "$body" --write-out '%{http_code}' \
+                "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/runners/${runner_id}")" || {
+                  rm -f "$body"
+                  failed=1
+                  continue
+                }
+              if [[ "$code" != '204' && "$code" != '404' ]]; then
+                cat "$body" >&2
+                rm -f "$body"
+                failed=1
+                continue
+              fi
+              rm -f "$body"
+              echo "Removed GitHub runner registration ${runner_id} (${RUNNER_LABEL})"
+            done <<<"$ids"
+            (( failed == 0 ))
+          }
+          verify_runners_absent() {
+            local ids
+            for _ in {1..6}; do
+              ids="$(exact_runner_ids)" || return
+              [[ -z "$ids" ]] && return 0
+              sleep 5
+            done
+            echo "Runner registrations for ${RUNNER_LABEL} still exist" >&2
+            return 1
+          }
+          teardown() {
+            local failed=0
+            destroy_instances || true
+            verify_instances_absent || failed=1
+            remove_runner_registrations || true
+            verify_runners_absent || failed=1
+            (( failed == 0 ))
+          }
+          on_exit() {
+            local status=$?
+            trap - EXIT INT TERM
+            if (( status != 0 )); then
+              teardown || status=1
+            fi
+            exit "$status"
+          }
+          trap on_exit EXIT
+          trap 'exit 130' INT
+          trap 'exit 143' TERM
+          teardown
+          {
+            echo "run_attempt=${GITHUB_RUN_ATTEMPT}"
+            echo 'verified=true'
+          } >> "$GITHUB_OUTPUT"
+
+  release-verdict:
+    name: ${{ needs.authorize.outputs.gpu_count == '2' && '2x RTX 3060 release verdict' || 'Single-GPU lifecycle verdict' }}
+    if: always()
+    needs: [authorize, provision, cuda, billing-watchdog, cleanup]
+    permissions:
+      actions: read
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Require current-attempt CUDA and verified teardown
+        env:
+          AUTHORIZED_ATTEMPT: ${{ needs.authorize.outputs.run_attempt }}
+          CUDA_RESULT: ${{ needs.cuda.result }}
+          CLEANUP_ATTEMPT: ${{ needs.cleanup.outputs.run_attempt }}
+          CLEANUP_RESULT: ${{ needs.cleanup.result }}
+          CLEANUP_VERIFIED: ${{ needs.cleanup.outputs.verified }}
+          PROVISION_ATTEMPT: ${{ needs.provision.outputs.run_attempt }}
+          PROVISION_RESULT: ${{ needs.provision.result }}
+          WATCHDOG_ATTEMPT: ${{ needs.billing-watchdog.outputs.run_attempt }}
+          WATCHDOG_RESULT: ${{ needs.billing-watchdog.result }}
+          WATCHDOG_VERIFIED: ${{ needs.billing-watchdog.outputs.verified }}
+        run: |
+          set -Eeuo pipefail
+          [[ "$AUTHORIZED_ATTEMPT" == "$GITHUB_RUN_ATTEMPT" ]]
+          [[ "$PROVISION_ATTEMPT" == "$GITHUB_RUN_ATTEMPT" ]]
+          [[ "$CLEANUP_ATTEMPT" == "$GITHUB_RUN_ATTEMPT" ]]
+          [[ "$WATCHDOG_ATTEMPT" == "$GITHUB_RUN_ATTEMPT" ]]
+          [[ "$PROVISION_RESULT" == 'success' ]]
+          [[ "$CUDA_RESULT" == 'success' ]]
+          [[ "$CLEANUP_RESULT" == 'success' && "$CLEANUP_VERIFIED" == 'true' ]]
+          [[ "$WATCHDOG_RESULT" == 'success' && "$WATCHDOG_VERIFIED" == 'true' ]]
+
+      - name: Download two-GPU CUDA evidence
+        if: needs.authorize.outputs.gpu_count == '2'
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: cuda-vast-${{ github.run_id }}-${{ github.run_attempt }}
+          path: cuda-evidence
+
+      - name: Validate exact two-GPU release evidence
+        if: needs.authorize.outputs.gpu_count == '2'
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path("cuda-evidence")
+
+          def load(name):
+              paths = list(root.rglob(name))
+              if len(paths) != 1:
+                  raise SystemExit(f"expected one {name}, found {len(paths)}")
+              return json.loads(paths[0].read_text())
+
+          expected_gpu = "NVIDIA GeForce RTX 3060"
+          for name in (
+              "ci-vast-torch25-environment.json",
+              "ci-vast-torch27-environment.json",
+          ):
+              devices = load(name).get("devices", [])
+              if len(devices) != 2 or any(
+                  device.get("name") != expected_gpu for device in devices
+              ):
+                  raise SystemExit(
+                      f"{name} does not describe exactly two {expected_gpu} devices"
+                  )
+
+          ddp = load("ci-vast-ddp.json")
+          if ddp.get("status") != "passed" or ddp.get("world_size") != 2:
+              raise SystemExit("two-rank DDP evidence did not pass")
+
+          for name in (
+              "ci-vast-phase10-paired.json",
+              "ci-vast-profile.json",
+              "ci-vast-resources.json",
+              "ci-vast-adjoint.json",
+              "ci-vast-multichart.json",
+              "ci-vast-compiler.json",
+              "ci-vast-soak.json",
+          ):
+              if load(name).get("status") != "passed":
+                  raise SystemExit(f"{name} did not pass")
+          PY

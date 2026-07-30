@@ -36,7 +36,16 @@ def EuclideanSpace(dim: int = 2) -> AnalyticMetric:
     def sqrt_det_fn(x: torch.Tensor) -> torch.Tensor:
         return torch.ones(x.shape[:-1], device=x.device, dtype=x.dtype)
 
-    return AnalyticMetric(dim, metric_fn, inverse_fn, sqrt_det_fn)
+    def log_volume_gradient_fn(x: torch.Tensor) -> torch.Tensor:
+        return torch.zeros_like(x)
+
+    return AnalyticMetric(
+        dim,
+        metric_fn,
+        inverse_fn,
+        sqrt_det_fn,
+        log_volume_gradient_fn=log_volume_gradient_fn,
+    )
 
 
 def SphereStereographicMetric(dim: int = 2, radius: float = 1.0) -> AnalyticMetric:
@@ -66,12 +75,21 @@ def SphereStereographicMetric(dim: int = 2, radius: float = 1.0) -> AnalyticMetr
         r2 = (x * x).sum(dim=-1)
         return (2.0 * radius / (1.0 + r2)) ** dim
 
+    def log_volume_gradient_fn(x: torch.Tensor) -> torch.Tensor:
+        r2 = (x * x).sum(dim=-1, keepdim=True)
+        return (-2.0 * dim / (1.0 + r2)) * x
+
     def domain_fn(x: torch.Tensor) -> torch.Tensor:
         limit = torch.finfo(x.dtype).max ** 0.25 / math.sqrt(dim)
-        return torch.isfinite(x).all(dim=-1) & (x.abs().amax(dim=-1) < limit)
+        return x.abs().amax(dim=-1) < limit
 
     return AnalyticMetric(
-        dim, metric_fn, inverse_fn, sqrt_det_fn, domain_fn=domain_fn
+        dim,
+        metric_fn,
+        inverse_fn,
+        sqrt_det_fn,
+        domain_fn=domain_fn,
+        log_volume_gradient_fn=log_volume_gradient_fn,
     )
 
 
@@ -93,21 +111,29 @@ def Sphere2DAtlas(n_samples: int = 500, seed: int = 42) -> Atlas:
     def transition_b_to_a(x: torch.Tensor) -> torch.Tensor:
         return transition_a_to_b(x)
 
+    def transition_jacobian(x: torch.Tensor) -> torch.Tensor:
+        r2 = (x * x).sum(dim=-1, keepdim=True)
+        eye = torch.eye(2, device=x.device, dtype=x.dtype)
+        outer = x.unsqueeze(-1) * x.unsqueeze(-2)
+        return eye / r2.unsqueeze(-1) - 2.0 * outer / r2.square().unsqueeze(-1)
+
     def chart_domain(x: torch.Tensor) -> torch.Tensor:
-        return torch.isfinite(x).all(dim=-1)
+        return torch.ones(x.shape[:-1], device=x.device, dtype=torch.bool)
 
     def overlap_domain(x: torch.Tensor) -> torch.Tensor:
         minimum = math.sqrt(torch.finfo(x.dtype).tiny)
         maximum = torch.finfo(x.dtype).max ** 0.25 / math.sqrt(2.0)
         scale = x.abs().amax(dim=-1)
-        return chart_domain(x) & (scale > minimum) & (scale < maximum)
+        return (scale > minimum) & (scale < maximum)
 
     chart_a = Chart(
         0,
         2,
         None,
         metric_a,
-        transitions={1: Transition(transition_a_to_b, overlap_domain)},
+        transitions={
+            1: Transition(transition_a_to_b, overlap_domain, transition_jacobian)
+        },
         domain=chart_domain,
     )
     chart_b = Chart(
@@ -115,10 +141,14 @@ def Sphere2DAtlas(n_samples: int = 500, seed: int = 42) -> Atlas:
         2,
         None,
         metric_b,
-        transitions={0: Transition(transition_b_to_a, overlap_domain)},
+        transitions={
+            0: Transition(transition_b_to_a, overlap_domain, transition_jacobian)
+        },
         domain=chart_domain,
     )
 
+    chart_a._defer_trial_validation = True
+    chart_b._defer_trial_validation = True
     return Atlas([chart_a, chart_b], reference_chart_id=0)
 
 
@@ -156,11 +186,21 @@ def Torus2D(R: float = 2.0, r: float = 1.0) -> AnalyticMetric:
         phi = x[..., 1]
         return r * (R + r * torch.cos(phi))
 
+    def log_volume_gradient_fn(x: torch.Tensor) -> torch.Tensor:
+        phi = x[..., 1]
+        grad_phi = -r * torch.sin(phi) / (R + r * torch.cos(phi))
+        return torch.stack((torch.zeros_like(phi), grad_phi), dim=-1)
+
     def canonicalize_fn(x: torch.Tensor) -> torch.Tensor:
         return torch.remainder(x + math.pi, 2.0 * math.pi) - math.pi
 
     metric = AnalyticMetric(
-        2, metric_fn, inverse_fn, sqrt_det_fn, canonicalize_fn=canonicalize_fn
+        2,
+        metric_fn,
+        inverse_fn,
+        sqrt_det_fn,
+        canonicalize_fn=canonicalize_fn,
+        log_volume_gradient_fn=log_volume_gradient_fn,
     )
     metric.coordinate_topology = "angles modulo 2*pi"
     metric.default_base_distribution = UniformAngleCoordinateBase(2)
@@ -192,11 +232,20 @@ def PoincareDisk(dim: int = 2) -> AnalyticMetric:
         r2 = (x * x).sum(dim=-1)
         return (2.0 / (1.0 - r2)) ** dim
 
+    def log_volume_gradient_fn(x: torch.Tensor) -> torch.Tensor:
+        r2 = (x * x).sum(dim=-1, keepdim=True)
+        return (2.0 * dim / (1.0 - r2)) * x
+
     def domain_fn(x: torch.Tensor) -> torch.Tensor:
         return x.square().sum(dim=-1) < 1.0
 
     metric = AnalyticMetric(
-        dim, metric_fn, inverse_fn, sqrt_det_fn, domain_fn=domain_fn
+        dim,
+        metric_fn,
+        inverse_fn,
+        sqrt_det_fn,
+        domain_fn=domain_fn,
+        log_volume_gradient_fn=log_volume_gradient_fn,
     )
     metric.default_base_distribution = PoincareDiskCoordinateBase(dim)
     return metric
