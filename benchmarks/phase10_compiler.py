@@ -112,7 +112,8 @@ def evaluate(device: torch.device, dtype: torch.dtype, steps: int) -> dict[str, 
     }
     try:
         torch._dynamo.reset()
-        torch._dynamo.config.trace_autograd_ops = True
+        if hasattr(torch._dynamo.config, "trace_autograd_ops"):
+            torch._dynamo.config.trace_autograd_ops = True
         counters = torch._dynamo.utils.counters
         counters.clear()
         compile_start = time.perf_counter_ns()

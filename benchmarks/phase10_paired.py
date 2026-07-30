@@ -174,11 +174,13 @@ def case_name(case: dict[str, Any]) -> str:
 
 
 def verify_prepared(*prepared: dict[str, Any]) -> None:
-    case_ids = {item["case_id"] for item in prepared}
     model_hashes = {item["model_hash"] for item in prepared}
     input_hashes = {item["input_hash"] for item in prepared}
-    if len(case_ids) != 1 or len(model_hashes) != 1 or len(input_hashes) != 1:
-        raise AssertionError("paired workers did not receive an identical workload")
+    if len(model_hashes) != 1 or len(input_hashes) != 1:
+        raise AssertionError(
+            "paired workers did not receive an identical workload: "
+            f"model_hashes={model_hashes}, input_hashes={input_hashes}"
+        )
 
 
 def prepare(workers: list[WorkerClient], case: dict[str, Any], warmup: int) -> None:

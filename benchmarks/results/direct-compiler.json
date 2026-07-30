@@ -1,0 +1,115 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "decision": "retain_eager",
+  "records": [
+    {
+      "device": "cpu",
+      "dtype": "float64",
+      "steps": 1,
+      "backend": "TorchInductor",
+      "fullgraph": true,
+      "status": "rejected",
+      "error": "AttributeError: torch._dynamo.config.trace_autograd_ops does not exist"
+    },
+    {
+      "device": "cpu",
+      "dtype": "float64",
+      "steps": 2,
+      "backend": "TorchInductor",
+      "fullgraph": true,
+      "status": "rejected",
+      "error": "AttributeError: torch._dynamo.config.trace_autograd_ops does not exist"
+    },
+    {
+      "device": "cpu",
+      "dtype": "float64",
+      "steps": 4,
+      "backend": "TorchInductor",
+      "fullgraph": true,
+      "status": "rejected",
+      "error": "AttributeError: torch._dynamo.config.trace_autograd_ops does not exist"
+    },
+    {
+      "device": "cpu",
+      "dtype": "float64",
+      "steps": 8,
+      "backend": "TorchInductor",
+      "fullgraph": true,
+      "status": "rejected",
+      "error": "AttributeError: torch._dynamo.config.trace_autograd_ops does not exist"
+    },
+    {
+      "device": "cuda",
+      "dtype": "float32",
+      "steps": 1,
+      "backend": "TorchInductor",
+      "fullgraph": true,
+      "status": "rejected",
+      "error": "AttributeError: torch._dynamo.config.trace_autograd_ops does not exist"
+    },
+    {
+      "device": "cuda",
+      "dtype": "float32",
+      "steps": 2,
+      "backend": "TorchInductor",
+      "fullgraph": true,
+      "status": "rejected",
+      "error": "AttributeError: torch._dynamo.config.trace_autograd_ops does not exist"
+    },
+    {
+      "device": "cuda",
+      "dtype": "float32",
+      "steps": 4,
+      "backend": "TorchInductor",
+      "fullgraph": true,
+      "status": "rejected",
+      "error": "AttributeError: torch._dynamo.config.trace_autograd_ops does not exist"
+    },
+    {
+      "device": "cuda",
+      "dtype": "float32",
+      "steps": 8,
+      "backend": "TorchInductor",
+      "fullgraph": true,
+      "status": "rejected",
+      "error": "AttributeError: torch._dynamo.config.trace_autograd_ops does not exist"
+    },
+    {
+      "device": "cuda",
+      "dtype": "float64",
+      "steps": 1,
+      "backend": "TorchInductor",
+      "fullgraph": true,
+      "status": "rejected",
+      "error": "AttributeError: torch._dynamo.config.trace_autograd_ops does not exist"
+    },
+    {
+      "device": "cuda",
+      "dtype": "float64",
+      "steps": 2,
+      "backend": "TorchInductor",
+      "fullgraph": true,
+      "status": "rejected",
+      "error": "AttributeError: torch._dynamo.config.trace_autograd_ops does not exist"
+    },
+    {
+      "device": "cuda",
+      "dtype": "float64",
+      "steps": 4,
+      "backend": "TorchInductor",
+      "fullgraph": true,
+      "status": "rejected",
+      "error": "AttributeError: torch._dynamo.config.trace_autograd_ops does not exist"
+    },
+    {
+      "device": "cuda",
+      "dtype": "float64",
+      "steps": 8,
+      "backend": "TorchInductor",
+      "fullgraph": true,
+      "status": "rejected",
+      "error": "AttributeError: torch._dynamo.config.trace_autograd_ops does not exist"
+    }
+  ]
+}

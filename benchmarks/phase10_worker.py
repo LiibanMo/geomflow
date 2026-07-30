@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+from dataclasses import replace
 import gc
 import hashlib
 import importlib.metadata
@@ -178,7 +179,8 @@ class Worker:
         )
         torch.manual_seed(self.case.seed)
         self.geometry = make_geometry(self.case)
-        self.model = make_model(self.case, self.geometry)
+        source_case = replace(self.case, device=torch.device("cpu"))
+        self.model = make_model(source_case, self.geometry).to(self.device)
         self.x = make_input(self.case)
         return {
             "case_id": self.case.case_id,

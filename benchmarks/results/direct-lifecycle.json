@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "candidate_revision": "f37bc6ef66e6d89eb48647f6b64964179cbead93",
+  "instance_id": 46252762,
+  "label": "geomflow-phase10-direct2-f37bc6e",
+  "offer_id": 43555755,
+  "geolocation": "Norway, NO",
+  "gpu_name": "RTX 3060",
+  "num_gpus": 2,
+  "reliability": 0.9981399,
+  "hourly_cost_usd": 0.127,
+  "driver": "595.84",
+  "cuda_runtime": "12.8",
+  "cleanup_verified_utc": "2026-07-30T04:26:11Z",
+  "instance_absent": true,
+  "exact_label_absent": true,
+  "github_runner_registration_absent": true,
+  "remaining_vast_instances": 0,
+  "failures": []
+}

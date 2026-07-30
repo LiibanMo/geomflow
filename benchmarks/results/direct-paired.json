@@ -1,0 +1,4295 @@
+{
+  "schema_version": 2,
+  "status": "failed",
+  "timestamp_utc": "2026-07-30T04:05:43.232426+00:00",
+  "manifest": {
+    "scenarios": [
+      "euclidean",
+      "sphere-atlas"
+    ],
+    "workloads": [
+      "forward",
+      "backward"
+    ],
+    "regression_batches": [
+      256,
+      512
+    ],
+    "crossover_batches": [
+      1,
+      64,
+      256,
+      512,
+      1024,
+      2048,
+      4096
+    ],
+    "dimension": 2,
+    "hidden_width": 32,
+    "hidden_depth": 2,
+    "steps": 16,
+    "dtype": "float32",
+    "divergence": "exact",
+    "quartets": 10,
+    "warmup": 3,
+    "mode": "release",
+    "release_matrix_complete": true,
+    "baseline_revision": "19cf027bd80d336112d9674474d8596d6b4209f3",
+    "candidate_revision": "f37bc6ef66e6d89eb48647f6b64964179cbead93",
+    "baseline_wheel_sha256": "edaeadbc2381dc572ab3e4f553983f7c0e76faac02fd63077bbcbeb998f10bc1",
+    "candidate_wheel_sha256": "99e0e67500565eb9a6e187adb9fea0ec7c70599943f479194c640f2674d665af",
+    "worker_sha256": "fa11cedd17fc717a2aad97e3237598a15664e951c5037ba16148c26922df80c2",
+    "scenarios_sha256": "b659de3d9533624bf6e40721918b310aa62b1557d05bbb68feccde1b387ecb73",
+    "frozen_manifest_path": "/workspace/geomflow/benchmarks/phase10_manifest.json",
+    "frozen_manifest_sha256": "7a76927414e0e92c302ec0e8ab768273243dcf8cfd5971f336e1ee0b07353f04"
+  },
+  "cpu_regression": {
+    "euclidean-b256-forward": {
+      "ratio": 0.8274204697056164,
+      "lower": 0.8158799913297281,
+      "upper": 0.8376347517335792,
+      "bound_method": "deterministic percentile block bootstrap of medians",
+      "bound_requested_alpha": 0.00625,
+      "bound_resamples": 20000,
+      "bound_seed": 0,
+      "block_log_ratios": [
+        -0.18702238869964205,
+        -0.20601507599486535,
+        -0.18611040873290996,
+        -0.15807818323314748,
+        -0.19186218223391016,
+        -0.20362258713696946,
+        -0.1932113948254255,
+        -0.18412465806050093,
+        -0.20096093257046377,
+        -0.1771731306332116
+      ],
+      "blocks": [
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 92.495483,
+              "backward_ms": 0.000457,
+              "wall_ms": 92.49594
+            },
+            {
+              "forward_ms": 92.820024,
+              "backward_ms": 0.00067,
+              "wall_ms": 92.820694
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 77.43009,
+              "backward_ms": 0.000422,
+              "wall_ms": 77.430512
+            },
+            {
+              "forward_ms": 76.279436,
+              "backward_ms": 0.000403,
+              "wall_ms": 76.279839
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 92.191434,
+              "backward_ms": 0.000365,
+              "wall_ms": 92.191799
+            },
+            {
+              "forward_ms": 92.866058,
+              "backward_ms": 0.000357,
+              "wall_ms": 92.866415
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 74.951832,
+              "backward_ms": 0.000395,
+              "wall_ms": 74.952227
+            },
+            {
+              "forward_ms": 75.652229,
+              "backward_ms": 0.000397,
+              "wall_ms": 75.652626
+            }
+          ]
+        },
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 91.521292,
+              "backward_ms": 0.000414,
+              "wall_ms": 91.521706
+            },
+            {
+              "forward_ms": 91.198722,
+              "backward_ms": 0.000354,
+              "wall_ms": 91.199076
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 75.386953,
+              "backward_ms": 0.000475,
+              "wall_ms": 75.387428
+            },
+            {
+              "forward_ms": 76.306198,
+              "backward_ms": 0.000414,
+              "wall_ms": 76.306612
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 91.453028,
+              "backward_ms": 0.000331,
+              "wall_ms": 91.453359
+            },
+            {
+              "forward_ms": 91.30447,
+              "backward_ms": 0.000368,
+              "wall_ms": 91.304838
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 81.517658,
+              "backward_ms": 0.000406,
+              "wall_ms": 81.518064
+            },
+            {
+              "forward_ms": 74.667615,
+              "backward_ms": 0.000404,
+              "wall_ms": 74.668019
+            }
+          ]
+        },
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 91.700724,
+              "backward_ms": 0.000364,
+              "wall_ms": 91.701088
+            },
+            {
+              "forward_ms": 91.87021,
+              "backward_ms": 0.000352,
+              "wall_ms": 91.870562
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 75.193449,
+              "backward_ms": 0.00042,
+              "wall_ms": 75.193869
+            },
+            {
+              "forward_ms": 76.333819,
+              "backward_ms": 0.000363,
+              "wall_ms": 76.334182
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 92.132689,
+              "backward_ms": 0.000362,
+              "wall_ms": 92.133051
+            },
+            {
+              "forward_ms": 91.617678,
+              "backward_ms": 0.00033,
+              "wall_ms": 91.618008
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 74.899196,
+              "backward_ms": 0.000446,
+              "wall_ms": 74.899642
+            },
+            {
+              "forward_ms": 74.998032,
+              "backward_ms": 0.000407,
+              "wall_ms": 74.998439
+            }
+          ]
+        },
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 92.87015,
+              "backward_ms": 0.00043,
+              "wall_ms": 92.87058
+            },
+            {
+              "forward_ms": 91.222411,
+              "backward_ms": 0.000339,
+              "wall_ms": 91.22275
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 75.584221,
+              "backward_ms": 0.000399,
+              "wall_ms": 75.58462
+            },
+            {
+              "forward_ms": 76.159541,
+              "backward_ms": 0.0004,
+              "wall_ms": 76.159941
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 92.572378,
+              "backward_ms": 0.000317,
+              "wall_ms": 92.572695
+            },
+            {
+              "forward_ms": 91.23902,
+              "backward_ms": 0.000395,
+              "wall_ms": 91.239415
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 75.648594,
+              "backward_ms": 0.000405,
+              "wall_ms": 75.648999
+            },
+            {
+              "forward_ms": 77.255777,
+              "backward_ms": 0.000463,
+              "wall_ms": 77.25624
+            }
+          ]
+        },
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 92.65874,
+              "backward_ms": 0.000668,
+              "wall_ms": 92.659408
+            },
+            {
+              "forward_ms": 91.306989,
+              "backward_ms": 0.000331,
+              "wall_ms": 91.30732
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 75.866603,
+              "backward_ms": 0.000401,
+              "wall_ms": 75.867004
+            },
+            {
+              "forward_ms": 74.608366,
+              "backward_ms": 0.000379,
+              "wall_ms": 74.608745
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 91.111114,
+              "backward_ms": 0.000373,
+              "wall_ms": 91.111487
+            },
+            {
+              "forward_ms": 91.672347,
+              "backward_ms": 0.000376,
+              "wall_ms": 91.672723
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 78.045948,
+              "backward_ms": 0.000438,
+              "wall_ms": 78.046386
+            },
+            {
+              "forward_ms": 75.087522,
+              "backward_ms": 0.000358,
+              "wall_ms": 75.08788
+            }
+          ]
+        }
+      ],
+      "case": {
+        "scenario": "euclidean",
+        "batch_size": 256,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 16,
+        "dtype": "float32",
+        "workload": "forward",
+        "seed": 0
+      },
+      "decision": "passed"
+    },
+    "euclidean-b512-forward": {
+      "ratio": 0.8413032154857344,
+      "lower": 0.8154186559596867,
+      "upper": 0.8553965008415747,
+      "bound_method": "deterministic percentile block bootstrap of medians",
+      "bound_requested_alpha": 0.00625,
+      "bound_resamples": 20000,
+      "bound_seed": 0,
+      "block_log_ratios": [
+        -0.16322117588745755,
+        -0.17230157630009213,
+        -0.20405360933984618,
+        -0.19727181167862184,
+        -0.16823810294285835,
+        -0.1803028707017118,
+        -0.06166861362743248,
+        -0.15619017386688583,
+        -0.22713515912232562,
+        -0.17330470847697566
+      ],
+      "blocks": [
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 109.425173,
+              "backward_ms": 0.000354,
+              "wall_ms": 109.425527
+            },
+            {
+              "forward_ms": 117.752124,
+              "backward_ms": 0.000372,
+              "wall_ms": 117.752496
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 97.296692,
+              "backward_ms": 0.000404,
+              "wall_ms": 97.297096
+            },
+            {
+              "forward_ms": 95.546576,
+              "backward_ms": 0.000363,
+              "wall_ms": 95.546939
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 110.425831,
+              "backward_ms": 0.000397,
+              "wall_ms": 110.426228
+            },
+            {
+              "forward_ms": 109.738893,
+              "backward_ms": 0.000403,
+              "wall_ms": 109.739296
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 92.813762,
+              "backward_ms": 0.000391,
+              "wall_ms": 92.814153
+            },
+            {
+              "forward_ms": 92.50349,
+              "backward_ms": 0.000604,
+              "wall_ms": 92.504094
+            }
+          ]
+        },
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 109.413289,
+              "backward_ms": 0.000371,
+              "wall_ms": 109.41366
+            },
+            {
+              "forward_ms": 120.491362,
+              "backward_ms": 0.000363,
+              "wall_ms": 120.491725
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 92.619674,
+              "backward_ms": 0.00043,
+              "wall_ms": 92.620104
+            },
+            {
+              "forward_ms": 94.641783,
+              "backward_ms": 0.000409,
+              "wall_ms": 94.642192
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 110.869518,
+              "backward_ms": 0.000397,
+              "wall_ms": 110.869915
+            },
+            {
+              "forward_ms": 110.04406,
+              "backward_ms": 0.000439,
+              "wall_ms": 110.044499
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 91.047809,
+              "backward_ms": 0.000396,
+              "wall_ms": 91.048205
+            },
+            {
+              "forward_ms": 90.315159,
+              "backward_ms": 0.000394,
+              "wall_ms": 90.315553
+            }
+          ]
+        },
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 113.626003,
+              "backward_ms": 0.000699,
+              "wall_ms": 113.626702
+            },
+            {
+              "forward_ms": 109.997058,
+              "backward_ms": 0.00058,
+              "wall_ms": 109.997638
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 96.691206,
+              "backward_ms": 0.000431,
+              "wall_ms": 96.691637
+            },
+            {
+              "forward_ms": 92.33009,
+              "backward_ms": 0.000389,
+              "wall_ms": 92.330479
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 109.878973,
+              "backward_ms": 0.000376,
+              "wall_ms": 109.879349
+            },
+            {
+              "forward_ms": 110.186937,
+              "backward_ms": 0.000375,
+              "wall_ms": 110.187312
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 92.035784,
+              "backward_ms": 0.0004,
+              "wall_ms": 92.036184
+            },
+            {
+              "forward_ms": 91.722928,
+              "backward_ms": 0.000437,
+              "wall_ms": 91.723365
+            }
+          ]
+        },
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 109.768609,
+              "backward_ms": 0.00034,
+              "wall_ms": 109.768949
+            },
+            {
+              "forward_ms": 112.792941,
+              "backward_ms": 0.000361,
+              "wall_ms": 112.793302
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 90.80824,
+              "backward_ms": 0.000379,
+              "wall_ms": 90.808619
+            },
+            {
+              "forward_ms": 120.522889,
+              "backward_ms": 0.000426,
+              "wall_ms": 120.523315
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 109.408986,
+              "backward_ms": 0.000382,
+              "wall_ms": 109.409368
+            },
+            {
+              "forward_ms": 109.900977,
+              "backward_ms": 0.00039,
+              "wall_ms": 109.901367
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 94.210182,
+              "backward_ms": 0.0004,
+              "wall_ms": 94.210582
+            },
+            {
+              "forward_ms": 93.387958,
+              "backward_ms": 0.000425,
+              "wall_ms": 93.388383
+            }
+          ]
+        },
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 109.782059,
+              "backward_ms": 0.000394,
+              "wall_ms": 109.782453
+            },
+            {
+              "forward_ms": 120.590039,
+              "backward_ms": 0.000394,
+              "wall_ms": 120.590433
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 92.360489,
+              "backward_ms": 0.000417,
+              "wall_ms": 92.360906
+            },
+            {
+              "forward_ms": 91.005693,
+              "backward_ms": 0.000408,
+              "wall_ms": 91.006101
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 110.376548,
+              "backward_ms": 0.000327,
+              "wall_ms": 110.376875
+            },
+            {
+              "forward_ms": 110.208581,
+              "backward_ms": 0.000353,
+              "wall_ms": 110.208934
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 92.827023,
+              "backward_ms": 0.000425,
+              "wall_ms": 92.827448
+            },
+            {
+              "forward_ms": 92.658671,
+              "backward_ms": 0.000397,
+              "wall_ms": 92.659068
+            }
+          ]
+        }
+      ],
+      "case": {
+        "scenario": "euclidean",
+        "batch_size": 512,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 16,
+        "dtype": "float32",
+        "workload": "forward",
+        "seed": 0
+      },
+      "decision": "passed"
+    },
+    "euclidean-b256-backward": {
+      "ratio": 0.8660519026283465,
+      "lower": 0.8622685357881225,
+      "upper": 0.8707640214994086,
+      "bound_method": "deterministic percentile block bootstrap of medians",
+      "bound_requested_alpha": 0.00625,
+      "bound_resamples": 20000,
+      "bound_seed": 0,
+      "block_log_ratios": [
+        -0.1448735558405243,
+        -0.13469507698104177,
+        -0.14852099543622366,
+        -0.1345779342026887,
+        -0.14785606535656015,
+        -0.14256941836862946,
+        -0.1877991080551542,
+        -0.14629222297670363,
+        -0.14219059996010852,
+        -0.14274732108883548
+      ],
+      "blocks": [
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 91.219025,
+              "backward_ms": 77.852812,
+              "wall_ms": 169.071837
+            },
+            {
+              "forward_ms": 91.320077,
+              "backward_ms": 77.354253,
+              "wall_ms": 168.67433
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 75.421513,
+              "backward_ms": 69.85292,
+              "wall_ms": 145.274433
+            },
+            {
+              "forward_ms": 76.547872,
+              "backward_ms": 70.377062,
+              "wall_ms": 146.924934
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 90.885567,
+              "backward_ms": 77.824251,
+              "wall_ms": 168.709818
+            },
+            {
+              "forward_ms": 90.914317,
+              "backward_ms": 77.672549,
+              "wall_ms": 168.586866
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 76.544769,
+              "backward_ms": 70.374641,
+              "wall_ms": 146.91941
+            },
+            {
+              "forward_ms": 76.481771,
+              "backward_ms": 71.391698,
+              "wall_ms": 147.873469
+            }
+          ]
+        },
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 91.739015,
+              "backward_ms": 81.833894,
+              "wall_ms": 173.572909
+            },
+            {
+              "forward_ms": 91.162726,
+              "backward_ms": 77.212949,
+              "wall_ms": 168.375675
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 76.445926,
+              "backward_ms": 70.060442,
+              "wall_ms": 146.506368
+            },
+            {
+              "forward_ms": 76.629894,
+              "backward_ms": 71.588155,
+              "wall_ms": 148.218049
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 91.562955,
+              "backward_ms": 77.410734,
+              "wall_ms": 168.973689
+            },
+            {
+              "forward_ms": 91.081067,
+              "backward_ms": 77.466446,
+              "wall_ms": 168.547513
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 75.592558,
+              "backward_ms": 70.157517,
+              "wall_ms": 145.750075
+            },
+            {
+              "forward_ms": 79.689045,
+              "backward_ms": 69.604056,
+              "wall_ms": 149.293101
+            }
+          ]
+        },
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 94.402719,
+              "backward_ms": 77.508181,
+              "wall_ms": 171.9109
+            },
+            {
+              "forward_ms": 91.606066,
+              "backward_ms": 77.39565,
+              "wall_ms": 169.001716
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 75.23094,
+              "backward_ms": 69.821381,
+              "wall_ms": 145.052321
+            },
+            {
+              "forward_ms": 77.559225,
+              "backward_ms": 71.46048,
+              "wall_ms": 149.019705
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 90.988245,
+              "backward_ms": 77.658066,
+              "wall_ms": 168.646311
+            },
+            {
+              "forward_ms": 92.194965,
+              "backward_ms": 77.32246,
+              "wall_ms": 169.517425
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 76.065955,
+              "backward_ms": 69.550477,
+              "wall_ms": 145.616432
+            },
+            {
+              "forward_ms": 77.183552,
+              "backward_ms": 70.436918,
+              "wall_ms": 147.62047
+            }
+          ]
+        },
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 91.24602,
+              "backward_ms": 86.107315,
+              "wall_ms": 177.353335
+            },
+            {
+              "forward_ms": 98.2272,
+              "backward_ms": 77.597252,
+              "wall_ms": 175.824452
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 76.814644,
+              "backward_ms": 70.467939,
+              "wall_ms": 147.282583
+            },
+            {
+              "forward_ms": 75.229793,
+              "backward_ms": 70.197864,
+              "wall_ms": 145.427657
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 91.787191,
+              "backward_ms": 77.539405,
+              "wall_ms": 169.326596
+            },
+            {
+              "forward_ms": 91.155072,
+              "backward_ms": 77.55526,
+              "wall_ms": 168.710332
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 76.186876,
+              "backward_ms": 70.208915,
+              "wall_ms": 146.395791
+            },
+            {
+              "forward_ms": 75.627475,
+              "backward_ms": 70.0091,
+              "wall_ms": 145.636575
+            }
+          ]
+        },
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 91.215775,
+              "backward_ms": 77.54238,
+              "wall_ms": 168.758155
+            },
+            {
+              "forward_ms": 91.898518,
+              "backward_ms": 77.425774,
+              "wall_ms": 169.324292
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 77.591296,
+              "backward_ms": 70.485078,
+              "wall_ms": 148.076374
+            },
+            {
+              "forward_ms": 75.366848,
+              "backward_ms": 69.842,
+              "wall_ms": 145.208848
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 91.125235,
+              "backward_ms": 77.585086,
+              "wall_ms": 168.710321
+            },
+            {
+              "forward_ms": 91.162232,
+              "backward_ms": 77.525772,
+              "wall_ms": 168.688004
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 75.795797,
+              "backward_ms": 70.072442,
+              "wall_ms": 145.868239
+            },
+            {
+              "forward_ms": 76.560185,
+              "backward_ms": 70.087889,
+              "wall_ms": 146.648074
+            }
+          ]
+        }
+      ],
+      "case": {
+        "scenario": "euclidean",
+        "batch_size": 256,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 16,
+        "dtype": "float32",
+        "workload": "backward",
+        "seed": 0
+      },
+      "decision": "passed"
+    },
+    "euclidean-b512-backward": {
+      "ratio": 0.8719772631461702,
+      "lower": 0.8622145247983567,
+      "upper": 0.897742094612611,
+      "bound_method": "deterministic percentile block bootstrap of medians",
+      "bound_requested_alpha": 0.00625,
+      "bound_resamples": 20000,
+      "bound_seed": 0,
+      "block_log_ratios": [
+        -0.1449153417349951,
+        -0.12422967359254944,
+        -0.10787245169292703,
+        -0.136059499234781,
+        -0.13792436033873479,
+        -0.11397341332872202,
+        -0.14825117060552806,
+        -0.15596679119218138,
+        -0.14441365979150245,
+        -0.0696760831706289
+      ],
+      "blocks": [
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 110.074044,
+              "backward_ms": 100.58995,
+              "wall_ms": 210.663994
+            },
+            {
+              "forward_ms": 110.427195,
+              "backward_ms": 100.645238,
+              "wall_ms": 211.072433
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 91.055319,
+              "backward_ms": 91.990053,
+              "wall_ms": 183.045372
+            },
+            {
+              "forward_ms": 91.497374,
+              "backward_ms": 90.301509,
+              "wall_ms": 181.798883
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 110.723315,
+              "backward_ms": 101.681457,
+              "wall_ms": 212.404772
+            },
+            {
+              "forward_ms": 110.54863,
+              "backward_ms": 100.424403,
+              "wall_ms": 210.973033
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 96.353505,
+              "backward_ms": 92.917341,
+              "wall_ms": 189.270846
+            },
+            {
+              "forward_ms": 93.003987,
+              "backward_ms": 91.668828,
+              "wall_ms": 184.672815
+            }
+          ]
+        },
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 110.474505,
+              "backward_ms": 101.140565,
+              "wall_ms": 211.61507
+            },
+            {
+              "forward_ms": 110.506286,
+              "backward_ms": 103.615804,
+              "wall_ms": 214.12209
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 97.112601,
+              "backward_ms": 95.970319,
+              "wall_ms": 193.08292
+            },
+            {
+              "forward_ms": 92.069934,
+              "backward_ms": 97.063099,
+              "wall_ms": 189.133033
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 110.39479,
+              "backward_ms": 100.002997,
+              "wall_ms": 210.397787
+            },
+            {
+              "forward_ms": 110.006565,
+              "backward_ms": 100.340693,
+              "wall_ms": 210.347258
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 92.8655,
+              "backward_ms": 91.660569,
+              "wall_ms": 184.526069
+            },
+            {
+              "forward_ms": 91.48208,
+              "backward_ms": 91.218747,
+              "wall_ms": 182.700827
+            }
+          ]
+        },
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 109.65322,
+              "backward_ms": 99.981323,
+              "wall_ms": 209.634543
+            },
+            {
+              "forward_ms": 111.380952,
+              "backward_ms": 100.354815,
+              "wall_ms": 211.735767
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 92.763343,
+              "backward_ms": 91.36124,
+              "wall_ms": 184.124583
+            },
+            {
+              "forward_ms": 93.34303,
+              "backward_ms": 89.612575,
+              "wall_ms": 182.955605
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 110.295531,
+              "backward_ms": 100.612541,
+              "wall_ms": 210.908072
+            },
+            {
+              "forward_ms": 113.946428,
+              "backward_ms": 118.825981,
+              "wall_ms": 232.772409
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 91.735409,
+              "backward_ms": 91.087934,
+              "wall_ms": 182.823343
+            },
+            {
+              "forward_ms": 108.987969,
+              "backward_ms": 104.806767,
+              "wall_ms": 213.794736
+            }
+          ]
+        },
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 109.610448,
+              "backward_ms": 100.208001,
+              "wall_ms": 209.818449
+            },
+            {
+              "forward_ms": 110.610742,
+              "backward_ms": 100.882053,
+              "wall_ms": 211.492795
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 90.985845,
+              "backward_ms": 90.886027,
+              "wall_ms": 181.871872
+            },
+            {
+              "forward_ms": 91.005709,
+              "backward_ms": 90.380549,
+              "wall_ms": 181.386258
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 110.302748,
+              "backward_ms": 103.196702,
+              "wall_ms": 213.49945
+            },
+            {
+              "forward_ms": 110.6627,
+              "backward_ms": 100.263403,
+              "wall_ms": 210.926103
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 91.294808,
+              "backward_ms": 89.838809,
+              "wall_ms": 181.133617
+            },
+            {
+              "forward_ms": 90.943846,
+              "backward_ms": 91.050123,
+              "wall_ms": 181.993969
+            }
+          ]
+        },
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 109.684842,
+              "backward_ms": 100.505737,
+              "wall_ms": 210.190579
+            },
+            {
+              "forward_ms": 110.19829,
+              "backward_ms": 100.662428,
+              "wall_ms": 210.860718
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 91.525791,
+              "backward_ms": 90.967812,
+              "wall_ms": 182.493603
+            },
+            {
+              "forward_ms": 91.030115,
+              "backward_ms": 90.90862,
+              "wall_ms": 181.938735
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 113.350364,
+              "backward_ms": 100.981915,
+              "wall_ms": 214.332279
+            },
+            {
+              "forward_ms": 109.481168,
+              "backward_ms": 100.598864,
+              "wall_ms": 210.080032
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 91.156956,
+              "backward_ms": 89.879617,
+              "wall_ms": 181.036573
+            },
+            {
+              "forward_ms": 124.580012,
+              "backward_ms": 91.784565,
+              "wall_ms": 216.364577
+            }
+          ]
+        }
+      ],
+      "case": {
+        "scenario": "euclidean",
+        "batch_size": 512,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 16,
+        "dtype": "float32",
+        "workload": "backward",
+        "seed": 0
+      },
+      "decision": "passed"
+    },
+    "sphere-atlas-b256-forward": {
+      "ratio": 0.7581366481163844,
+      "lower": 0.7452683638910068,
+      "upper": 0.7641123960278525,
+      "bound_method": "deterministic percentile block bootstrap of medians",
+      "bound_requested_alpha": 0.00625,
+      "bound_resamples": 20000,
+      "bound_seed": 0,
+      "block_log_ratios": [
+        -0.2746274392848491,
+        -0.27915583076994555,
+        -0.274495875000226,
+        -0.28571888337929785,
+        -0.29401090547829245,
+        -0.26644031102340726,
+        -0.2664694412015045,
+        -0.279398544460153,
+        -0.27164045980918683,
+        -0.31422387719768885
+      ],
+      "blocks": [
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 114.463345,
+              "backward_ms": 0.000348,
+              "wall_ms": 114.463693
+            },
+            {
+              "forward_ms": 114.367797,
+              "backward_ms": 0.000337,
+              "wall_ms": 114.368134
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 87.282768,
+              "backward_ms": 0.000399,
+              "wall_ms": 87.283167
+            },
+            {
+              "forward_ms": 86.596736,
+              "backward_ms": 0.00048,
+              "wall_ms": 86.597216
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 114.182577,
+              "backward_ms": 0.000337,
+              "wall_ms": 114.182914
+            },
+            {
+              "forward_ms": 114.465097,
+              "backward_ms": 0.00032,
+              "wall_ms": 114.465417
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 87.192593,
+              "backward_ms": 0.000414,
+              "wall_ms": 87.193007
+            },
+            {
+              "forward_ms": 85.766941,
+              "backward_ms": 0.000428,
+              "wall_ms": 85.767369
+            }
+          ]
+        },
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 114.409606,
+              "backward_ms": 0.000313,
+              "wall_ms": 114.409919
+            },
+            {
+              "forward_ms": 114.407635,
+              "backward_ms": 0.000352,
+              "wall_ms": 114.407987
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 85.240799,
+              "backward_ms": 0.0004,
+              "wall_ms": 85.241199
+            },
+            {
+              "forward_ms": 88.683801,
+              "backward_ms": 0.000426,
+              "wall_ms": 88.684227
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 114.397509,
+              "backward_ms": 0.000317,
+              "wall_ms": 114.397826
+            },
+            {
+              "forward_ms": 114.597837,
+              "backward_ms": 0.000342,
+              "wall_ms": 114.598179
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 85.581548,
+              "backward_ms": 0.00043,
+              "wall_ms": 85.581978
+            },
+            {
+              "forward_ms": 86.504502,
+              "backward_ms": 0.000436,
+              "wall_ms": 86.504938
+            }
+          ]
+        },
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 114.872727,
+              "backward_ms": 0.000331,
+              "wall_ms": 114.873058
+            },
+            {
+              "forward_ms": 114.427794,
+              "backward_ms": 0.000346,
+              "wall_ms": 114.42814
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 85.2233,
+              "backward_ms": 0.00044,
+              "wall_ms": 85.22374
+            },
+            {
+              "forward_ms": 85.667047,
+              "backward_ms": 0.000396,
+              "wall_ms": 85.667443
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 114.282286,
+              "backward_ms": 0.000355,
+              "wall_ms": 114.282641
+            },
+            {
+              "forward_ms": 114.501817,
+              "backward_ms": 0.000338,
+              "wall_ms": 114.502155
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 88.147434,
+              "backward_ms": 0.00037,
+              "wall_ms": 88.147804
+            },
+            {
+              "forward_ms": 87.12708,
+              "backward_ms": 0.000433,
+              "wall_ms": 87.127513
+            }
+          ]
+        },
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 114.308802,
+              "backward_ms": 0.000352,
+              "wall_ms": 114.309154
+            },
+            {
+              "forward_ms": 114.36036,
+              "backward_ms": 0.000314,
+              "wall_ms": 114.360674
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 88.259282,
+              "backward_ms": 0.000374,
+              "wall_ms": 88.259656
+            },
+            {
+              "forward_ms": 86.92422,
+              "backward_ms": 0.000454,
+              "wall_ms": 86.924674
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 115.031108,
+              "backward_ms": 0.00036,
+              "wall_ms": 115.031468
+            },
+            {
+              "forward_ms": 114.307367,
+              "backward_ms": 0.000323,
+              "wall_ms": 114.30769
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 85.560718,
+              "backward_ms": 0.000425,
+              "wall_ms": 85.561143
+            },
+            {
+              "forward_ms": 87.888281,
+              "backward_ms": 0.000419,
+              "wall_ms": 87.8887
+            }
+          ]
+        },
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 114.360108,
+              "backward_ms": 0.000327,
+              "wall_ms": 114.360435
+            },
+            {
+              "forward_ms": 114.617956,
+              "backward_ms": 0.000335,
+              "wall_ms": 114.618291
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 86.940451,
+              "backward_ms": 0.000378,
+              "wall_ms": 86.940829
+            },
+            {
+              "forward_ms": 87.57098,
+              "backward_ms": 0.00037,
+              "wall_ms": 87.57135
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 120.198762,
+              "backward_ms": 0.000316,
+              "wall_ms": 120.199078
+            },
+            {
+              "forward_ms": 114.290038,
+              "backward_ms": 0.000343,
+              "wall_ms": 114.290381
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 86.362286,
+              "backward_ms": 0.000411,
+              "wall_ms": 86.362697
+            },
+            {
+              "forward_ms": 84.849878,
+              "backward_ms": 0.000392,
+              "wall_ms": 84.85027
+            }
+          ]
+        }
+      ],
+      "case": {
+        "scenario": "sphere-atlas",
+        "batch_size": 256,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 16,
+        "dtype": "float32",
+        "workload": "forward",
+        "seed": 0
+      },
+      "decision": "passed"
+    },
+    "sphere-atlas-b512-forward": {
+      "ratio": 0.7656060414718325,
+      "lower": 0.758990186656922,
+      "upper": 0.7839889323651833,
+      "bound_method": "deterministic percentile block bootstrap of medians",
+      "bound_requested_alpha": 0.00625,
+      "bound_resamples": 20000,
+      "bound_seed": 0,
+      "block_log_ratios": [
+        -0.26579750388210677,
+        -0.26837759154763674,
+        -0.2831130180212682,
+        -0.13548275185182668,
+        -0.2712213705463675,
+        -0.2496859432695402,
+        -0.24415894136912986,
+        -0.2763858113991571,
+        -0.2433603756125171,
+        -0.2751470505525617
+      ],
+      "blocks": [
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 133.907889,
+              "backward_ms": 0.000324,
+              "wall_ms": 133.908213
+            },
+            {
+              "forward_ms": 133.468301,
+              "backward_ms": 0.000359,
+              "wall_ms": 133.46866
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 103.875386,
+              "backward_ms": 0.000443,
+              "wall_ms": 103.875829
+            },
+            {
+              "forward_ms": 101.111767,
+              "backward_ms": 0.000357,
+              "wall_ms": 101.112124
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 133.472926,
+              "backward_ms": 0.000318,
+              "wall_ms": 133.473244
+            },
+            {
+              "forward_ms": 133.471904,
+              "backward_ms": 0.000322,
+              "wall_ms": 133.472226
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 101.372793,
+              "backward_ms": 0.000404,
+              "wall_ms": 101.373197
+            },
+            {
+              "forward_ms": 102.742551,
+              "backward_ms": 0.00043,
+              "wall_ms": 102.742981
+            }
+          ]
+        },
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 133.642823,
+              "backward_ms": 0.000344,
+              "wall_ms": 133.643167
+            },
+            {
+              "forward_ms": 139.748154,
+              "backward_ms": 0.000322,
+              "wall_ms": 139.748476
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 102.819355,
+              "backward_ms": 0.000407,
+              "wall_ms": 102.819762
+            },
+            {
+              "forward_ms": 103.111389,
+              "backward_ms": 0.000419,
+              "wall_ms": 103.111808
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 133.858568,
+              "backward_ms": 0.000326,
+              "wall_ms": 133.858894
+            },
+            {
+              "forward_ms": 133.544735,
+              "backward_ms": 0.000339,
+              "wall_ms": 133.545074
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 133.356997,
+              "backward_ms": 0.000434,
+              "wall_ms": 133.357431
+            },
+            {
+              "forward_ms": 102.229835,
+              "backward_ms": 0.00033,
+              "wall_ms": 102.230165
+            }
+          ]
+        },
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 133.328633,
+              "backward_ms": 0.000302,
+              "wall_ms": 133.328935
+            },
+            {
+              "forward_ms": 133.426793,
+              "backward_ms": 0.000353,
+              "wall_ms": 133.427146
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 102.32624,
+              "backward_ms": 0.000461,
+              "wall_ms": 102.326701
+            },
+            {
+              "forward_ms": 101.064373,
+              "backward_ms": 0.000386,
+              "wall_ms": 101.064759
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 133.654748,
+              "backward_ms": 0.000321,
+              "wall_ms": 133.655069
+            },
+            {
+              "forward_ms": 133.938734,
+              "backward_ms": 0.000334,
+              "wall_ms": 133.939068
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 106.395283,
+              "backward_ms": 0.000375,
+              "wall_ms": 106.395658
+            },
+            {
+              "forward_ms": 102.115739,
+              "backward_ms": 0.000391,
+              "wall_ms": 102.11613
+            }
+          ]
+        },
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 133.651367,
+              "backward_ms": 0.00033,
+              "wall_ms": 133.651697
+            },
+            {
+              "forward_ms": 133.605065,
+              "backward_ms": 0.000343,
+              "wall_ms": 133.605408
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 106.931987,
+              "backward_ms": 0.000439,
+              "wall_ms": 106.932426
+            },
+            {
+              "forward_ms": 102.473959,
+              "backward_ms": 0.000429,
+              "wall_ms": 102.474388
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 133.428144,
+              "backward_ms": 0.000319,
+              "wall_ms": 133.428463
+            },
+            {
+              "forward_ms": 133.595041,
+              "backward_ms": 0.000328,
+              "wall_ms": 133.595369
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 101.387411,
+              "backward_ms": 0.000395,
+              "wall_ms": 101.387806
+            },
+            {
+              "forward_ms": 101.154855,
+              "backward_ms": 0.000411,
+              "wall_ms": 101.155266
+            }
+          ]
+        },
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 133.771335,
+              "backward_ms": 0.000323,
+              "wall_ms": 133.771658
+            },
+            {
+              "forward_ms": 133.5575,
+              "backward_ms": 0.000358,
+              "wall_ms": 133.557858
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 106.758331,
+              "backward_ms": 0.000593,
+              "wall_ms": 106.758924
+            },
+            {
+              "forward_ms": 102.860234,
+              "backward_ms": 0.000408,
+              "wall_ms": 102.860642
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 134.021277,
+              "backward_ms": 0.000304,
+              "wall_ms": 134.021581
+            },
+            {
+              "forward_ms": 134.200828,
+              "backward_ms": 0.000317,
+              "wall_ms": 134.201145
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 101.856695,
+              "backward_ms": 0.000413,
+              "wall_ms": 101.857108
+            },
+            {
+              "forward_ms": 101.846865,
+              "backward_ms": 0.00053,
+              "wall_ms": 101.847395
+            }
+          ]
+        }
+      ],
+      "case": {
+        "scenario": "sphere-atlas",
+        "batch_size": 512,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 16,
+        "dtype": "float32",
+        "workload": "forward",
+        "seed": 0
+      },
+      "decision": "passed"
+    },
+    "sphere-atlas-b256-backward": {
+      "ratio": 0.6937398213721091,
+      "lower": 0.684237630888221,
+      "upper": 0.7144201290317912,
+      "bound_method": "deterministic percentile block bootstrap of medians",
+      "bound_requested_alpha": 0.00625,
+      "bound_resamples": 20000,
+      "bound_seed": 0,
+      "block_log_ratios": [
+        -0.3681225188088124,
+        -0.38123789549122655,
+        -0.33628407368046176,
+        -0.3884228587134908,
+        -0.36519865081470115,
+        -0.3355050802174979,
+        -0.37047715751538934,
+        -0.3659908112882979,
+        -0.36532576056207233,
+        -0.3568222804520431
+      ],
+      "blocks": [
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 114.914165,
+              "backward_ms": 118.916735,
+              "wall_ms": 233.8309
+            },
+            {
+              "forward_ms": 114.958467,
+              "backward_ms": 119.173346,
+              "wall_ms": 234.131813
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 85.072037,
+              "backward_ms": 76.021861,
+              "wall_ms": 161.093898
+            },
+            {
+              "forward_ms": 86.384596,
+              "backward_ms": 76.371057,
+              "wall_ms": 162.755653
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 114.559097,
+              "backward_ms": 118.818136,
+              "wall_ms": 233.377233
+            },
+            {
+              "forward_ms": 120.053245,
+              "backward_ms": 120.364023,
+              "wall_ms": 240.417268
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 86.031958,
+              "backward_ms": 76.333674,
+              "wall_ms": 162.365632
+            },
+            {
+              "forward_ms": 85.05758,
+              "backward_ms": 76.15206,
+              "wall_ms": 161.20964
+            }
+          ]
+        },
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 114.412964,
+              "backward_ms": 121.952498,
+              "wall_ms": 236.365462
+            },
+            {
+              "forward_ms": 114.57093,
+              "backward_ms": 119.100364,
+              "wall_ms": 233.671294
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 88.577764,
+              "backward_ms": 78.796556,
+              "wall_ms": 167.37432
+            },
+            {
+              "forward_ms": 90.690538,
+              "backward_ms": 77.734991,
+              "wall_ms": 168.425529
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 124.78935,
+              "backward_ms": 119.10232,
+              "wall_ms": 243.89167
+            },
+            {
+              "forward_ms": 114.380263,
+              "backward_ms": 119.126501,
+              "wall_ms": 233.506764
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 85.711701,
+              "backward_ms": 76.047191,
+              "wall_ms": 161.758892
+            },
+            {
+              "forward_ms": 85.588703,
+              "backward_ms": 76.311898,
+              "wall_ms": 161.900601
+            }
+          ]
+        },
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 114.805039,
+              "backward_ms": 119.186988,
+              "wall_ms": 233.992027
+            },
+            {
+              "forward_ms": 114.280542,
+              "backward_ms": 119.495632,
+              "wall_ms": 233.776174
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 86.189293,
+              "backward_ms": 77.131241,
+              "wall_ms": 163.320534
+            },
+            {
+              "forward_ms": 84.966776,
+              "backward_ms": 76.37729,
+              "wall_ms": 161.344066
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 114.193107,
+              "backward_ms": 118.92086,
+              "wall_ms": 233.113967
+            },
+            {
+              "forward_ms": 114.322033,
+              "backward_ms": 118.912822,
+              "wall_ms": 233.234855
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 84.96482,
+              "backward_ms": 76.254754,
+              "wall_ms": 161.219574
+            },
+            {
+              "forward_ms": 87.21506,
+              "backward_ms": 85.181251,
+              "wall_ms": 172.396311
+            }
+          ]
+        },
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 114.801104,
+              "backward_ms": 119.273099,
+              "wall_ms": 234.074203
+            },
+            {
+              "forward_ms": 114.957125,
+              "backward_ms": 118.520325,
+              "wall_ms": 233.47745
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 85.061595,
+              "backward_ms": 76.734188,
+              "wall_ms": 161.795783
+            },
+            {
+              "forward_ms": 84.957239,
+              "backward_ms": 76.047599,
+              "wall_ms": 161.004838
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 114.410126,
+              "backward_ms": 118.757506,
+              "wall_ms": 233.167632
+            },
+            {
+              "forward_ms": 114.696435,
+              "backward_ms": 118.342177,
+              "wall_ms": 233.038612
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 85.64929,
+              "backward_ms": 76.180227,
+              "wall_ms": 161.829517
+            },
+            {
+              "forward_ms": 85.514166,
+              "backward_ms": 75.974791,
+              "wall_ms": 161.488957
+            }
+          ]
+        },
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 114.702131,
+              "backward_ms": 119.081346,
+              "wall_ms": 233.783477
+            },
+            {
+              "forward_ms": 115.515811,
+              "backward_ms": 119.014149,
+              "wall_ms": 234.52996
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 86.38358,
+              "backward_ms": 76.073009,
+              "wall_ms": 162.456589
+            },
+            {
+              "forward_ms": 85.891073,
+              "backward_ms": 76.647667,
+              "wall_ms": 162.53874
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 114.535785,
+              "backward_ms": 118.952744,
+              "wall_ms": 233.488529
+            },
+            {
+              "forward_ms": 114.266894,
+              "backward_ms": 119.489675,
+              "wall_ms": 233.756569
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 85.131487,
+              "backward_ms": 76.746001,
+              "wall_ms": 161.877488
+            },
+            {
+              "forward_ms": 88.916128,
+              "backward_ms": 76.24621,
+              "wall_ms": 165.162338
+            }
+          ]
+        }
+      ],
+      "case": {
+        "scenario": "sphere-atlas",
+        "batch_size": 256,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 16,
+        "dtype": "float32",
+        "workload": "backward",
+        "seed": 0
+      },
+      "decision": "passed"
+    },
+    "sphere-atlas-b512-backward": {
+      "ratio": 0.7490730341965505,
+      "lower": 0.7392909650626083,
+      "upper": 0.7558517520059165,
+      "bound_method": "deterministic percentile block bootstrap of medians",
+      "bound_requested_alpha": 0.00625,
+      "bound_resamples": 20000,
+      "bound_seed": 0,
+      "block_log_ratios": [
+        -0.2934633966451585,
+        -0.28954418390673275,
+        -0.2799100172620568,
+        -0.33538474019984044,
+        -0.3020637074289567,
+        -0.2787428193756609,
+        -0.28704143970350593,
+        -0.28799518935055435,
+        -0.28829339864916825,
+        -0.29736004873388566
+      ],
+      "blocks": [
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 134.246317,
+              "backward_ms": 145.122836,
+              "wall_ms": 279.369153
+            },
+            {
+              "forward_ms": 134.220794,
+              "backward_ms": 145.353715,
+              "wall_ms": 279.574509
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 112.01866,
+              "backward_ms": 98.13545,
+              "wall_ms": 210.15411
+            },
+            {
+              "forward_ms": 108.856521,
+              "backward_ms": 97.795219,
+              "wall_ms": 206.65174
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 134.114114,
+              "backward_ms": 145.445888,
+              "wall_ms": 279.560002
+            },
+            {
+              "forward_ms": 133.59086,
+              "backward_ms": 144.495566,
+              "wall_ms": 278.086426
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 109.127147,
+              "backward_ms": 97.785676,
+              "wall_ms": 206.912823
+            },
+            {
+              "forward_ms": 112.038331,
+              "backward_ms": 98.520052,
+              "wall_ms": 210.558383
+            }
+          ]
+        },
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 134.791246,
+              "backward_ms": 144.93588,
+              "wall_ms": 279.727126
+            },
+            {
+              "forward_ms": 134.214396,
+              "backward_ms": 145.815588,
+              "wall_ms": 280.029984
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 115.198325,
+              "backward_ms": 98.342236,
+              "wall_ms": 213.540561
+            },
+            {
+              "forward_ms": 110.577357,
+              "backward_ms": 98.99403,
+              "wall_ms": 209.571387
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 134.731485,
+              "backward_ms": 148.378447,
+              "wall_ms": 283.109932
+            },
+            {
+              "forward_ms": 135.251993,
+              "backward_ms": 146.180989,
+              "wall_ms": 281.432982
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 107.709011,
+              "backward_ms": 97.603183,
+              "wall_ms": 205.312194
+            },
+            {
+              "forward_ms": 101.392979,
+              "backward_ms": 97.035439,
+              "wall_ms": 198.428418
+            }
+          ]
+        },
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 135.014627,
+              "backward_ms": 145.164983,
+              "wall_ms": 280.17961
+            },
+            {
+              "forward_ms": 134.647256,
+              "backward_ms": 145.095829,
+              "wall_ms": 279.743085
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 109.945224,
+              "backward_ms": 106.243125,
+              "wall_ms": 216.188349
+            },
+            {
+              "forward_ms": 100.969816,
+              "backward_ms": 97.180331,
+              "wall_ms": 198.150147
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 134.292087,
+              "backward_ms": 144.974158,
+              "wall_ms": 279.266245
+            },
+            {
+              "forward_ms": 135.017511,
+              "backward_ms": 146.547488,
+              "wall_ms": 281.564999
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 111.3276,
+              "backward_ms": 101.970568,
+              "wall_ms": 213.298168
+            },
+            {
+              "forward_ms": 111.895136,
+              "backward_ms": 99.20915,
+              "wall_ms": 211.104286
+            }
+          ]
+        },
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 135.166231,
+              "backward_ms": 144.895942,
+              "wall_ms": 280.062173
+            },
+            {
+              "forward_ms": 135.945272,
+              "backward_ms": 145.071346,
+              "wall_ms": 281.016618
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 111.873372,
+              "backward_ms": 99.193245,
+              "wall_ms": 211.066617
+            },
+            {
+              "forward_ms": 111.077458,
+              "backward_ms": 98.935398,
+              "wall_ms": 210.012856
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 135.069755,
+              "backward_ms": 148.288221,
+              "wall_ms": 283.357976
+            },
+            {
+              "forward_ms": 134.5105,
+              "backward_ms": 145.544662,
+              "wall_ms": 280.055162
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 111.892803,
+              "backward_ms": 99.562756,
+              "wall_ms": 211.455559
+            },
+            {
+              "forward_ms": 111.827993,
+              "backward_ms": 99.137038,
+              "wall_ms": 210.965031
+            }
+          ]
+        },
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 135.480812,
+              "backward_ms": 144.888837,
+              "wall_ms": 280.369649
+            },
+            {
+              "forward_ms": 134.940205,
+              "backward_ms": 145.526894,
+              "wall_ms": 280.467099
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 111.161878,
+              "backward_ms": 99.127345,
+              "wall_ms": 210.289223
+            },
+            {
+              "forward_ms": 111.179711,
+              "backward_ms": 98.90161,
+              "wall_ms": 210.081321
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 134.46166,
+              "backward_ms": 145.177708,
+              "wall_ms": 279.639368
+            },
+            {
+              "forward_ms": 134.73092,
+              "backward_ms": 144.98138,
+              "wall_ms": 279.7123
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 105.953667,
+              "backward_ms": 98.571581,
+              "wall_ms": 204.525248
+            },
+            {
+              "forward_ms": 110.902906,
+              "backward_ms": 100.095557,
+              "wall_ms": 210.998463
+            }
+          ]
+        }
+      ],
+      "case": {
+        "scenario": "sphere-atlas",
+        "batch_size": 512,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 16,
+        "dtype": "float32",
+        "workload": "backward",
+        "seed": 0
+      },
+      "decision": "passed"
+    }
+  },
+  "crossover": {
+    "euclidean-forward": [
+      {
+        "batch_size": 1,
+        "cpu_ms": 59.515646,
+        "cuda_ms": 350.199933,
+        "speedup": 0.1699476224628518
+      },
+      {
+        "batch_size": 64,
+        "cpu_ms": 67.968337,
+        "cuda_ms": 359.848418,
+        "speedup": 0.18888046633013128
+      },
+      {
+        "batch_size": 256,
+        "cpu_ms": 83.530299,
+        "cuda_ms": 362.022469,
+        "speedup": 0.23073236097950595
+      },
+      {
+        "batch_size": 512,
+        "cpu_ms": 99.000962,
+        "cuda_ms": 359.007644,
+        "speedup": 0.2757628247046461
+      },
+      {
+        "batch_size": 1024,
+        "cpu_ms": 130.036418,
+        "cuda_ms": 360.190577,
+        "speedup": 0.3610211546428101
+      },
+      {
+        "batch_size": 2048,
+        "cpu_ms": 196.889743,
+        "cuda_ms": 354.533394,
+        "speedup": 0.5553489356209983
+      },
+      {
+        "batch_size": 4096,
+        "cpu_ms": 306.876883,
+        "cuda_ms": 356.193717,
+        "speedup": 0.8615449075986931
+      }
+    ],
+    "euclidean-forward-eligibility": [
+      {
+        "batch_size": 256,
+        "samples_ms": [
+          74.994913,
+          75.928838,
+          76.004566,
+          75.878155,
+          74.336852,
+          74.627576,
+          76.099608,
+          74.88256,
+          76.082682,
+          74.357251,
+          74.664909,
+          74.296474,
+          74.348805,
+          76.057436,
+          74.973926,
+          80.44551,
+          74.689791,
+          75.248412,
+          74.535716,
+          74.555067
+        ],
+        "lower_ms": 74.555067,
+        "bound_method": "deterministic percentile block bootstrap of medians",
+        "bound_requested_alpha": 0.0125,
+        "bound_resamples": 20000,
+        "bound_seed": 0
+      },
+      {
+        "batch_size": 512,
+        "samples_ms": [
+          90.647028,
+          90.148609,
+          90.733755,
+          103.27557,
+          90.953162,
+          90.214664,
+          90.236999,
+          90.49055,
+          94.150083,
+          92.021996,
+          90.318743,
+          89.799453,
+          91.280724,
+          94.235375,
+          90.829867,
+          91.335209,
+          90.126433,
+          89.968112,
+          89.916705,
+          94.041106
+        ],
+        "lower_ms": 90.214664,
+        "bound_method": "deterministic percentile block bootstrap of medians",
+        "bound_requested_alpha": 0.0125,
+        "bound_resamples": 20000,
+        "bound_seed": 0
+      },
+      {
+        "batch_size": 1024,
+        "samples_ms": [
+          122.578367,
+          126.061645,
+          123.468708,
+          122.554672,
+          122.305562,
+          121.551129,
+          125.153643,
+          121.36903,
+          121.670136,
+          122.059669,
+          122.943244,
+          122.977874,
+          130.691918,
+          122.43267,
+          124.485684,
+          124.090238,
+          120.388287,
+          119.385234,
+          125.830988,
+          119.679551
+        ],
+        "lower_ms": 121.670136,
+        "bound_method": "deterministic percentile block bootstrap of medians",
+        "bound_requested_alpha": 0.0125,
+        "bound_resamples": 20000,
+        "bound_seed": 0
+      }
+    ],
+    "euclidean-backward": [
+      {
+        "batch_size": 1,
+        "cpu_ms": 100.278239,
+        "cuda_ms": 540.099082,
+        "speedup": 0.18566637556328972
+      },
+      {
+        "batch_size": 64,
+        "cpu_ms": 117.311364,
+        "cuda_ms": 536.829337,
+        "speedup": 0.21852636567066006
+      },
+      {
+        "batch_size": 256,
+        "cpu_ms": 143.299438,
+        "cuda_ms": 549.87371,
+        "speedup": 0.26060427220643084
+      },
+      {
+        "batch_size": 512,
+        "cpu_ms": 198.794091,
+        "cuda_ms": 548.599212,
+        "speedup": 0.3623667089773363
+      },
+      {
+        "batch_size": 1024,
+        "cpu_ms": 250.543747,
+        "cuda_ms": 550.426245,
+        "speedup": 0.45518132406640605
+      },
+      {
+        "batch_size": 2048,
+        "cpu_ms": 542.137947,
+        "cuda_ms": 550.585109,
+        "speedup": 0.9846578451506942
+      },
+      {
+        "batch_size": 4096,
+        "cpu_ms": 825.039136,
+        "cuda_ms": 558.907354,
+        "speedup": 1.4761643948596173
+      }
+    ],
+    "euclidean-backward-eligibility": [
+      {
+        "batch_size": 256,
+        "samples_ms": [
+          145.624053,
+          145.644035,
+          146.483421,
+          144.593773,
+          144.054593,
+          143.114549,
+          143.113884,
+          143.09293,
+          143.098842,
+          143.683478,
+          149.988332,
+          142.749418,
+          143.024395,
+          142.798658,
+          143.598934,
+          143.250949,
+          144.042123,
+          143.579996,
+          144.219477,
+          151.73906
+        ],
+        "lower_ms": 143.113884,
+        "bound_method": "deterministic percentile block bootstrap of medians",
+        "bound_requested_alpha": 0.0125,
+        "bound_resamples": 20000,
+        "bound_seed": 0
+      }
+    ],
+    "sphere-atlas-forward": [
+      {
+        "batch_size": 1,
+        "cpu_ms": 76.653919,
+        "cuda_ms": 416.299609,
+        "speedup": 0.18413161420961124
+      },
+      {
+        "batch_size": 64,
+        "cpu_ms": 81.040294,
+        "cuda_ms": 404.112406,
+        "speedup": 0.20053899062925576
+      },
+      {
+        "batch_size": 256,
+        "cpu_ms": 91.70786,
+        "cuda_ms": 418.218603,
+        "speedup": 0.21928211548255783
+      },
+      {
+        "batch_size": 512,
+        "cpu_ms": 107.214764,
+        "cuda_ms": 414.606546,
+        "speedup": 0.25859399721103293
+      },
+      {
+        "batch_size": 1024,
+        "cpu_ms": 205.743224,
+        "cuda_ms": 412.239645,
+        "speedup": 0.49908645734448953
+      },
+      {
+        "batch_size": 2048,
+        "cpu_ms": 211.880532,
+        "cuda_ms": 417.184361,
+        "speedup": 0.5078822501690086
+      },
+      {
+        "batch_size": 4096,
+        "cpu_ms": 314.357011,
+        "cuda_ms": 418.394984,
+        "speedup": 0.7513402957048835
+      }
+    ],
+    "sphere-atlas-forward-eligibility": [
+      {
+        "batch_size": 256,
+        "samples_ms": [
+          84.377383,
+          84.030939,
+          86.135708,
+          86.187732,
+          86.009367,
+          86.0455,
+          85.234405,
+          84.420938,
+          85.278352,
+          84.554348,
+          84.838836,
+          84.243434,
+          86.035293,
+          84.17704,
+          84.838155,
+          84.43665,
+          84.403297,
+          85.001659,
+          84.224586,
+          85.72152
+        ],
+        "lower_ms": 84.403297,
+        "bound_method": "deterministic percentile block bootstrap of medians",
+        "bound_requested_alpha": 0.0125,
+        "bound_resamples": 20000,
+        "bound_seed": 0
+      },
+      {
+        "batch_size": 512,
+        "samples_ms": [
+          101.242287,
+          101.857313,
+          102.839998,
+          100.584753,
+          100.975234,
+          100.046242,
+          100.190097,
+          101.078712,
+          101.313128,
+          101.685798,
+          101.127177,
+          100.342192,
+          101.039741,
+          101.914653,
+          100.458225,
+          100.492628,
+          101.375081,
+          100.013505,
+          100.202843,
+          101.873938
+        ],
+        "lower_ms": 100.458225,
+        "bound_method": "deterministic percentile block bootstrap of medians",
+        "bound_requested_alpha": 0.0125,
+        "bound_resamples": 20000,
+        "bound_seed": 0
+      }
+    ],
+    "sphere-atlas-backward": [
+      {
+        "batch_size": 1,
+        "cpu_ms": 114.85723,
+        "cuda_ms": 622.375908,
+        "speedup": 0.18454639474894327
+      },
+      {
+        "batch_size": 64,
+        "cpu_ms": 137.448469,
+        "cuda_ms": 623.832609,
+        "speedup": 0.22032908670857887
+      },
+      {
+        "batch_size": 256,
+        "cpu_ms": 161.956198,
+        "cuda_ms": 607.896048,
+        "speedup": 0.26642087661672054
+      },
+      {
+        "batch_size": 512,
+        "cpu_ms": 199.203053,
+        "cuda_ms": 625.412732,
+        "speedup": 0.31851454696640236
+      },
+      {
+        "batch_size": 1024,
+        "cpu_ms": 331.990933,
+        "cuda_ms": 628.263243,
+        "speedup": 0.5284264783894097
+      },
+      {
+        "batch_size": 2048,
+        "cpu_ms": 510.794409,
+        "cuda_ms": 630.3169,
+        "speedup": 0.810377143624104
+      },
+      {
+        "batch_size": 4096,
+        "cpu_ms": 691.804581,
+        "cuda_ms": 630.671374,
+        "speedup": 1.0969335370531659
+      }
+    ],
+    "sphere-atlas-backward-eligibility": [
+      {
+        "batch_size": 256,
+        "samples_ms": [
+          163.443563,
+          161.032979,
+          161.63612,
+          159.680408,
+          160.421141,
+          160.937087,
+          159.699894,
+          159.783982,
+          159.934048,
+          159.718269,
+          161.106713,
+          161.947841,
+          159.985553,
+          159.76077,
+          162.811512,
+          161.594965,
+          160.940918,
+          160.740311,
+          161.438982,
+          159.792805
+        ],
+        "lower_ms": 159.792805,
+        "bound_method": "deterministic percentile block bootstrap of medians",
+        "bound_requested_alpha": 0.0125,
+        "bound_resamples": 20000,
+        "bound_seed": 0
+      }
+    ]
+  },
+  "speed_gates": {
+    "euclidean-forward": {
+      "case": {
+        "scenario": "euclidean",
+        "batch_size": 1024,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 16,
+        "dtype": "float32",
+        "workload": "forward",
+        "seed": 0
+      },
+      "cpu_duration_lower_ms": 121.670136,
+      "speedup": 0.35447299933257115,
+      "lower": 0.34760610699535727,
+      "upper": 0.36290308755346395,
+      "required": 2.0,
+      "decision": "failed",
+      "blocks": [
+        {
+          "order": "CGGC",
+          "first": [
+            {
+              "forward_ms": 134.198908,
+              "backward_ms": 0.000384,
+              "wall_ms": 134.199292
+            },
+            {
+              "forward_ms": 128.341497,
+              "backward_ms": 0.000418,
+              "wall_ms": 128.341915
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 359.350211,
+              "backward_ms": 0.000856,
+              "wall_ms": 359.351067
+            },
+            {
+              "forward_ms": 367.640217,
+              "backward_ms": 0.000947,
+              "wall_ms": 367.641164
+            }
+          ]
+        },
+        {
+          "order": "GCCG",
+          "first": [
+            {
+              "forward_ms": 127.480243,
+              "backward_ms": 0.000359,
+              "wall_ms": 127.480602
+            },
+            {
+              "forward_ms": 136.472248,
+              "backward_ms": 0.000422,
+              "wall_ms": 136.47267
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 363.038422,
+              "backward_ms": 0.000783,
+              "wall_ms": 363.039205
+            },
+            {
+              "forward_ms": 360.203833,
+              "backward_ms": 0.00079,
+              "wall_ms": 360.204623
+            }
+          ]
+        },
+        {
+          "order": "CGGC",
+          "first": [
+            {
+              "forward_ms": 130.118542,
+              "backward_ms": 0.000403,
+              "wall_ms": 130.118945
+            },
+            {
+              "forward_ms": 137.995843,
+              "backward_ms": 0.000461,
+              "wall_ms": 137.996304
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 363.533554,
+              "backward_ms": 0.000663,
+              "wall_ms": 363.534217
+            },
+            {
+              "forward_ms": 391.382211,
+              "backward_ms": 0.00075,
+              "wall_ms": 391.382961
+            }
+          ]
+        },
+        {
+          "order": "GCCG",
+          "first": [
+            {
+              "forward_ms": 131.127605,
+              "backward_ms": 0.000442,
+              "wall_ms": 131.128047
+            },
+            {
+              "forward_ms": 121.725703,
+              "backward_ms": 0.000391,
+              "wall_ms": 121.726094
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 363.574766,
+              "backward_ms": 0.000794,
+              "wall_ms": 363.57556
+            },
+            {
+              "forward_ms": 362.400485,
+              "backward_ms": 0.00069,
+              "wall_ms": 362.401175
+            }
+          ]
+        },
+        {
+          "order": "CGGC",
+          "first": [
+            {
+              "forward_ms": 128.783259,
+              "backward_ms": 0.000401,
+              "wall_ms": 128.78366
+            },
+            {
+              "forward_ms": 129.635253,
+              "backward_ms": 0.000376,
+              "wall_ms": 129.635629
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 363.127213,
+              "backward_ms": 0.000826,
+              "wall_ms": 363.128039
+            },
+            {
+              "forward_ms": 363.109103,
+              "backward_ms": 0.00078,
+              "wall_ms": 363.109883
+            }
+          ]
+        },
+        {
+          "order": "GCCG",
+          "first": [
+            {
+              "forward_ms": 127.83894,
+              "backward_ms": 0.000402,
+              "wall_ms": 127.839342
+            },
+            {
+              "forward_ms": 121.818429,
+              "backward_ms": 0.000418,
+              "wall_ms": 121.818847
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 363.903131,
+              "backward_ms": 0.000687,
+              "wall_ms": 363.903818
+            },
+            {
+              "forward_ms": 342.073659,
+              "backward_ms": 0.000713,
+              "wall_ms": 342.074372
+            }
+          ]
+        },
+        {
+          "order": "CGGC",
+          "first": [
+            {
+              "forward_ms": 198.469055,
+              "backward_ms": 0.00041,
+              "wall_ms": 198.469465
+            },
+            {
+              "forward_ms": 138.207948,
+              "backward_ms": 0.0004,
+              "wall_ms": 138.208348
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 364.356504,
+              "backward_ms": 0.0008,
+              "wall_ms": 364.357304
+            },
+            {
+              "forward_ms": 367.692442,
+              "backward_ms": 0.000797,
+              "wall_ms": 367.693239
+            }
+          ]
+        },
+        {
+          "order": "GCCG",
+          "first": [
+            {
+              "forward_ms": 126.918169,
+              "backward_ms": 0.000397,
+              "wall_ms": 126.918566
+            },
+            {
+              "forward_ms": 119.652224,
+              "backward_ms": 0.000413,
+              "wall_ms": 119.652637
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 345.520784,
+              "backward_ms": 0.00072,
+              "wall_ms": 345.521504
+            },
+            {
+              "forward_ms": 364.667074,
+              "backward_ms": 0.0008,
+              "wall_ms": 364.667874
+            }
+          ]
+        },
+        {
+          "order": "CGGC",
+          "first": [
+            {
+              "forward_ms": 128.529936,
+              "backward_ms": 0.000352,
+              "wall_ms": 128.530288
+            },
+            {
+              "forward_ms": 126.586848,
+              "backward_ms": 0.000419,
+              "wall_ms": 126.587267
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 365.276588,
+              "backward_ms": 0.00087,
+              "wall_ms": 365.277458
+            },
+            {
+              "forward_ms": 367.702877,
+              "backward_ms": 0.000726,
+              "wall_ms": 367.703603
+            }
+          ]
+        },
+        {
+          "order": "GCCG",
+          "first": [
+            {
+              "forward_ms": 128.488871,
+              "backward_ms": 0.000384,
+              "wall_ms": 128.489255
+            },
+            {
+              "forward_ms": 122.138433,
+              "backward_ms": 0.000475,
+              "wall_ms": 122.138908
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 362.714465,
+              "backward_ms": 0.00103,
+              "wall_ms": 362.715495
+            },
+            {
+              "forward_ms": 365.074595,
+              "backward_ms": 0.000743,
+              "wall_ms": 365.075338
+            }
+          ]
+        }
+      ]
+    },
+    "euclidean-backward": {
+      "case": {
+        "scenario": "euclidean",
+        "batch_size": 256,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 16,
+        "dtype": "float32",
+        "workload": "backward",
+        "seed": 0
+      },
+      "cpu_duration_lower_ms": 143.113884,
+      "speedup": 0.297929818086845,
+      "lower": 0.2612763418796521,
+      "upper": 0.3407182886097063,
+      "required": 2.0,
+      "decision": "failed",
+      "blocks": [
+        {
+          "order": "CGGC",
+          "first": [
+            {
+              "forward_ms": 74.894981,
+              "backward_ms": 69.268325,
+              "wall_ms": 144.163306
+            },
+            {
+              "forward_ms": 74.598342,
+              "backward_ms": 69.550666,
+              "wall_ms": 144.149008
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 345.213244,
+              "backward_ms": 187.706539,
+              "wall_ms": 532.919783
+            },
+            {
+              "forward_ms": 371.62582,
+              "backward_ms": 189.818104,
+              "wall_ms": 561.443924
+            }
+          ]
+        },
+        {
+          "order": "GCCG",
+          "first": [
+            {
+              "forward_ms": 74.845511,
+              "backward_ms": 69.754359,
+              "wall_ms": 144.59987
+            },
+            {
+              "forward_ms": 74.23081,
+              "backward_ms": 69.389298,
+              "wall_ms": 143.620108
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 352.880903,
+              "backward_ms": 188.560203,
+              "wall_ms": 541.441106
+            },
+            {
+              "forward_ms": 365.919789,
+              "backward_ms": 189.545967,
+              "wall_ms": 555.465756
+            }
+          ]
+        },
+        {
+          "order": "CGGC",
+          "first": [
+            {
+              "forward_ms": 74.52454,
+              "backward_ms": 69.461019,
+              "wall_ms": 143.985559
+            },
+            {
+              "forward_ms": 74.474396,
+              "backward_ms": 73.350238,
+              "wall_ms": 147.824634
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 374.335536,
+              "backward_ms": 190.72388,
+              "wall_ms": 565.059416
+            },
+            {
+              "forward_ms": 371.348934,
+              "backward_ms": 189.066707,
+              "wall_ms": 560.415641
+            }
+          ]
+        },
+        {
+          "order": "GCCG",
+          "first": [
+            {
+              "forward_ms": 74.754825,
+              "backward_ms": 69.612372,
+              "wall_ms": 144.367197
+            },
+            {
+              "forward_ms": 75.296171,
+              "backward_ms": 69.48882,
+              "wall_ms": 144.784991
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 347.57595,
+              "backward_ms": 190.792237,
+              "wall_ms": 538.368187
+            },
+            {
+              "forward_ms": 365.809533,
+              "backward_ms": 189.664215,
+              "wall_ms": 555.473748
+            }
+          ]
+        },
+        {
+          "order": "CGGC",
+          "first": [
+            {
+              "forward_ms": 74.564649,
+              "backward_ms": 69.498021,
+              "wall_ms": 144.06267
+            },
+            {
+              "forward_ms": 74.614697,
+              "backward_ms": 70.01847,
+              "wall_ms": 144.633167
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 361.739254,
+              "backward_ms": 188.845081,
+              "wall_ms": 550.584335
+            },
+            {
+              "forward_ms": 371.179443,
+              "backward_ms": 189.571218,
+              "wall_ms": 560.750661
+            }
+          ]
+        },
+        {
+          "order": "GCCG",
+          "first": [
+            {
+              "forward_ms": 96.35077,
+              "backward_ms": 90.396494,
+              "wall_ms": 186.747264
+            },
+            {
+              "forward_ms": 98.627776,
+              "backward_ms": 92.98714,
+              "wall_ms": 191.614916
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 358.699132,
+              "backward_ms": 190.01961,
+              "wall_ms": 548.718742
+            },
+            {
+              "forward_ms": 371.191052,
+              "backward_ms": 189.613004,
+              "wall_ms": 560.804056
+            }
+          ]
+        },
+        {
+          "order": "CGGC",
+          "first": [
+            {
+              "forward_ms": 98.750597,
+              "backward_ms": 91.419063,
+              "wall_ms": 190.16966
+            },
+            {
+              "forward_ms": 96.403954,
+              "backward_ms": 90.642524,
+              "wall_ms": 187.046478
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 372.005805,
+              "backward_ms": 190.853924,
+              "wall_ms": 562.859729
+            },
+            {
+              "forward_ms": 371.388517,
+              "backward_ms": 189.251176,
+              "wall_ms": 560.639693
+            }
+          ]
+        },
+        {
+          "order": "GCCG",
+          "first": [
+            {
+              "forward_ms": 98.698124,
+              "backward_ms": 92.696581,
+              "wall_ms": 191.394705
+            },
+            {
+              "forward_ms": 96.324253,
+              "backward_ms": 90.477307,
+              "wall_ms": 186.80156
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 368.136862,
+              "backward_ms": 189.038513,
+              "wall_ms": 557.175375
+            },
+            {
+              "forward_ms": 370.633035,
+              "backward_ms": 189.30956,
+              "wall_ms": 559.942595
+            }
+          ]
+        },
+        {
+          "order": "CGGC",
+          "first": [
+            {
+              "forward_ms": 98.530741,
+              "backward_ms": 92.541926,
+              "wall_ms": 191.072667
+            },
+            {
+              "forward_ms": 98.703274,
+              "backward_ms": 91.663089,
+              "wall_ms": 190.366363
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 360.945927,
+              "backward_ms": 188.340594,
+              "wall_ms": 549.286521
+            },
+            {
+              "forward_ms": 370.978678,
+              "backward_ms": 189.071847,
+              "wall_ms": 560.050525
+            }
+          ]
+        },
+        {
+          "order": "GCCG",
+          "first": [
+            {
+              "forward_ms": 98.819022,
+              "backward_ms": 92.000603,
+              "wall_ms": 190.819625
+            },
+            {
+              "forward_ms": 98.665054,
+              "backward_ms": 92.617193,
+              "wall_ms": 191.282247
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 372.241467,
+              "backward_ms": 188.847077,
+              "wall_ms": 561.088544
+            },
+            {
+              "forward_ms": 371.727154,
+              "backward_ms": 189.588481,
+              "wall_ms": 561.315635
+            }
+          ]
+        }
+      ]
+    },
+    "sphere-atlas-forward": {
+      "case": {
+        "scenario": "sphere-atlas",
+        "batch_size": 512,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 16,
+        "dtype": "float32",
+        "workload": "forward",
+        "seed": 0
+      },
+      "cpu_duration_lower_ms": 100.458225,
+      "speedup": 0.26310354042559725,
+      "lower": 0.2586447526768515,
+      "upper": 0.2657050741665533,
+      "required": 1.5,
+      "decision": "failed",
+      "blocks": [
+        {
+          "order": "CGGC",
+          "first": [
+            {
+              "forward_ms": 108.884196,
+              "backward_ms": 0.000388,
+              "wall_ms": 108.884584
+            },
+            {
+              "forward_ms": 109.856737,
+              "backward_ms": 0.000379,
+              "wall_ms": 109.857116
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 416.450536,
+              "backward_ms": 0.000747,
+              "wall_ms": 416.451283
+            },
+            {
+              "forward_ms": 417.75854,
+              "backward_ms": 0.00075,
+              "wall_ms": 417.75929
+            }
+          ]
+        },
+        {
+          "order": "GCCG",
+          "first": [
+            {
+              "forward_ms": 113.702413,
+              "backward_ms": 0.000382,
+              "wall_ms": 113.702795
+            },
+            {
+              "forward_ms": 101.117443,
+              "backward_ms": 0.000432,
+              "wall_ms": 101.117875
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 391.488493,
+              "backward_ms": 0.000597,
+              "wall_ms": 391.48909
+            },
+            {
+              "forward_ms": 417.464582,
+              "backward_ms": 0.00079,
+              "wall_ms": 417.465372
+            }
+          ]
+        },
+        {
+          "order": "CGGC",
+          "first": [
+            {
+              "forward_ms": 110.969048,
+              "backward_ms": 0.000403,
+              "wall_ms": 110.969451
+            },
+            {
+              "forward_ms": 108.350613,
+              "backward_ms": 0.000399,
+              "wall_ms": 108.351012
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 415.004717,
+              "backward_ms": 0.000683,
+              "wall_ms": 415.0054
+            },
+            {
+              "forward_ms": 413.636818,
+              "backward_ms": 0.000726,
+              "wall_ms": 413.637544
+            }
+          ]
+        },
+        {
+          "order": "GCCG",
+          "first": [
+            {
+              "forward_ms": 107.527351,
+              "backward_ms": 0.000399,
+              "wall_ms": 107.52775
+            },
+            {
+              "forward_ms": 101.689899,
+              "backward_ms": 0.000393,
+              "wall_ms": 101.690292
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 363.918107,
+              "backward_ms": 0.000535,
+              "wall_ms": 363.918642
+            },
+            {
+              "forward_ms": 414.830752,
+              "backward_ms": 0.00066,
+              "wall_ms": 414.831412
+            }
+          ]
+        },
+        {
+          "order": "CGGC",
+          "first": [
+            {
+              "forward_ms": 109.665465,
+              "backward_ms": 0.000394,
+              "wall_ms": 109.665859
+            },
+            {
+              "forward_ms": 107.965168,
+              "backward_ms": 0.0004,
+              "wall_ms": 107.965568
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 416.120045,
+              "backward_ms": 0.00064,
+              "wall_ms": 416.120685
+            },
+            {
+              "forward_ms": 408.257468,
+              "backward_ms": 0.00073,
+              "wall_ms": 408.258198
+            }
+          ]
+        },
+        {
+          "order": "GCCG",
+          "first": [
+            {
+              "forward_ms": 108.781838,
+              "backward_ms": 0.000384,
+              "wall_ms": 108.782222
+            },
+            {
+              "forward_ms": 107.779108,
+              "backward_ms": 0.000396,
+              "wall_ms": 107.779504
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 416.97521,
+              "backward_ms": 0.00077,
+              "wall_ms": 416.97598
+            },
+            {
+              "forward_ms": 417.451091,
+              "backward_ms": 0.000824,
+              "wall_ms": 417.451915
+            }
+          ]
+        },
+        {
+          "order": "CGGC",
+          "first": [
+            {
+              "forward_ms": 108.01674,
+              "backward_ms": 0.000378,
+              "wall_ms": 108.017118
+            },
+            {
+              "forward_ms": 108.72038,
+              "backward_ms": 0.000374,
+              "wall_ms": 108.720754
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 416.313938,
+              "backward_ms": 0.00089,
+              "wall_ms": 416.314828
+            },
+            {
+              "forward_ms": 416.456741,
+              "backward_ms": 0.00074,
+              "wall_ms": 416.457481
+            }
+          ]
+        },
+        {
+          "order": "GCCG",
+          "first": [
+            {
+              "forward_ms": 110.822041,
+              "backward_ms": 0.000393,
+              "wall_ms": 110.822434
+            },
+            {
+              "forward_ms": 100.426336,
+              "backward_ms": 0.000321,
+              "wall_ms": 100.426657
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 416.965442,
+              "backward_ms": 0.000716,
+              "wall_ms": 416.966158
+            },
+            {
+              "forward_ms": 412.475991,
+              "backward_ms": 0.000793,
+              "wall_ms": 412.476784
+            }
+          ]
+        },
+        {
+          "order": "CGGC",
+          "first": [
+            {
+              "forward_ms": 108.143925,
+              "backward_ms": 0.000369,
+              "wall_ms": 108.144294
+            },
+            {
+              "forward_ms": 107.435008,
+              "backward_ms": 0.000394,
+              "wall_ms": 107.435402
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 397.484476,
+              "backward_ms": 0.000817,
+              "wall_ms": 397.485293
+            },
+            {
+              "forward_ms": 412.561668,
+              "backward_ms": 0.000613,
+              "wall_ms": 412.562281
+            }
+          ]
+        },
+        {
+          "order": "GCCG",
+          "first": [
+            {
+              "forward_ms": 111.346316,
+              "backward_ms": 0.000406,
+              "wall_ms": 111.346722
+            },
+            {
+              "forward_ms": 101.399259,
+              "backward_ms": 0.00036,
+              "wall_ms": 101.399619
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 406.082875,
+              "backward_ms": 0.000747,
+              "wall_ms": 406.083622
+            },
+            {
+              "forward_ms": 418.465355,
+              "backward_ms": 0.000674,
+              "wall_ms": 418.466029
+            }
+          ]
+        }
+      ]
+    },
+    "sphere-atlas-backward": {
+      "case": {
+        "scenario": "sphere-atlas",
+        "batch_size": 256,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 16,
+        "dtype": "float32",
+        "workload": "backward",
+        "seed": 0
+      },
+      "cpu_duration_lower_ms": 159.792805,
+      "speedup": 0.2587382344546899,
+      "lower": 0.25589945412372733,
+      "upper": 0.2651773258332977,
+      "required": 1.5,
+      "decision": "failed",
+      "blocks": [
+        {
+          "order": "CGGC",
+          "first": [
+            {
+              "forward_ms": 85.498438,
+              "backward_ms": 76.484835,
+              "wall_ms": 161.983273
+            },
+            {
+              "forward_ms": 89.346044,
+              "backward_ms": 75.150225,
+              "wall_ms": 164.496269
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 415.001792,
+              "backward_ms": 208.542309,
+              "wall_ms": 623.544101
+            },
+            {
+              "forward_ms": 421.861402,
+              "backward_ms": 208.514863,
+              "wall_ms": 630.376265
+            }
+          ]
+        },
+        {
+          "order": "GCCG",
+          "first": [
+            {
+              "forward_ms": 85.116119,
+              "backward_ms": 78.431385,
+              "wall_ms": 163.547504
+            },
+            {
+              "forward_ms": 85.203969,
+              "backward_ms": 76.01635,
+              "wall_ms": 161.220319
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 416.460989,
+              "backward_ms": 208.648667,
+              "wall_ms": 625.109656
+            },
+            {
+              "forward_ms": 400.388742,
+              "backward_ms": 210.434282,
+              "wall_ms": 610.823024
+            }
+          ]
+        },
+        {
+          "order": "CGGC",
+          "first": [
+            {
+              "forward_ms": 85.00444,
+              "backward_ms": 75.254507,
+              "wall_ms": 160.258947
+            },
+            {
+              "forward_ms": 85.054938,
+              "backward_ms": 76.126952,
+              "wall_ms": 161.18189
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 415.95945,
+              "backward_ms": 208.885094,
+              "wall_ms": 624.844544
+            },
+            {
+              "forward_ms": 422.17829,
+              "backward_ms": 208.390496,
+              "wall_ms": 630.568786
+            }
+          ]
+        },
+        {
+          "order": "GCCG",
+          "first": [
+            {
+              "forward_ms": 85.254563,
+              "backward_ms": 75.895676,
+              "wall_ms": 161.150239
+            },
+            {
+              "forward_ms": 84.574146,
+              "backward_ms": 75.089986,
+              "wall_ms": 159.664132
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 416.439986,
+              "backward_ms": 208.89876,
+              "wall_ms": 625.338746
+            },
+            {
+              "forward_ms": 413.200701,
+              "backward_ms": 209.447785,
+              "wall_ms": 622.648486
+            }
+          ]
+        },
+        {
+          "order": "CGGC",
+          "first": [
+            {
+              "forward_ms": 85.09064,
+              "backward_ms": 75.808468,
+              "wall_ms": 160.899108
+            },
+            {
+              "forward_ms": 85.023204,
+              "backward_ms": 75.323685,
+              "wall_ms": 160.346889
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 416.701667,
+              "backward_ms": 208.603989,
+              "wall_ms": 625.305656
+            },
+            {
+              "forward_ms": 423.109516,
+              "backward_ms": 208.976282,
+              "wall_ms": 632.085798
+            }
+          ]
+        },
+        {
+          "order": "GCCG",
+          "first": [
+            {
+              "forward_ms": 85.788881,
+              "backward_ms": 75.770713,
+              "wall_ms": 161.559594
+            },
+            {
+              "forward_ms": 86.066382,
+              "backward_ms": 78.518052,
+              "wall_ms": 164.584434
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 402.211791,
+              "backward_ms": 208.616023,
+              "wall_ms": 610.827814
+            },
+            {
+              "forward_ms": 381.129945,
+              "backward_ms": 206.999014,
+              "wall_ms": 588.128959
+            }
+          ]
+        },
+        {
+          "order": "CGGC",
+          "first": [
+            {
+              "forward_ms": 85.605298,
+              "backward_ms": 77.622997,
+              "wall_ms": 163.228295
+            },
+            {
+              "forward_ms": 84.939953,
+              "backward_ms": 75.65606,
+              "wall_ms": 160.596013
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 418.400419,
+              "backward_ms": 209.099786,
+              "wall_ms": 627.500205
+            },
+            {
+              "forward_ms": 422.773237,
+              "backward_ms": 209.104544,
+              "wall_ms": 631.877781
+            }
+          ]
+        },
+        {
+          "order": "GCCG",
+          "first": [
+            {
+              "forward_ms": 85.089229,
+              "backward_ms": 76.606604,
+              "wall_ms": 161.695833
+            },
+            {
+              "forward_ms": 84.971489,
+              "backward_ms": 81.219828,
+              "wall_ms": 166.191317
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 416.580619,
+              "backward_ms": 208.375473,
+              "wall_ms": 624.956092
+            },
+            {
+              "forward_ms": 396.68876,
+              "backward_ms": 209.572626,
+              "wall_ms": 606.261386
+            }
+          ]
+        },
+        {
+          "order": "CGGC",
+          "first": [
+            {
+              "forward_ms": 85.01148,
+              "backward_ms": 75.517407,
+              "wall_ms": 160.528887
+            },
+            {
+              "forward_ms": 85.139868,
+              "backward_ms": 76.04424,
+              "wall_ms": 161.184108
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 417.184352,
+              "backward_ms": 208.476934,
+              "wall_ms": 625.661286
+            },
+            {
+              "forward_ms": 422.695571,
+              "backward_ms": 209.560156,
+              "wall_ms": 632.255727
+            }
+          ]
+        },
+        {
+          "order": "GCCG",
+          "first": [
+            {
+              "forward_ms": 84.8815,
+              "backward_ms": 75.516463,
+              "wall_ms": 160.397963
+            },
+            {
+              "forward_ms": 84.526391,
+              "backward_ms": 75.335746,
+              "wall_ms": 159.862137
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 400.565871,
+              "backward_ms": 208.030144,
+              "wall_ms": 608.596015
+            },
+            {
+              "forward_ms": 395.5465,
+              "backward_ms": 208.774318,
+              "wall_ms": 604.320818
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "failures": [
+    "CUDA speedup upper bound 0.363 < 2.000: euclidean-forward",
+    "CUDA speedup upper bound 0.341 < 2.000: euclidean-backward",
+    "CUDA speedup upper bound 0.266 < 1.500: sphere-atlas-forward",
+    "CUDA speedup upper bound 0.265 < 1.500: sphere-atlas-backward"
+  ],
+  "inconclusive": [],
+  "incomplete": [],
+  "vast_offer": {
+    "offer_id": 43555755,
+    "instance_id": 46252762,
+    "label": "geomflow-phase10-direct2-f37bc6e",
+    "geolocation": "Norway, NO",
+    "gpu_name": "RTX 3060",
+    "num_gpus": 2,
+    "gpu_ram_mib": 12288,
+    "cpu_name": "Intel Xeon E5-2690 v4",
+    "cpu_cores_effective": 28,
+    "cpu_ram_mib": 64201,
+    "driver_version": "595.84",
+    "cuda_max_good": 13.2,
+    "reliability": 0.9981399,
+    "verified": true,
+    "is_vm_deverified": false,
+    "dph_total_usd": 0.127,
+    "inet_down_mbps": 688.9,
+    "inet_up_mbps": 688.3,
+    "inet_down_cost_usd_per_gib": 0.006510416666666667,
+    "inet_up_cost_usd_per_gib": 0.006510416666666667,
+    "disk_gib": 30
+  },
+  "environments": {
+    "baseline_cpu": {
+      "python": "3.11.13",
+      "python_executable": "/opt/conda/bin/python",
+      "torch": "2.7.1+cu128",
+      "cuda_runtime": "12.8",
+      "geomflow_path": "/workspace/phase1-package/geomflow/__init__.py",
+      "declared_revision": "19cf027bd80d336112d9674474d8596d6b4209f3",
+      "device": "cpu",
+      "torch_num_threads": 1,
+      "torch_num_interop_threads": 14,
+      "cpu": "x86_64",
+      "cpu_count": 28,
+      "process_affinity": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27
+      ],
+      "thread_environment": {
+        "MKL_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1",
+        "VECLIB_MAXIMUM_THREADS": null
+      },
+      "dependency_versions": {
+        "numpy": "2.2.6",
+        "scipy": "1.17.1",
+        "torch": "2.7.1+cu128"
+      },
+      "ram_bytes": 67319459840,
+      "torch_backends": {
+        "cudnn_benchmark": false,
+        "cudnn_deterministic": false,
+        "cuda_matmul_allow_tf32": false,
+        "cudnn_allow_tf32": true,
+        "deterministic_algorithms": false
+      },
+      "package_root": "/workspace/phase1-package/geomflow",
+      "package_sha256": "82b3507f2417694a0f142e6329f312aa8f3b32b733667fe3b484710ccae678d8",
+      "package_file_count": 19
+    },
+    "candidate_cpu": {
+      "python": "3.11.13",
+      "python_executable": "/opt/conda/bin/python",
+      "torch": "2.7.1+cu128",
+      "cuda_runtime": "12.8",
+      "geomflow_path": "/workspace/candidate-package/geomflow/__init__.py",
+      "declared_revision": "f37bc6ef66e6d89eb48647f6b64964179cbead93",
+      "device": "cpu",
+      "torch_num_threads": 1,
+      "torch_num_interop_threads": 14,
+      "cpu": "x86_64",
+      "cpu_count": 28,
+      "process_affinity": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27
+      ],
+      "thread_environment": {
+        "MKL_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1",
+        "VECLIB_MAXIMUM_THREADS": null
+      },
+      "dependency_versions": {
+        "numpy": "2.2.6",
+        "scipy": "1.17.1",
+        "torch": "2.7.1+cu128"
+      },
+      "ram_bytes": 67319459840,
+      "torch_backends": {
+        "cudnn_benchmark": false,
+        "cudnn_deterministic": false,
+        "cuda_matmul_allow_tf32": false,
+        "cudnn_allow_tf32": true,
+        "deterministic_algorithms": false
+      },
+      "package_root": "/workspace/candidate-package/geomflow",
+      "package_sha256": "42d279f1ae9c7bae79f4efc7267c2810314a5c33a8eddac54421782bee82bd7e",
+      "package_file_count": 21
+    },
+    "candidate_cuda": {
+      "python": "3.11.13",
+      "python_executable": "/opt/conda/bin/python",
+      "torch": "2.7.1+cu128",
+      "cuda_runtime": "12.8",
+      "geomflow_path": "/workspace/candidate-package/geomflow/__init__.py",
+      "declared_revision": "f37bc6ef66e6d89eb48647f6b64964179cbead93",
+      "device": "cuda",
+      "torch_num_threads": 1,
+      "torch_num_interop_threads": 14,
+      "cpu": "x86_64",
+      "cpu_count": 28,
+      "process_affinity": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27
+      ],
+      "thread_environment": {
+        "MKL_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1",
+        "VECLIB_MAXIMUM_THREADS": null
+      },
+      "dependency_versions": {
+        "numpy": "2.2.6",
+        "scipy": "1.17.1",
+        "torch": "2.7.1+cu128"
+      },
+      "ram_bytes": 67319459840,
+      "torch_backends": {
+        "cudnn_benchmark": false,
+        "cudnn_deterministic": false,
+        "cuda_matmul_allow_tf32": false,
+        "cudnn_allow_tf32": true,
+        "deterministic_algorithms": false
+      },
+      "package_root": "/workspace/candidate-package/geomflow",
+      "package_sha256": "42d279f1ae9c7bae79f4efc7267c2810314a5c33a8eddac54421782bee82bd7e",
+      "package_file_count": 21,
+      "gpu": {
+        "name": "NVIDIA GeForce RTX 3060",
+        "uuid": "bb6b2f85-b0e5-186b-dfa6-5a72ef14978f",
+        "total_memory": 12488343552,
+        "capability": [
+          8,
+          6
+        ]
+      },
+      "nvidia_driver": "595.84",
+      "cudnn": 90701
+    }
+  },
+  "cpu_geomean": {
+    "ratio": 0.7954078829197274,
+    "lower": 0.7929900433720087,
+    "upper": 0.7996500704189887,
+    "decision": "passed"
+  }
+}

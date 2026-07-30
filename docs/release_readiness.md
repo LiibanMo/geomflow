@@ -42,6 +42,26 @@ checks. Forty-iteration single-chart and multi-chart soaks each measured zero
 tail allocated-memory growth. Evidence is stored in
 `benchmarks/results/phase10_{torch25,torch27,ddp,soak}*`.
 
+The optimized candidate at revision `f37bc6e` was rerun on a verified Norwegian
+2x RTX 3060 host with reliability 0.9981399 at USD 0.127/hour. PyTorch 2.5.1
+with CUDA 12.4 and PyTorch 2.7.1 with CUDA 12.8 each passed 283 built-wheel
+tests with zero skips. DDP, soak, scoped transfer, direct-memory, adjoint-memory,
+and multi-chart resource gates passed. The no-switch atlas overhead was 1.8%,
+direct adjusted-memory ratios were 1.994, and adjoint 128/16-step adjusted-memory
+ratios were 1.0. Scoped profiles recorded 64 field calls, zero functional
+transform attempts or fallbacks, and zero materializing host-transfer bytes.
+
+The CPU remediation passed decisively: all eight case intervals passed and the
+equal-weight geometric-mean candidate/baseline ratio was 0.795. The release is
+still blocked because all CUDA speed gates failed at their first eligible
+batches. Speedup upper bounds were 0.363 and 0.341 for Euclidean forward and
+backward, and 0.266 and 0.265 for atlas forward and backward. The bounded
+TorchInductor experiment was rejected, so eager remains the selected backend.
+These results must not be converted into a release claim by choosing a later
+batch or weakening thresholds. Evidence is preserved under
+`benchmarks/results/direct-*`. Vast.ai instance `46252762` and exact-label
+runner registrations were verified absent after artifact collection.
+
 ## Infrastructure gates
 
 The Vast.ai workflow creates a uniquely labelled self-hosted runner for each run

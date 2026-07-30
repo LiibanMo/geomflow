@@ -1,0 +1,98 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "records": [
+    {
+      "workload": "single-chart-sphere-control",
+      "samples_ms": [
+        374.482244,
+        399.418027,
+        393.522295,
+        391.373142,
+        399.199994,
+        394.048504,
+        400.971195,
+        386.521832
+      ]
+    },
+    {
+      "workload": "atlas-no-switch",
+      "samples_ms": [
+        398.746618,
+        395.407722,
+        398.585712,
+        399.050539,
+        419.766751,
+        407.95314,
+        402.511946,
+        418.896966
+      ],
+      "overhead_fraction": 0.017765623125902685,
+      "statistics": {
+        "chart_predicate_count": 65,
+        "scalar_decision_count": 17,
+        "rk_trial_count": 16,
+        "accepted_trial_count": 16,
+        "rejected_trial_count": 0,
+        "wasted_rk_stage_count": 0,
+        "field_call_count": 64,
+        "transition_predicate_count": 0,
+        "transition_map_count": 0,
+        "transition_jacobian_count": 0,
+        "transition_event_count": 0
+      }
+    },
+    {
+      "workload": "deterministic-frequent-switch",
+      "transition_count": 10,
+      "statistics": {
+        "chart_predicate_count": 562,
+        "scalar_decision_count": 572,
+        "rk_trial_count": 160,
+        "accepted_trial_count": 91,
+        "rejected_trial_count": 69,
+        "wasted_rk_stage_count": 187,
+        "field_call_count": 551,
+        "transition_predicate_count": 10,
+        "transition_map_count": 10,
+        "transition_jacobian_count": 10,
+        "transition_event_count": 10
+      }
+    },
+    {
+      "workload": "late-stage-rejection",
+      "transition_count": 1,
+      "statistics": {
+        "chart_predicate_count": 59,
+        "scalar_decision_count": 60,
+        "rk_trial_count": 16,
+        "accepted_trial_count": 9,
+        "rejected_trial_count": 7,
+        "wasted_rk_stage_count": 21,
+        "field_call_count": 57,
+        "transition_predicate_count": 1,
+        "transition_map_count": 1,
+        "transition_jacobian_count": 1,
+        "transition_event_count": 1
+      }
+    },
+    {
+      "workload": "bounded-bisection",
+      "transition_count": 1,
+      "statistics": {
+        "chart_predicate_count": 49,
+        "scalar_decision_count": 50,
+        "rk_trial_count": 16,
+        "accepted_trial_count": 7,
+        "rejected_trial_count": 9,
+        "wasted_rk_stage_count": 19,
+        "field_call_count": 47,
+        "transition_predicate_count": 1,
+        "transition_map_count": 1,
+        "transition_jacobian_count": 1,
+        "transition_event_count": 1
+      }
+    }
+  ],
+  "failures": []
+}

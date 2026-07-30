@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 from datetime import datetime, timezone
+import hashlib
 import json
 import math
 import platform
@@ -63,7 +64,7 @@ def run(mode: str, steps: int, dtype: torch.dtype) -> dict[str, object]:
     torch.manual_seed(7)
     device = torch.device("cuda")
     field = LinearField(device=device, dtype=dtype)
-    data = torch.randn(2048, 2, device=device, dtype=dtype, requires_grad=True)
+    data = torch.randn(8192, 2, device=device, dtype=dtype, requires_grad=True)
     loss_fn = cnf_nll if mode == "direct" else intrinsic_adjoint_nll
     dt = 1.0 / steps
 
@@ -182,6 +183,12 @@ def main() -> int:
                 )
             except AssertionError as error:
                 failures.append(f"{dtype} step {steps} gradient parity: {error}")
+
+    for record in records:
+        vector = record.pop("gradient_vector")
+        encoded = json.dumps(vector, separators=(",", ":")).encode()
+        record["gradient_vector_length"] = len(vector)
+        record["gradient_vector_sha256"] = hashlib.sha256(encoded).hexdigest()
 
     result["status"] = "failed" if failures else "passed"
     checkpoint()
