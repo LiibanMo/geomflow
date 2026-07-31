@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import importlib.util
 import json
 from pathlib import Path
@@ -36,6 +37,10 @@ def _profile_module():
 
 def _compiler_module():
     return _benchmark_module("phase10_compiler")
+
+
+def _verify_module():
+    return _benchmark_module("phase10_verify")
 
 
 def _block(first: tuple[float, float], second: tuple[float, float]):
@@ -97,9 +102,7 @@ def test_incomplete_modes_never_produce_passed_status() -> None:
         payload = {
             "failures": [],
             "inconclusive": [],
-            "incomplete": paired.incomplete_reasons(
-                quick=quick, skip_cuda=skip_cuda
-            ),
+            "incomplete": paired.incomplete_reasons(quick=quick, skip_cuda=skip_cuda),
             "manifest": {"release_matrix_complete": False},
         }
         assert payload["incomplete"]
@@ -107,14 +110,17 @@ def test_incomplete_modes_never_produce_passed_status() -> None:
         payload["incomplete"] = []
         assert paired.overall_status(payload) == "inconclusive"
 
-    assert paired.overall_status(
-        {
-            "failures": [],
-            "inconclusive": [],
-            "incomplete": [],
-            "manifest": {"release_matrix_complete": True},
-        }
-    ) == "passed"
+    assert (
+        paired.overall_status(
+            {
+                "failures": [],
+                "inconclusive": [],
+                "incomplete": [],
+                "manifest": {"release_matrix_complete": True},
+            }
+        )
+        == "passed"
+    )
 
 
 def test_worker_identity_uses_measured_package_content() -> None:
@@ -172,13 +178,15 @@ def test_worker_package_fingerprint_hashes_package_bytes(tmp_path: Path) -> None
     second.mkdir()
     (first / "module.py").write_text("value = 1\n")
     (second / "module.py").write_text("value = 1\n")
-    assert worker.package_fingerprint(first)[
-        "package_sha256"
-    ] == worker.package_fingerprint(second)["package_sha256"]
+    assert (
+        worker.package_fingerprint(first)["package_sha256"]
+        == worker.package_fingerprint(second)["package_sha256"]
+    )
     (second / "module.py").write_text("value = 2\n")
-    assert worker.package_fingerprint(first)[
-        "package_sha256"
-    ] != worker.package_fingerprint(second)["package_sha256"]
+    assert (
+        worker.package_fingerprint(first)["package_sha256"]
+        != worker.package_fingerprint(second)["package_sha256"]
+    )
 
 
 def test_balanced_blocks_support_named_cpu_cuda_order() -> None:
@@ -200,6 +208,173 @@ def test_balanced_blocks_support_named_cpu_cuda_order() -> None:
     assert execution == list("CGGCGCCG")
     assert [block["order"] for block in blocks] == ["CGGC", "GCCG"]
     assert all(len(block["first"]) == len(block["second"]) == 2 for block in blocks)
+
+
+def _release_payload():
+    paired = _module()
+    frozen = {
+        "baseline_revision": "baseline",
+        "scenarios": ["euclidean", "sphere-atlas"],
+        "workloads": ["forward", "backward"],
+        "regression_batches": [256, 512],
+        "crossover_batches": [1, 64, 256, 512, 1024, 2048, 4096],
+        "dimension": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 16,
+        "dtype": "float32",
+        "quartets": 10,
+        "warmup": 3,
+    }
+    digest = "a" * 64
+    manifest = {
+        **{key: frozen[key] for key in frozen if key != "baseline_revision"},
+        "baseline_revision": "baseline",
+        "candidate_revision": "candidate",
+        "mode": "release",
+        "release_matrix_complete": True,
+        "baseline_wheel_sha256": digest,
+        "candidate_wheel_sha256": digest,
+        "worker_sha256": digest,
+        "scenarios_sha256": digest,
+        "frozen_manifest_sha256": digest,
+    }
+    environment = {
+        "python": "3.11",
+        "torch": "2.7.1",
+        "dependency_versions": {},
+        "process_affinity": [0],
+        "thread_environment": {},
+        "torch_num_threads": 1,
+        "torch_num_interop_threads": 1,
+        "package_root": "/candidate",
+        "package_sha256": "candidate",
+    }
+    environments = {
+        "baseline_cpu": {
+            **environment,
+            "package_root": "/baseline",
+            "package_sha256": "baseline",
+        },
+        "candidate_cpu": environment,
+        "candidate_cuda": environment,
+    }
+
+    def sample(wall_ms, backend="tensor-eager"):
+        return {
+            "forward_ms": wall_ms,
+            "backward_ms": 0.0,
+            "wall_ms": wall_ms,
+            "backend": backend,
+            "fallback_reason": None,
+        }
+
+    def blocks(first_ms, second_ms, orders, second_backend="tensor-eager"):
+        return [
+            {
+                "order": orders[index % 2],
+                "first": [sample(first_ms), sample(first_ms)],
+                "second": [
+                    sample(second_ms, second_backend),
+                    sample(second_ms, second_backend),
+                ],
+            }
+            for index in range(10)
+        ]
+
+    cpu_regression = {}
+    cpu_summaries = []
+    for scenario in frozen["scenarios"]:
+        for workload in frozen["workloads"]:
+            for batch in frozen["regression_batches"]:
+                case = paired.case_payload(scenario, batch, workload)
+                summary = paired.ratio_summary(
+                    blocks(100.0, 90.0, ("ABBA", "BAAB")), alpha=0.05 / 8
+                )
+                summary.update({"case": case, "decision": "passed"})
+                cpu_regression[paired.case_name(case)] = summary
+                cpu_summaries.append(summary)
+    aggregate = paired.aggregate_ratio_summary(cpu_summaries)
+    cpu_geomean = {**aggregate, "decision": "passed"}
+
+    crossover = {}
+    speed_gates = {}
+    for scenario in frozen["scenarios"]:
+        for workload in frozen["workloads"]:
+            family = f"{scenario}-{workload}"
+            crossover[family] = [
+                {"batch_size": batch, "cpu_ms": 200.0, "cuda_ms": 50.0, "speedup": 4.0}
+                for batch in frozen["crossover_batches"]
+            ]
+            duration_bounds = paired.deterministic_block_bootstrap_bounds(
+                [200.0] * 20, 0.05 / 4
+            )
+            crossover[f"{family}-eligibility"] = [
+                {
+                    "batch_size": 256,
+                    "samples_ms": [200.0] * 20,
+                    "lower_ms": duration_bounds["lower"],
+                    "bound_method": duration_bounds["bound_method"],
+                    "bound_requested_alpha": duration_bounds["requested_alpha"],
+                    "bound_resamples": duration_bounds["resamples"],
+                    "bound_seed": duration_bounds["seed"],
+                }
+            ]
+            summary = paired.ratio_summary(
+                blocks(200.0, 50.0, ("CGGC", "GCCG"), "inductor"),
+                alpha=0.05 / 4,
+            )
+            required = 1.5 if scenario == "sphere-atlas" else 2.0
+            speed_gates[family] = {
+                "case": paired.case_payload(scenario, 256, workload),
+                "cpu_duration_lower_ms": 200.0,
+                "speedup": 1.0 / summary["ratio"],
+                "lower": 1.0 / summary["upper"],
+                "upper": 1.0 / summary["lower"],
+                "required": required,
+                "decision": "passed",
+                "blocks": summary["blocks"],
+                "backends": ["inductor"],
+                "fallback_reasons": [],
+            }
+    return frozen, {
+        "schema_version": 2,
+        "status": "passed",
+        "manifest": manifest,
+        "environments": environments,
+        "cpu_regression": cpu_regression,
+        "cpu_geomean": cpu_geomean,
+        "crossover": crossover,
+        "speed_gates": speed_gates,
+        "selected_cuda_backend": "inductor",
+        "failures": [],
+        "inconclusive": [],
+        "incomplete": [],
+    }
+
+
+def test_release_verifier_reconstructs_raw_decisions_and_rejects_fallback() -> None:
+    verifier = _verify_module()
+    frozen, payload = _release_payload()
+    verifier.verify_release_payload(payload, frozen)
+
+    changed = copy.deepcopy(payload)
+    changed["speed_gates"]["euclidean-forward"]["blocks"][0]["second"][0][
+        "fallback_reason"
+    ] = "unsupported"
+    with pytest.raises(AssertionError, match="used fallback"):
+        verifier.verify_release_payload(changed, frozen)
+
+
+def test_release_verifier_rejects_later_batch_after_eligible_case() -> None:
+    verifier = _verify_module()
+    frozen, payload = _release_payload()
+    family = "euclidean-forward"
+    first = payload["crossover"][f"{family}-eligibility"][0]
+    payload["crossover"][f"{family}-eligibility"].append({**first, "batch_size": 512})
+    payload["speed_gates"][family]["case"]["batch_size"] = 512
+    with pytest.raises(AssertionError, match="skipped an earlier eligible batch"):
+        verifier.verify_release_payload(payload, frozen)
 
 
 def test_profiler_transfer_bytes_fails_closed() -> None:
@@ -309,7 +484,9 @@ def test_compiler_unsupported_fullgraph_is_a_candidate_rejection(monkeypatch) ->
 def test_compiler_harness_errors_fail_the_evidence_run(monkeypatch, tmp_path) -> None:
     compiler = _compiler_module()
     output = tmp_path / "compiler.json"
-    monkeypatch.setattr(sys, "argv", ["phase10_compiler.py", "--output", str(output), "--quick"])
+    monkeypatch.setattr(
+        sys, "argv", ["phase10_compiler.py", "--output", str(output), "--quick"]
+    )
     monkeypatch.setattr(compiler.torch.cuda, "is_available", lambda: False)
     monkeypatch.setattr(
         compiler,

@@ -90,9 +90,7 @@ class WorkerClient:
         else:
             return_code = self.process.wait(timeout=10)
         if return_code != 0:
-            raise RuntimeError(
-                f"worker {self.label} exited with status {return_code}"
-            )
+            raise RuntimeError(f"worker {self.label} exited with status {return_code}")
 
 
 def validate_worker_environments(environments: dict[str, dict[str, Any]]) -> None:
@@ -216,12 +214,8 @@ def balanced_blocks(
 def block_log_ratios(blocks: list[dict[str, Any]]) -> list[float]:
     ratios = []
     for block in blocks:
-        first = statistics.fmean(
-            math.log(item["wall_ms"]) for item in block["first"]
-        )
-        second = statistics.fmean(
-            math.log(item["wall_ms"]) for item in block["second"]
-        )
+        first = statistics.fmean(math.log(item["wall_ms"]) for item in block["first"])
+        second = statistics.fmean(math.log(item["wall_ms"]) for item in block["second"])
         ratios.append(second - first)
     return ratios
 
@@ -331,7 +325,12 @@ def validate_measurements(payload: dict[str, Any]) -> None:
         blocks = summary.get("blocks", [])
         if len(blocks) != payload["manifest"]["quartets"]:
             raise AssertionError(f"{name} has an invalid quartet count")
-        samples = [sample for block in blocks for side in ("first", "second") for sample in block[side]]
+        samples = [
+            sample
+            for block in blocks
+            for side in ("first", "second")
+            for sample in block[side]
+        ]
         if any(
             not math.isfinite(float(sample.get("wall_ms", 0.0)))
             or float(sample.get("wall_ms", 0.0)) <= 0.0
@@ -469,9 +468,7 @@ def main() -> int:
                     summary["decision"] = (
                         "passed"
                         if summary["upper"] <= 1.10
-                        else "failed"
-                        if summary["lower"] > 1.10
-                        else "inconclusive"
+                        else "failed" if summary["lower"] > 1.10 else "inconclusive"
                     )
                     payload["cpu_regression"][case_name(case)] = summary
                     cpu_summaries.append(summary)
@@ -493,9 +490,7 @@ def main() -> int:
         geomean_decision = (
             "passed"
             if geomean_upper <= 1.05
-            else "failed"
-            if geomean_lower > 1.05
-            else "inconclusive"
+            else "failed" if geomean_lower > 1.05 else "inconclusive"
         )
         payload["cpu_geomean"] = {
             "ratio": geomean_ratio,
@@ -508,9 +503,7 @@ def main() -> int:
                 f"CPU geometric-mean lower bound {geomean_lower:.3f} > 1.050"
             )
         elif geomean_decision == "inconclusive":
-            payload["inconclusive"].append(
-                "CPU geometric-mean interval crosses 1.050"
-            )
+            payload["inconclusive"].append("CPU geometric-mean interval crosses 1.050")
 
         if candidate_cuda is not None:
             speed_alpha = 0.05 / 4.0
@@ -585,9 +578,9 @@ def main() -> int:
                         decision = (
                             "passed"
                             if speedup_lower >= required
-                            else "failed"
-                            if speedup_upper < required
-                            else "inconclusive"
+                            else (
+                                "failed" if speedup_upper < required else "inconclusive"
+                            )
                         )
                         selected = {
                             "case": case,
@@ -599,6 +592,21 @@ def main() -> int:
                             "decision": decision,
                             "blocks": blocks,
                         }
+                        selected_samples = [
+                            sample for block in blocks for sample in block["second"]
+                        ]
+                        selected_backends = sorted(
+                            {sample.get("backend") for sample in selected_samples}
+                        )
+                        fallback_reasons = sorted(
+                            {
+                                sample["fallback_reason"]
+                                for sample in selected_samples
+                                if sample.get("fallback_reason") is not None
+                            }
+                        )
+                        selected["backends"] = selected_backends
+                        selected["fallback_reasons"] = fallback_reasons
                         break
                     payload["crossover"][family + "-eligibility"] = eligibility
                     if selected is None:
@@ -616,8 +624,24 @@ def main() -> int:
                             payload["inconclusive"].append(
                                 f"CUDA speedup interval crosses {selected['required']:.3f}: {family}"
                             )
+                        if len(selected["backends"]) != 1:
+                            payload["failures"].append(
+                                f"CUDA gate used multiple backends {selected['backends']}: {family}"
+                            )
+                        if selected["fallback_reasons"]:
+                            payload["failures"].append(
+                                f"CUDA gate used fallback {selected['fallback_reasons']}: {family}"
+                            )
                     atomic_write(args.output, payload)
 
+        selected_backends = {
+            backend
+            for gate in payload["speed_gates"].values()
+            for backend in gate.get("backends", [])
+        }
+        payload["selected_cuda_backend"] = (
+            next(iter(selected_backends)) if len(selected_backends) == 1 else None
+        )
         validate_measurements(payload)
         payload["status"] = overall_status(payload)
     except Exception as error:

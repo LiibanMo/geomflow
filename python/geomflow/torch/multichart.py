@@ -42,9 +42,7 @@ class MultiChartVectorField(nn.Module):
                 dim, hidden_dim, n_layers, activation=activation
             )
 
-    def forward(
-        self, t: torch.Tensor, x: torch.Tensor, chart_id: int
-    ) -> torch.Tensor:
+    def forward(self, t: torch.Tensor, x: torch.Tensor, chart_id: int) -> torch.Tensor:
         """Evaluate vector field in a given chart.
 
         Parameters
@@ -93,6 +91,28 @@ class MultiChartVectorField(nn.Module):
         ):
             return head._forward_unchecked(t, x)
         return self(t, x, chart_id)
+
+    def _supports_tensor_value_and_trace(self, chart_id: int) -> bool:
+        """Return whether one built-in head permits tensor-only solver dispatch."""
+        if type(self) is not MultiChartVectorField:
+            return False
+        if (
+            self._forward_hooks
+            or self._forward_pre_hooks
+            or self._backward_hooks
+            or self._backward_pre_hooks
+            or getattr(self, "_compiled_call_impl", None) is not None
+            or _has_global_execution_hooks()
+        ):
+            return False
+        head = self._heads[str(chart_id)]
+        return head._supports_tensor_value_and_trace()
+
+    def _tensor_value_and_trace_unchecked(
+        self, t: torch.Tensor, x: torch.Tensor, chart_id: int
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        """Evaluate an eligible chart head and its coordinate-Jacobian trace."""
+        return self._heads[str(chart_id)]._tensor_value_and_trace_unchecked(t, x)
 
     def head(self, chart_id: int) -> ManifoldVectorField:
         """Access the per-chart head."""

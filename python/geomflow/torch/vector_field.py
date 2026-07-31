@@ -2,16 +2,25 @@
 
 from __future__ import annotations
 
+import warnings
+
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from torch.nn.modules import module as module_hooks
-import warnings
+from torch.nn.utils import parametrize
 
 from .operators import covariant_derivative_tensor
 from ._utils import validate_tensor_module_compatibility
 
-
-_NONSMOOTH_ACTIVATIONS = (nn.ReLU, nn.ReLU6, nn.LeakyReLU, nn.PReLU, nn.RReLU, nn.Hardtanh)
+_NONSMOOTH_ACTIVATIONS = (
+    nn.ReLU,
+    nn.ReLU6,
+    nn.LeakyReLU,
+    nn.PReLU,
+    nn.RReLU,
+    nn.Hardtanh,
+)
 _KNOWN_SMOOTH_ACTIVATIONS = (nn.Tanh, nn.Sigmoid, nn.SiLU, nn.Softplus, nn.GELU)
 
 
@@ -104,7 +113,9 @@ class ManifoldVectorField(nn.Module):
         """Evaluate after the caller has validated placement and dtype."""
         if t.dim() == x.dim() - 1:
             t = t.unsqueeze(-1)
-        coordinates = torch.cat([torch.sin(x), torch.cos(x)], dim=-1) if self.periodic else x
+        coordinates = (
+            torch.cat([torch.sin(x), torch.cos(x)], dim=-1) if self.periodic else x
+        )
         tx = torch.cat([t, coordinates], dim=-1)
         return self.net(tx)
 
@@ -124,6 +135,54 @@ class ManifoldVectorField(nn.Module):
         ):
             return self._forward_unchecked(t, x)
         return self(t, x)
+
+    def _supports_tensor_value_and_trace(self) -> bool:
+        """Return whether solver internals may bypass module dispatch safely."""
+        if type(self) is not ManifoldVectorField or self.periodic:
+            return False
+        if _has_global_execution_hooks():
+            return False
+        for module in self.modules():
+            if (
+                type(module)
+                not in (ManifoldVectorField, nn.Sequential, nn.Linear, nn.SiLU)
+                or module._forward_hooks
+                or module._forward_pre_hooks
+                or module._backward_hooks
+                or module._backward_pre_hooks
+                or getattr(module, "_compiled_call_impl", None) is not None
+                or parametrize.is_parametrized(module)
+            ):
+                return False
+        layers = list(self.net)
+        return bool(layers) and all(
+            type(layer) is (nn.Linear if index % 2 == 0 else nn.SiLU)
+            for index, layer in enumerate(layers)
+        )
+
+    def _tensor_value_and_trace_unchecked(
+        self, t: torch.Tensor, x: torch.Tensor
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        """Evaluate the built-in MLP and its exact coordinate-Jacobian trace."""
+        if t.dim() == x.dim() - 1:
+            t = t.unsqueeze(-1)
+        value = torch.cat((t, x), dim=-1)
+        identity = torch.eye(self.dim, device=x.device, dtype=x.dtype).expand(
+            *x.shape[:-1], self.dim, self.dim
+        )
+        time_tangent = x.new_zeros(*x.shape[:-1], 1, self.dim)
+        tangent = torch.cat((time_tangent, identity), dim=-2)
+
+        for layer in self.net:
+            if type(layer) is nn.Linear:
+                value = F.linear(value, layer.weight, layer.bias)
+                tangent = torch.einsum("oi,...ij->...oj", layer.weight, tangent)
+            else:
+                sigmoid = torch.sigmoid(value)
+                derivative = sigmoid * (1.0 + value * (1.0 - sigmoid))
+                value = F.silu(value)
+                tangent = derivative.unsqueeze(-1) * tangent
+        return value, tangent.diagonal(dim1=-2, dim2=-1).sum(-1)
 
 
 def weight_decay_loss(vf: ManifoldVectorField) -> torch.Tensor:

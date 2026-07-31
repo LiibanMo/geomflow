@@ -45,6 +45,7 @@ def EuclideanSpace(dim: int = 2) -> AnalyticMetric:
         inverse_fn,
         sqrt_det_fn,
         log_volume_gradient_fn=log_volume_gradient_fn,
+        _solver_kind="euclidean",
     )
 
 
@@ -90,6 +91,7 @@ def SphereStereographicMetric(dim: int = 2, radius: float = 1.0) -> AnalyticMetr
         sqrt_det_fn,
         domain_fn=domain_fn,
         log_volume_gradient_fn=log_volume_gradient_fn,
+        _solver_kind="sphere-stereographic",
     )
 
 
@@ -149,7 +151,11 @@ def Sphere2DAtlas(n_samples: int = 500, seed: int = 42) -> Atlas:
 
     chart_a._defer_trial_validation = True
     chart_b._defer_trial_validation = True
-    return Atlas([chart_a, chart_b], reference_chart_id=0)
+    chart_a._solver_domain_fn = chart_domain
+    chart_b._solver_domain_fn = chart_domain
+    atlas = Atlas([chart_a, chart_b], reference_chart_id=0)
+    atlas._solver_kind = "sphere-2d-stereographic"
+    return atlas
 
 
 def Torus2D(R: float = 2.0, r: float = 1.0) -> AnalyticMetric:

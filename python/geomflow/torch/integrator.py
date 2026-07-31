@@ -32,12 +32,16 @@ class FlowResult:
         trajectory: list[tuple[float, torch.Tensor, torch.Tensor]],
         trajectory_checkpoint_interval: int = 1,
         trajectory_is_detached: bool = False,
+        execution_backend: str = "component-gradient-eager",
+        fallback_reason: str | None = None,
     ) -> None:
         self.x_final = x_final
         self.divergence_integral = divergence_integral
         self.trajectory = trajectory
         self.trajectory_checkpoint_interval = trajectory_checkpoint_interval
         self.trajectory_is_detached = trajectory_is_detached
+        self._execution_backend = execution_backend
+        self._fallback_reason = fallback_reason
 
     @property
     def flow_log_abs_det_jacobian(self) -> torch.Tensor:
@@ -62,6 +66,7 @@ def _augmented_rk4_step(
     *,
     compute_divergence: bool = True,
     stage_callback: Callable[[float, torch.Tensor], None] | None = None,
+    use_tensor_core: bool = False,
 ) -> tuple[torch.Tensor, torch.Tensor]:
     """Advance one intrinsic augmented RK4 step."""
     build_graph = torch.is_grad_enabled() and not torch.is_inference_mode_enabled()
@@ -77,6 +82,15 @@ def _augmented_rk4_step(
             time_tensor = state.new_full(state.shape[:-1], stage_time)
             field_value = field_call(time_tensor, state)
             return field_value, state.new_zeros(state.shape[:-1])
+
+        if use_tensor_core:
+            time_tensor = state.new_full(state.shape[:-1], stage_time)
+            field_value, trace = vf._tensor_value_and_trace_unchecked(
+                time_tensor, state
+            )
+            volume_gradient = metric._tensor_log_volume_gradient_unchecked(state)
+            divergence_value = trace + (field_value * volume_gradient).sum(-1)
+            return field_value, divergence_value
 
         with torch.inference_mode(False), torch.enable_grad():
             divergence_state = state
@@ -105,9 +119,7 @@ def _augmented_rk4_step(
     x_next = metric.canonicalize(
         x + (step_size / 6.0) * (k1_x + 2.0 * k2_x + 2.0 * k3_x + k4_x)
     )
-    integral_increment = (step_size / 6.0) * (
-        k1_i + 2.0 * k2_i + 2.0 * k3_i + k4_i
-    )
+    integral_increment = (step_size / 6.0) * (k1_i + 2.0 * k2_i + 2.0 * k3_i + k4_i)
     return x_next, integral_increment
 
 
@@ -123,7 +135,7 @@ def integrate_rk4(
     stage_callback: Callable[[float, torch.Tensor], None] | None = None,
     checkpoint_interval: int = 1,
     detach_trajectory: bool = False,
-    compile: bool = False,
+    compile: bool | None = None,
 ) -> FlowResult:
     """Integrate ``x_dot=f`` and ``I_dot=div_g f`` with augmented RK4.
 
@@ -131,7 +143,8 @@ def integrate_rk4(
     step's sign. Trajectory entries are ``(time, state, divergence_integral)``.
     By default they retain autograd history. ``detach_trajectory=True`` stores
     replay-only checkpoints, and ``checkpoint_interval`` controls their spacing.
-    ``compile=True`` opts into the cached single-chart tensor execution path.
+    ``compile=None`` automatically selects eligible CUDA acceleration,
+    ``False`` forces exact eager execution, and ``True`` requests compilation.
     """
     if x0.dim() < 1:
         raise ValueError("x0 must have shape (..., dim); got 0-d tensor")
@@ -140,8 +153,24 @@ def integrate_rk4(
     validate_tensor_module_compatibility(x0, vf, "integrate_rk4")
     schedule = FixedStepSchedule(t0, t1, dt)
     checkpoint_interval = validate_checkpoint_interval(checkpoint_interval)
+    tensor_eligible = (
+        stage_callback is None
+        and not track_trajectory
+        and metric._supports_tensor_solver()
+        and type(vf) is ManifoldVectorField
+        and vf._supports_tensor_value_and_trace()
+    )
+    use_tensor_core = compile is not False and compute_divergence and tensor_eligible
+    execution_backend = (
+        "tensor-eager" if use_tensor_core else "component-gradient-eager"
+    )
+    fallback_reason = None
+    metric.validate_points(x0)
 
-    if compile:
+    request_compilation = compile is True or (
+        compile is None and x0.device.type == "cuda" and tensor_eligible
+    )
+    if request_compilation:
         from .compilation import _integrate_rk4_compiled
 
         compiled = _integrate_rk4_compiled(
@@ -153,18 +182,34 @@ def integrate_rk4(
             unsupported_reason=(
                 "stage callbacks require eager execution"
                 if stage_callback is not None
-                else "trajectory capture requires eager execution"
-                if track_trajectory
-                else None
+                else (
+                    "trajectory capture requires eager execution"
+                    if track_trajectory
+                    else (
+                        "field or metric is not eligible for tensor compilation"
+                        if not tensor_eligible
+                        else None
+                    )
+                )
             ),
+            warn_fallback=compile is True,
         )
         if compiled is not None:
             x, integral = compiled
-            return FlowResult(x, integral, [], checkpoint_interval, detach_trajectory)
+            return FlowResult(
+                x,
+                integral,
+                [],
+                checkpoint_interval,
+                detach_trajectory,
+                execution_backend="inductor",
+            )
+        fallback_reason = "compiled acceleration unavailable"
 
-    x = metric.canonicalize(x0.clone())
+    x = metric._canonicalize_unchecked(x0.clone())
     integral = torch.zeros(x0.shape[:-1], device=x0.device, dtype=x0.dtype)
     trajectory: list[tuple[float, torch.Tensor, torch.Tensor]] = []
+
     def checkpoint(time: float) -> None:
         state = x.detach() if detach_trajectory else x.clone()
         density = integral.detach() if detach_trajectory else integral.clone()
@@ -182,6 +227,7 @@ def integrate_rk4(
             step.size,
             compute_divergence=compute_divergence,
             stage_callback=stage_callback,
+            use_tensor_core=use_tensor_core,
         )
         integral = integral + integral_increment
         if track_trajectory and checkpoint_due(
@@ -190,5 +236,11 @@ def integrate_rk4(
             checkpoint(step.end)
 
     return FlowResult(
-        x, integral, trajectory, checkpoint_interval, detach_trajectory
+        x,
+        integral,
+        trajectory,
+        checkpoint_interval,
+        detach_trajectory,
+        execution_backend,
+        fallback_reason,
     )

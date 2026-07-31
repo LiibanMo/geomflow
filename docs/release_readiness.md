@@ -129,8 +129,9 @@ a prolonged GitHub outage, check the Vast.ai console for labels beginning with
 - The intrinsic adjoint is single-chart and first-order only; backward replay
   reduces memory at the cost of potentially substantial recomputation.
 - Multi-chart training uses direct autograd.
-- `compile=True` currently means TorchDynamo with `backend="eager"`; it is not
-  TorchInductor acceleration. Eager CUDA remains the default. The bounded
-  TorchInductor candidate is accepted only if the separate compiler gate passes.
+- Eligible built-in CUDA solves use automatic TorchInductor forward execution
+  with exact tensor-eager backward recomputation. `compile=False` forces the
+  component-gradient oracle. Production acceleration remains provisional until
+  all four frozen speed gates pass without fallback.
 - The header-only C++ and pybind APIs are CPU-only.
 - MPS is best-effort, not production-supported.

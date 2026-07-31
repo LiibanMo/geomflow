@@ -93,6 +93,7 @@ class Worker:
         self.case: BenchmarkCase | None = None
         self.geometry = None
         self.model: torch.nn.Module | None = None
+        self.model_key: tuple[Any, ...] | None = None
         self.x: torch.Tensor | None = None
 
     def describe(self) -> dict[str, Any]:
@@ -116,7 +117,9 @@ class Worker:
             "cpu": platform.processor() or platform.machine(),
             "cpu_count": os.cpu_count(),
             "process_affinity": (
-                sorted(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else None
+                sorted(os.sched_getaffinity(0))
+                if hasattr(os, "sched_getaffinity")
+                else None
             ),
             "thread_environment": {
                 name: os.environ.get(name)
@@ -153,12 +156,20 @@ class Worker:
                 "total_memory": properties.total_memory,
                 "capability": list(torch.cuda.get_device_capability(self.device)),
             }
-            result["nvidia_driver"] = subprocess.run(
-                ["nvidia-smi", "--query-gpu=driver_version", "--format=csv,noheader"],
-                check=True,
-                capture_output=True,
-                text=True,
-            ).stdout.splitlines()[0].strip()
+            result["nvidia_driver"] = (
+                subprocess.run(
+                    [
+                        "nvidia-smi",
+                        "--query-gpu=driver_version",
+                        "--format=csv,noheader",
+                    ],
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                )
+                .stdout.splitlines()[0]
+                .strip()
+            )
             result["cudnn"] = torch.backends.cudnn.version()
         return result
 
@@ -178,9 +189,23 @@ class Worker:
             seed=int(raw_case["seed"]),
         )
         torch.manual_seed(self.case.seed)
-        self.geometry = make_geometry(self.case)
+        fresh_geometry = make_geometry(self.case)
         source_case = replace(self.case, device=torch.device("cpu"))
-        self.model = make_model(source_case, self.geometry).to(self.device)
+        fresh_model = make_model(source_case, fresh_geometry).to(self.device)
+        model_key = (
+            self.case.scenario,
+            self.case.dim,
+            self.case.hidden_width,
+            self.case.hidden_depth,
+            self.case.dtype,
+            self.case.seed,
+        )
+        if self.model is not None and self.model_key == model_key:
+            self.model.load_state_dict(fresh_model.state_dict())
+        else:
+            self.geometry = fresh_geometry
+            self.model = fresh_model
+            self.model_key = model_key
         self.x = make_input(self.case)
         return {
             "case_id": self.case.case_id,
@@ -207,7 +232,7 @@ class Worker:
             loss = result.x_final.square().mean() + result.divergence_integral.mean()
         return result, loss
 
-    def sample(self) -> dict[str, float]:
+    def sample(self) -> dict[str, Any]:
         assert self.model is not None
         self.model.zero_grad(set_to_none=True)
         gc.collect()
@@ -220,12 +245,17 @@ class Worker:
             loss.backward()
             synchronize(self.device)
         total_end = time.perf_counter_ns()
-        del result, loss
-        return {
+        sample = {
             "forward_ms": (forward_end - total_start) / 1e6,
             "backward_ms": (total_end - forward_end) / 1e6,
             "wall_ms": (total_end - total_start) / 1e6,
+            "backend": getattr(
+                result, "_execution_backend", "component-gradient-eager"
+            ),
+            "fallback_reason": getattr(result, "_fallback_reason", None),
         }
+        del result, loss
+        return sample
 
     def warmup(self, count: int) -> dict[str, int]:
         for _ in range(count):

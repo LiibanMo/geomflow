@@ -74,6 +74,8 @@ class MultiChartFlowResult:
         statistics: MultiChartStatistics | None = None,
         trajectory_checkpoint_interval: int = 1,
         trajectory_is_detached: bool = False,
+        execution_backend: str = "component-gradient-eager",
+        fallback_reason: str | None = None,
     ) -> None:
         self.x_final = x_final
         self.chart_final = chart_final
@@ -84,6 +86,8 @@ class MultiChartFlowResult:
         self.statistics = statistics
         self.trajectory_checkpoint_interval = trajectory_checkpoint_interval
         self.trajectory_is_detached = trajectory_is_detached
+        self._execution_backend = execution_backend
+        self._fallback_reason = fallback_reason
 
     @property
     def flow_log_abs_det_jacobian(self) -> torch.Tensor:
@@ -133,6 +137,7 @@ def integrate_multichart(
     max_subdivisions: int = 20,
     record_operations: bool = False,
     record_statistics: bool = False,
+    compile: bool | None = None,
 ) -> MultiChartFlowResult:
     """Integrate ``x_dot=f`` and ``I_dot=div_g f`` with chart switching.
 
@@ -162,6 +167,27 @@ def integrate_multichart(
     minimum_step = schedule.dt * 1e-4 if min_step is None else float(min_step)
     if not math.isfinite(minimum_step) or minimum_step <= 0.0:
         raise ValueError("min_step must be a finite positive magnitude")
+    tensor_eligible = (
+        compile is not False
+        and compute_divergence
+        and not track_trajectory
+        and not record_operations
+        and not record_statistics
+        and type(vf) is MultiChartVectorField
+        and type(atlas) is Atlas
+        and getattr(atlas, "_solver_kind", None) == "sphere-2d-stereographic"
+        and all(
+            type(chart) is Chart
+            and chart._domain is getattr(chart, "_solver_domain_fn", None)
+            and chart.analytic_metric._supports_tensor_solver()
+            and vf._supports_tensor_value_and_trace(chart_id)
+            for chart_id, chart in atlas.charts.items()
+        )
+    )
+    execution_backend = (
+        "tensor-eager" if tensor_eligible else "component-gradient-eager"
+    )
+    fallback_reason = None
 
     current_chart = start_chart
     x = x0.clone()
@@ -199,13 +225,21 @@ def integrate_multichart(
             field_value = field_call(time_tensor, state, chart_id)
             return field_value, state.new_zeros(state.shape[:-1])
 
+        if tensor_eligible:
+            time_tensor = state.new_full(state.shape[:-1], time)
+            field_value, trace = vf._tensor_value_and_trace_unchecked(
+                time_tensor, state, chart_id
+            )
+            volume_gradient = atlas[
+                chart_id
+            ].analytic_metric._tensor_log_volume_gradient_unchecked(state)
+            return field_value, trace + (field_value * volume_gradient).sum(-1)
+
         with torch.inference_mode(False), torch.enable_grad():
             divergence_state = state
             if divergence_state.is_inference() or not divergence_state.requires_grad:
                 divergence_state = divergence_state.clone().requires_grad_(True)
-            time_tensor = divergence_state.new_full(
-                divergence_state.shape[:-1], time
-            )
+            time_tensor = divergence_state.new_full(divergence_state.shape[:-1], time)
             field_value = field_call(time_tensor, divergence_state, chart_id)
 
             divergence_value = _divergence_from_value(
@@ -226,6 +260,35 @@ def integrate_multichart(
 
     if not decide(chart_contains(current_chart, x)):
         raise RuntimeError(f"initial state is outside chart {current_chart}")
+
+    request_compilation = compile is True or (
+        compile is None and x0.device.type == "cuda" and tensor_eligible
+    )
+    if request_compilation and tensor_eligible:
+        from .compilation import _integrate_rk4_compiled
+
+        chart = atlas[current_chart]
+        compiled = _integrate_rk4_compiled(
+            vf.head(current_chart),
+            chart.analytic_metric,
+            x,
+            schedule,
+            compute_divergence=compute_divergence,
+            unsupported_reason=None,
+            warn_fallback=compile is True,
+        )
+        if compiled is not None:
+            compiled_x, compiled_integral = compiled
+            if decide(chart_contains(current_chart, compiled_x)):
+                return MultiChartFlowResult(
+                    compiled_x,
+                    current_chart,
+                    compiled_integral,
+                    [],
+                    [],
+                    execution_backend="inductor",
+                )
+        fallback_reason = "compiled acceleration unavailable or left the active chart"
 
     def rk4_trial(
         time: float,
@@ -259,9 +322,7 @@ def integrate_multichart(
             count("wasted_rk_stage_count", 3)
             return None
         k4_x, k4_i = augmented_rhs(time + h, stage4, chart_id)
-        proposed_x = state + (h / 6.0) * (
-            k1_x + 2.0 * k2_x + 2.0 * k3_x + k4_x
-        )
+        proposed_x = state + (h / 6.0) * (k1_x + 2.0 * k2_x + 2.0 * k3_x + k4_x)
         proposed_valid = chart_contains(chart_id, proposed_x)
         valid = stage2_valid & stage3_valid & stage4_valid & proposed_valid
         if not decide(valid if deferred else proposed_valid):
@@ -326,7 +387,9 @@ def integrate_multichart(
                     transition_domain = (
                         source._validate_mask(
                             "transition domain",
-                            source.transitions[candidate_id].source_domain(event_source),
+                            source.transitions[candidate_id].source_domain(
+                                event_source
+                            ),
                             event_source,
                         )
                         if type(source) is Chart
@@ -426,6 +489,8 @@ def integrate_multichart(
         statistics,
         checkpoint_interval,
         detach_trajectory,
+        execution_backend,
+        fallback_reason,
     )
 
 

@@ -12,7 +12,7 @@ import time
 import torch
 
 from geomflow.torch import EuclideanSpace, ManifoldVectorField
-from geomflow.torch.operators import _divergence_from_value
+from geomflow.torch.compilation import _with_exact_higher_order_fallback
 
 
 def make_field(device: torch.device, dtype: torch.dtype) -> ManifoldVectorField:
@@ -28,8 +28,9 @@ def make_block(field: ManifoldVectorField, steps: int):
 
     def rhs(state: torch.Tensor, stage_time: float):
         time_tensor = state.new_full(state.shape[:-1], stage_time)
-        value = field._solver_forward(time_tensor, state)
-        return value, _divergence_from_value(value, state, metric)
+        value, trace = field._tensor_value_and_trace_unchecked(time_tensor, state)
+        volume_gradient = metric._tensor_log_volume_gradient_unchecked(state)
+        return value, trace + (value * volume_gradient).sum(-1)
 
     def block(x0: torch.Tensor):
         x = x0
@@ -41,9 +42,7 @@ def make_block(field: ManifoldVectorField, steps: int):
             k3_x, k3_i = rhs(x + 0.5 * h * k2_x, t + 0.5 * h)
             k4_x, k4_i = rhs(x + h * k3_x, t + h)
             x = x + (h / 6.0) * (k1_x + 2.0 * k2_x + 2.0 * k3_x + k4_x)
-            integral = integral + (h / 6.0) * (
-                k1_i + 2.0 * k2_i + 2.0 * k3_i + k4_i
-            )
+            integral = integral + (h / 6.0) * (k1_i + 2.0 * k2_i + 2.0 * k3_i + k4_i)
         return x, integral
 
     return block
@@ -54,16 +53,20 @@ def synchronize(device: torch.device) -> None:
         torch.cuda.synchronize(device)
 
 
-def gradients(function, x: torch.Tensor, field: torch.nn.Module):
+def gradients(function, x: torch.Tensor, field: torch.nn.Module, *, second_order: bool):
     state, divergence = function(x)
     objective = state.square().mean() + divergence.mean()
     first = torch.autograd.grad(
         objective, (x, *field.parameters()), create_graph=True, allow_unused=False
     )
-    second = torch.autograd.grad(
-        sum(value.square().sum() for value in first),
-        (x, *field.parameters()),
-        allow_unused=True,
+    second = (
+        torch.autograd.grad(
+            sum(value.square().sum() for value in first),
+            (x, *field.parameters()),
+            allow_unused=True,
+        )
+        if second_order
+        else ()
     )
     return state, divergence, first, second
 
@@ -98,7 +101,9 @@ def cuda_launches(function, x: torch.Tensor) -> int | None:
     )
 
 
-def evaluate(device: torch.device, dtype: torch.dtype, steps: int) -> dict[str, object]:
+def evaluate(
+    device: torch.device, dtype: torch.dtype, steps: int, mode: str = "default"
+) -> dict[str, object]:
     field = make_field(device, dtype)
     eager = make_block(field, steps)
     x = torch.randn(256, 2, device=device, dtype=dtype, requires_grad=True)
@@ -108,6 +113,7 @@ def evaluate(device: torch.device, dtype: torch.dtype, steps: int) -> dict[str, 
         "steps": steps,
         "backend": "TorchInductor",
         "fullgraph": True,
+        "mode": mode,
         "status": "running",
     }
     try:
@@ -117,13 +123,17 @@ def evaluate(device: torch.device, dtype: torch.dtype, steps: int) -> dict[str, 
         counters = torch._dynamo.utils.counters
         counters.clear()
         compile_start = time.perf_counter_ns()
-        compiled = torch.compile(eager, backend="inductor", fullgraph=True, dynamic=False)
+        compile_options = {"backend": "inductor", "fullgraph": True, "dynamic": False}
+        if mode != "default":
+            compile_options["mode"] = mode
+        compiled_raw = torch.compile(eager, **compile_options)
+        compiled = _with_exact_higher_order_fallback(compiled_raw, eager, field)
         compiled(x)
         synchronize(device)
         record["cold_compile_ms"] = (time.perf_counter_ns() - compile_start) / 1e6
 
-        eager_values = gradients(eager, x, field)
-        compiled_values = gradients(compiled, x, field)
+        eager_values = gradients(eager, x, field, second_order=True)
+        compiled_values = gradients(compiled, x, field, second_order=True)
         tolerance = 3e-4 if dtype == torch.float32 else 2e-9
         for expected, actual in zip(eager_values, compiled_values, strict=True):
             expected_values = expected if isinstance(expected, tuple) else (expected,)
@@ -133,7 +143,9 @@ def evaluate(device: torch.device, dtype: torch.dtype, steps: int) -> dict[str, 
             ):
                 if expected_value is None or actual_value is None:
                     if expected_value is not actual_value:
-                        raise AssertionError("higher-order gradient availability differs")
+                        raise AssertionError(
+                            "higher-order gradient availability differs"
+                        )
                     continue
                 torch.testing.assert_close(
                     actual_value, expected_value, rtol=tolerance, atol=tolerance
@@ -162,6 +174,7 @@ def evaluate(device: torch.device, dtype: torch.dtype, steps: int) -> dict[str, 
                     counters.get("inductor", {}).get(key, 0)
                     for key in ("extern_calls", "generated_kernel_count")
                 ),
+                "higher_order_strategy": "exact-eager-recompute",
             }
         )
         accepted = (
@@ -204,13 +217,21 @@ def main() -> int:
         temporary.replace(args.output)
 
     checkpoint()
-    steps_matrix = (1,) if args.quick else (1, 2, 4, 8)
+    steps_matrix = (1,) if args.quick else (1, 2, 4, 8, 16)
     for device in devices:
-        dtypes = (torch.float64,) if device.type == "cpu" else (torch.float32, torch.float64)
+        dtypes = (
+            (torch.float64,) if device.type == "cpu" else (torch.float32, torch.float64)
+        )
         for dtype in dtypes:
             for steps in steps_matrix:
-                result["records"].append(evaluate(device, dtype, steps))
-                checkpoint()
+                modes = (
+                    ("default", "reduce-overhead")
+                    if device.type == "cuda"
+                    else ("default",)
+                )
+                for mode in modes:
+                    result["records"].append(evaluate(device, dtype, steps, mode))
+                    checkpoint()
     infrastructure_errors = [
         record
         for record in result["records"]
@@ -221,7 +242,9 @@ def main() -> int:
         result["status"] = "infrastructure_error"
         checkpoint()
         return 1
-    accepted = [record for record in result["records"] if record["status"] == "accepted"]
+    accepted = [
+        record for record in result["records"] if record["status"] == "accepted"
+    ]
     result["decision"] = "accept_inductor" if accepted else "retain_eager"
     result["status"] = "passed"
     checkpoint()
