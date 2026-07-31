@@ -31,6 +31,9 @@ class AnalyticMetric:
     derivative_fn : callable, optional
         Maps ``x`` (requires_grad=True) → ``∂g_ij/∂x_k`` of shape
         ``(..., dim, dim, dim)``.  If omitted, evaluated via autograd.
+    log_volume_gradient_fn : callable, optional
+        Maps ``x`` to ``partial_i log sqrt(det g)`` with shape ``(..., dim)``.
+        Exact divergence uses this closed form when supplied.
 
     All callables take ``x : torch.Tensor`` with shape ``(..., dim)``.
     """
@@ -45,6 +48,9 @@ class AnalyticMetric:
         domain_fn: Optional[Callable[[torch.Tensor], torch.Tensor]] = None,
         canonicalize_fn: Optional[Callable[[torch.Tensor], torch.Tensor]] = None,
         debug_validation: bool = False,
+        log_volume_gradient_fn: Optional[
+            Callable[[torch.Tensor], torch.Tensor]
+        ] = None,
     ):
         if dim < 1:
             raise ValueError("metric dimension must be positive")
@@ -56,6 +62,7 @@ class AnalyticMetric:
         self._domain_fn = domain_fn
         self._canonicalize_fn = canonicalize_fn
         self.debug_validation = debug_validation
+        self._log_volume_gradient_fn = log_volume_gradient_fn
 
     def _validate_callback_output(
         self,
@@ -113,6 +120,10 @@ class AnalyticMetric:
     def canonicalize(self, x: torch.Tensor) -> torch.Tensor:
         """Return the canonical representative of identified coordinates."""
         self.validate_points(x)
+        return self._canonicalize_unchecked(x)
+
+    def _canonicalize_unchecked(self, x: torch.Tensor) -> torch.Tensor:
+        """Canonicalize coordinates already validated by a solver stage."""
         if self._canonicalize_fn is None:
             return x
         return self._validate_callback_output(
@@ -122,6 +133,10 @@ class AnalyticMetric:
     def metric(self, x: torch.Tensor) -> torch.Tensor:
         """Return metric tensor ``G(x)`` of shape ``(..., dim, dim)``."""
         self.validate_points(x)
+        return self._metric_unchecked(x)
+
+    def _metric_unchecked(self, x: torch.Tensor) -> torch.Tensor:
+        """Evaluate the metric at coordinates validated by the caller."""
         G = self._metric_fn(x)
         G = self._validate_callback_output(
             "metric_fn",
@@ -181,15 +196,43 @@ class AnalyticMetric:
     def sqrt_det(self, x: torch.Tensor) -> torch.Tensor:
         """Return ``sqrt(det G(x))``."""
         self.validate_points(x)
+        return self._sqrt_det_unchecked(x)
+
+    def _sqrt_det_unchecked(self, x: torch.Tensor) -> torch.Tensor:
+        """Evaluate the volume factor at coordinates validated by the caller."""
         if self._sqrt_det_fn is not None:
             return self._validate_callback_output(
                 "sqrt_det_fn", self._sqrt_det_fn(x), x, x.shape[:-1]
             )
-        return torch.exp(0.5 * self.log_det(x))
+        return torch.exp(0.5 * self._log_det_unchecked(x))
+
+    @property
+    def has_log_volume_gradient(self) -> bool:
+        """Whether an exact analytic ``d log sqrt(|g|)`` callback is available."""
+        return self._log_volume_gradient_fn is not None
+
+    def log_volume_gradient(self, x: torch.Tensor) -> torch.Tensor:
+        """Return coordinate derivatives of ``log sqrt(|g|)``."""
+        self.validate_points(x)
+        return self._log_volume_gradient_unchecked(x)
+
+    def _log_volume_gradient_unchecked(self, x: torch.Tensor) -> torch.Tensor:
+        if self._log_volume_gradient_fn is None:
+            raise RuntimeError("no analytic log-volume gradient is available")
+        return self._validate_callback_output(
+            "log_volume_gradient_fn",
+            self._log_volume_gradient_fn(x),
+            x,
+            x.shape,
+        )
 
     def log_det(self, x: torch.Tensor) -> torch.Tensor:
         """Return ``log(det G(x))``."""
         self.validate_points(x)
+        return self._log_det_unchecked(x)
+
+    def _log_det_unchecked(self, x: torch.Tensor) -> torch.Tensor:
+        """Evaluate the log determinant after caller-side point validation."""
         if self._sqrt_det_fn is not None:
             sqrt_det = self._validate_callback_output(
                 "sqrt_det_fn", self._sqrt_det_fn(x), x, x.shape[:-1]
@@ -197,7 +240,7 @@ class AnalyticMetric:
             if self.debug_validation and (sqrt_det <= 0).any():
                 raise ValueError("sqrt_det_fn: result must be positive")
             return 2.0 * torch.log(sqrt_det)
-        factor = torch.linalg.cholesky(self.metric(x))
+        factor = torch.linalg.cholesky(self._metric_unchecked(x))
         return 2.0 * torch.log(factor.diagonal(dim1=-2, dim2=-1)).sum(-1)
 
     def derivative(self, x: torch.Tensor) -> torch.Tensor:

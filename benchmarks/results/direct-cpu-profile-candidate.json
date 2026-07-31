@@ -1,0 +1,565 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "label": "optimized-candidate",
+  "geomflow_path": "/opt/conda/lib/python3.11/site-packages/geomflow/__init__.py",
+  "case": "sphere-atlas-cpu-float32-b256-d2-w32x2-s16-forward-exact",
+  "total_calls": 12341,
+  "primitive_calls": 11559,
+  "category_call_counts": {
+    "compatibility": 1,
+    "field": 512,
+    "divergence": 192,
+    "metric_domain": 387,
+    "chart_routing": 471,
+    "schedule": 85,
+    "allocation": 67,
+    "autograd": 1794
+  },
+  "functions": [
+    {
+      "file": "/opt/conda/lib/python3.11/site-packages/geomflow/torch/multichart_integrator.py",
+      "line": 120,
+      "function": "integrate_multichart",
+      "primitive_calls": 1,
+      "total_calls": 1,
+      "own_seconds": 0.000220096,
+      "cumulative_seconds": 0.09458396200000001,
+      "categories": [
+        "chart_routing"
+      ]
+    },
+    {
+      "file": "/opt/conda/lib/python3.11/site-packages/geomflow/torch/multichart_integrator.py",
+      "line": 230,
+      "function": "rk4_trial",
+      "primitive_calls": 16,
+      "total_calls": 16,
+      "own_seconds": 0.003223044,
+      "cumulative_seconds": 0.09376377300000001,
+      "categories": [
+        "chart_routing"
+      ]
+    },
+    {
+      "file": "/opt/conda/lib/python3.11/site-packages/geomflow/torch/multichart_integrator.py",
+      "line": 193,
+      "function": "augmented_rhs",
+      "primitive_calls": 64,
+      "total_calls": 64,
+      "own_seconds": 0.001094891,
+      "cumulative_seconds": 0.079247525,
+      "categories": [
+        "chart_routing"
+      ]
+    },
+    {
+      "file": "/opt/conda/lib/python3.11/site-packages/geomflow/torch/operators.py",
+      "line": 117,
+      "function": "_divergence_from_value",
+      "primitive_calls": 64,
+      "total_calls": 64,
+      "own_seconds": 0.0016678040000000002,
+      "cumulative_seconds": 0.061807645,
+      "categories": [
+        "divergence"
+      ]
+    },
+    {
+      "file": "/opt/conda/lib/python3.11/site-packages/geomflow/torch/operators.py",
+      "line": 22,
+      "function": "_coordinate_derivative",
+      "primitive_calls": 128,
+      "total_calls": 128,
+      "own_seconds": 0.000916281,
+      "cumulative_seconds": 0.049015807,
+      "categories": [
+        "divergence"
+      ]
+    },
+    {
+      "file": "/opt/conda/lib/python3.11/site-packages/torch/autograd/__init__.py",
+      "line": 364,
+      "function": "grad",
+      "primitive_calls": 128,
+      "total_calls": 128,
+      "own_seconds": 0.0016668920000000001,
+      "cumulative_seconds": 0.0466658,
+      "categories": [
+        "autograd"
+      ]
+    },
+    {
+      "file": "/opt/conda/lib/python3.11/site-packages/torch/autograd/graph.py",
+      "line": 815,
+      "function": "_engine_run_backward",
+      "primitive_calls": 128,
+      "total_calls": 128,
+      "own_seconds": 0.000517648,
+      "cumulative_seconds": 0.041217077000000005,
+      "categories": [
+        "autograd"
+      ]
+    },
+    {
+      "file": "/opt/conda/lib/python3.11/site-packages/geomflow/torch/multichart.py",
+      "line": 71,
+      "function": "_solver_forward",
+      "primitive_calls": 64,
+      "total_calls": 64,
+      "own_seconds": 0.000662231,
+      "cumulative_seconds": 0.014262747000000001,
+      "categories": [
+        "field",
+        "chart_routing"
+      ]
+    },
+    {
+      "file": "/opt/conda/lib/python3.11/site-packages/geomflow/torch/vector_field.py",
+      "line": 103,
+      "function": "_forward_unchecked",
+      "primitive_calls": 64,
+      "total_calls": 64,
+      "own_seconds": 0.000423026,
+      "cumulative_seconds": 0.013362725,
+      "categories": [
+        "field"
+      ]
+    },
+    {
+      "file": "/opt/conda/lib/python3.11/site-packages/geomflow/torch/multichart_integrator.py",
+      "line": 221,
+      "function": "chart_contains",
+      "primitive_calls": 65,
+      "total_calls": 65,
+      "own_seconds": 0.000631239,
+      "cumulative_seconds": 0.011262341,
+      "categories": [
+        "metric_domain",
+        "chart_routing"
+      ]
+    },
+    {
+      "file": "/opt/conda/lib/python3.11/site-packages/torch/nn/modules/container.py",
+      "line": 238,
+      "function": "forward",
+      "primitive_calls": 64,
+      "total_calls": 64,
+      "own_seconds": 0.000500785,
+      "cumulative_seconds": 0.010983950000000001,
+      "categories": [
+        "field"
+      ]
+    },
+    {
+      "file": "/opt/conda/lib/python3.11/site-packages/torch/nn/modules/linear.py",
+      "line": 124,
+      "function": "forward",
+      "primitive_calls": 192,
+      "total_calls": 192,
+      "own_seconds": 0.000591837,
+      "cumulative_seconds": 0.006264922,
+      "categories": [
+        "field"
+      ]
+    },
+    {
+      "file": "/opt/conda/lib/python3.11/site-packages/geomflow/torch/analytic_metric.py",
+      "line": 96,
+      "function": "contains",
+      "primitive_calls": 65,
+      "total_calls": 65,
+      "own_seconds": 0.0010149450000000002,
+      "cumulative_seconds": 0.005966922,
+      "categories": [
+        "metric_domain"
+      ]
+    },
+    {
+      "file": "/opt/conda/lib/python3.11/site-packages/geomflow/torch/analytic_metric.py",
+      "line": 219,
+      "function": "_log_volume_gradient_unchecked",
+      "primitive_calls": 64,
+      "total_calls": 64,
+      "own_seconds": 0.000199755,
+      "cumulative_seconds": 0.005326793000000001,
+      "categories": [
+        "metric_domain",
+        "autograd"
+      ]
+    },
+    {
+      "file": "/opt/conda/lib/python3.11/site-packages/geomflow/torch/manifolds.py",
+      "line": 78,
+      "function": "log_volume_gradient_fn",
+      "primitive_calls": 64,
+      "total_calls": 64,
+      "own_seconds": 0.0023914820000000003,
+      "cumulative_seconds": 0.004785018,
+      "categories": [
+        "autograd"
+      ]
+    },
+    {
+      "file": "/opt/conda/lib/python3.11/site-packages/geomflow/torch/atlas.py",
+      "line": 165,
+      "function": "contains",
+      "primitive_calls": 65,
+      "total_calls": 65,
+      "own_seconds": 0.0007141270000000001,
+      "cumulative_seconds": 0.004580285,
+      "categories": [
+        "metric_domain"
+      ]
+    },
+    {
+      "file": "/opt/conda/lib/python3.11/site-packages/torch/autograd/__init__.py",
+      "line": 89,
+      "function": "_make_grads",
+      "primitive_calls": 128,
+      "total_calls": 128,
+      "own_seconds": 0.0017163340000000001,
+      "cumulative_seconds": 0.003013257,
+      "categories": [
+        "autograd"
+      ]
+    },
+    {
+      "file": "/opt/conda/lib/python3.11/site-packages/torch/nn/modules/activation.py",
+      "line": 431,
+      "function": "forward",
+      "primitive_calls": 128,
+      "total_calls": 128,
+      "own_seconds": 0.000142182,
+      "cumulative_seconds": 0.002699742,
+      "categories": [
+        "field"
+      ]
+    },
+    {
+      "file": "/opt/conda/lib/python3.11/site-packages/geomflow/torch/manifolds.py",
+      "line": 120,
+      "function": "chart_domain",
+      "primitive_calls": 65,
+      "total_calls": 65,
+      "own_seconds": 0.000247373,
+      "cumulative_seconds": 0.000883147,
+      "categories": [
+        "chart_routing"
+      ]
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'new_full' of 'torch._C.TensorBase' objects>",
+      "primitive_calls": 64,
+      "total_calls": 64,
+      "own_seconds": 0.0006308510000000001,
+      "cumulative_seconds": 0.0006308510000000001,
+      "categories": [
+        "allocation"
+      ]
+    },
+    {
+      "file": "/opt/conda/lib/python3.11/site-packages/torch/autograd/grad_mode.py",
+      "line": 269,
+      "function": "__enter__",
+      "primitive_calls": 64,
+      "total_calls": 64,
+      "own_seconds": 0.00035140400000000004,
+      "cumulative_seconds": 0.00039861400000000004,
+      "categories": [
+        "autograd"
+      ]
+    },
+    {
+      "file": "/opt/conda/lib/python3.11/site-packages/geomflow/torch/analytic_metric.py",
+      "line": 67,
+      "function": "_validate_callback_output",
+      "primitive_calls": 64,
+      "total_calls": 64,
+      "own_seconds": 0.000242281,
+      "cumulative_seconds": 0.00034202,
+      "categories": [
+        "metric_domain"
+      ]
+    },
+    {
+      "file": "/opt/conda/lib/python3.11/site-packages/geomflow/torch/_utils.py",
+      "line": 65,
+      "function": "validate_tensor_module_compatibility",
+      "primitive_calls": 1,
+      "total_calls": 1,
+      "own_seconds": 1.4744000000000001e-05,
+      "cumulative_seconds": 0.00025468400000000003,
+      "categories": [
+        "compatibility"
+      ]
+    },
+    {
+      "file": "/opt/conda/lib/python3.11/site-packages/torch/autograd/grad_mode.py",
+      "line": 273,
+      "function": "__exit__",
+      "primitive_calls": 64,
+      "total_calls": 64,
+      "own_seconds": 8.125600000000001e-05,
+      "cumulative_seconds": 0.00023839800000000002,
+      "categories": [
+        "autograd"
+      ]
+    },
+    {
+      "file": "/opt/conda/lib/python3.11/site-packages/geomflow/torch/multichart_integrator.py",
+      "line": 178,
+      "function": "decide",
+      "primitive_calls": 17,
+      "total_calls": 17,
+      "own_seconds": 8.5494e-05,
+      "cumulative_seconds": 0.00021134900000000003,
+      "categories": [
+        "chart_routing"
+      ]
+    },
+    {
+      "file": "/opt/conda/lib/python3.11/site-packages/torch/autograd/grad_mode.py",
+      "line": 139,
+      "function": "__exit__",
+      "primitive_calls": 64,
+      "total_calls": 64,
+      "own_seconds": 9.5884e-05,
+      "cumulative_seconds": 0.000177096,
+      "categories": [
+        "autograd"
+      ]
+    },
+    {
+      "file": "/opt/conda/lib/python3.11/site-packages/torch/autograd/grad_mode.py",
+      "line": 264,
+      "function": "__new__",
+      "primitive_calls": 64,
+      "total_calls": 64,
+      "own_seconds": 0.00011972600000000001,
+      "cumulative_seconds": 0.00016826700000000002,
+      "categories": [
+        "autograd"
+      ]
+    },
+    {
+      "file": "/opt/conda/lib/python3.11/site-packages/torch/autograd/grad_mode.py",
+      "line": 135,
+      "function": "__enter__",
+      "primitive_calls": 64,
+      "total_calls": 64,
+      "own_seconds": 6.578500000000001e-05,
+      "cumulative_seconds": 0.00016145700000000002,
+      "categories": [
+        "autograd"
+      ]
+    },
+    {
+      "file": "/opt/conda/lib/python3.11/site-packages/torch/autograd/grad_mode.py",
+      "line": 259,
+      "function": "__init__",
+      "primitive_calls": 64,
+      "total_calls": 64,
+      "own_seconds": 0.000140246,
+      "cumulative_seconds": 0.000150017,
+      "categories": [
+        "autograd"
+      ]
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method torch._C._set_grad_enabled>",
+      "primitive_calls": 128,
+      "total_calls": 128,
+      "own_seconds": 0.000147283,
+      "cumulative_seconds": 0.000147283,
+      "categories": [
+        "autograd"
+      ]
+    },
+    {
+      "file": "/opt/conda/lib/python3.11/site-packages/torch/autograd/__init__.py",
+      "line": 447,
+      "function": "<genexpr>",
+      "primitive_calls": 256,
+      "total_calls": 256,
+      "own_seconds": 0.00011422400000000001,
+      "cumulative_seconds": 0.000145134,
+      "categories": [
+        "autograd"
+      ]
+    },
+    {
+      "file": "/opt/conda/lib/python3.11/site-packages/torch/nn/modules/container.py",
+      "line": 230,
+      "function": "__iter__",
+      "primitive_calls": 64,
+      "total_calls": 64,
+      "own_seconds": 8.9858e-05,
+      "cumulative_seconds": 0.000129421,
+      "categories": [
+        "schedule"
+      ]
+    },
+    {
+      "file": "/opt/conda/lib/python3.11/site-packages/torch/autograd/__init__.py",
+      "line": 448,
+      "function": "<genexpr>",
+      "primitive_calls": 256,
+      "total_calls": 256,
+      "own_seconds": 6.8254e-05,
+      "cumulative_seconds": 9.596700000000001e-05,
+      "categories": [
+        "autograd"
+      ]
+    },
+    {
+      "file": "/opt/conda/lib/python3.11/site-packages/geomflow/torch/_schedule.py",
+      "line": 53,
+      "function": "__iter__",
+      "primitive_calls": 17,
+      "total_calls": 17,
+      "own_seconds": 5.6379000000000003e-05,
+      "cumulative_seconds": 8.2438e-05,
+      "categories": [
+        "schedule"
+      ]
+    },
+    {
+      "file": "/opt/conda/lib/python3.11/site-packages/torch/autograd/__init__.py",
+      "line": 233,
+      "function": "_tensor_or_tensors_to_tuple",
+      "primitive_calls": 128,
+      "total_calls": 128,
+      "own_seconds": 6.383300000000001e-05,
+      "cumulative_seconds": 6.383300000000001e-05,
+      "categories": [
+        "autograd"
+      ]
+    },
+    {
+      "file": "/opt/conda/lib/python3.11/site-packages/geomflow/torch/multichart_integrator.py",
+      "line": 174,
+      "function": "count",
+      "primitive_calls": 178,
+      "total_calls": 178,
+      "own_seconds": 4.2216000000000004e-05,
+      "cumulative_seconds": 4.2216000000000004e-05,
+      "categories": [
+        "chart_routing"
+      ]
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method torch.is_grad_enabled>",
+      "primitive_calls": 65,
+      "total_calls": 65,
+      "own_seconds": 2.9992000000000004e-05,
+      "cumulative_seconds": 2.9992000000000004e-05,
+      "categories": [
+        "autograd"
+      ]
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'clone' of 'torch._C.TensorBase' objects>",
+      "primitive_calls": 2,
+      "total_calls": 2,
+      "own_seconds": 2.5e-05,
+      "cumulative_seconds": 2.5e-05,
+      "categories": [
+        "allocation"
+      ]
+    },
+    {
+      "file": "/opt/conda/lib/python3.11/site-packages/geomflow/torch/analytic_metric.py",
+      "line": 209,
+      "function": "has_log_volume_gradient",
+      "primitive_calls": 64,
+      "total_calls": 64,
+      "own_seconds": 2.1909e-05,
+      "cumulative_seconds": 2.1909e-05,
+      "categories": [
+        "metric_domain",
+        "autograd"
+      ]
+    },
+    {
+      "file": "/opt/conda/lib/python3.11/site-packages/geomflow/torch/_schedule.py",
+      "line": 26,
+      "function": "__init__",
+      "primitive_calls": 1,
+      "total_calls": 1,
+      "own_seconds": 1.307e-05,
+      "cumulative_seconds": 1.9658e-05,
+      "categories": [
+        "schedule"
+      ]
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method torch.zeros>",
+      "primitive_calls": 1,
+      "total_calls": 1,
+      "own_seconds": 9.746000000000001e-06,
+      "cumulative_seconds": 9.746000000000001e-06,
+      "categories": [
+        "allocation"
+      ]
+    },
+    {
+      "file": "/opt/conda/lib/python3.11/site-packages/geomflow/torch/_schedule.py",
+      "line": 64,
+      "function": "_finite_scalar",
+      "primitive_calls": 2,
+      "total_calls": 2,
+      "own_seconds": 3.4890000000000004e-06,
+      "cumulative_seconds": 3.920000000000001e-06,
+      "categories": [
+        "schedule"
+      ]
+    },
+    {
+      "file": "/opt/conda/lib/python3.11/site-packages/geomflow/torch/multichart_integrator.py",
+      "line": 66,
+      "function": "__init__",
+      "primitive_calls": 1,
+      "total_calls": 1,
+      "own_seconds": 3.394e-06,
+      "cumulative_seconds": 3.394e-06,
+      "categories": [
+        "chart_routing"
+      ]
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'requires_grad_' of 'torch._C.TensorBase' objects>",
+      "primitive_calls": 1,
+      "total_calls": 1,
+      "own_seconds": 1.9090000000000003e-06,
+      "cumulative_seconds": 1.9090000000000003e-06,
+      "categories": [
+        "autograd"
+      ]
+    },
+    {
+      "file": "/opt/conda/lib/python3.11/site-packages/geomflow/torch/_schedule.py",
+      "line": 79,
+      "function": "validate_checkpoint_interval",
+      "primitive_calls": 1,
+      "total_calls": 1,
+      "own_seconds": 1.0280000000000002e-06,
+      "cumulative_seconds": 1.498e-06,
+      "categories": [
+        "schedule"
+      ]
+    }
+  ]
+}

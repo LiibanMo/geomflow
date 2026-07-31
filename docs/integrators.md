@@ -34,14 +34,18 @@ unrolling large schedules creates impractically large graphs. The lazy bounded
 loop supports large scalar schedules without materializing them.
 
 Single-chart `integrate_rk4` remains eager by default. Passing `compile=True`
-opts into a bounded cached `torch.compile` path for direct autograd when neither
+opts into a bounded cached TorchDynamo input wrapper using `backend="eager"` for direct autograd when neither
 trajectory capture nor a stage callback is requested. Dynamic batch sizes reuse
 the same variant, while device, dtype, schedule, divergence choice, gradient
 mode, field, and metric distinguish variants. The cache holds at most eight
 entries and is exposed through `compilation_cache_info()` and
 `clear_compilation_cache()`.
 
-Unsupported features and compiler failures issue a `RuntimeWarning` and rerun
+The exact-divergence solver remains eager because supported PyTorch versions do
+not trace its higher-order `autograd.grad` operations consistently. This path
+captures only the safe tensor-input boundary and does not invoke TorchInductor, generate
+Triton kernels, or provide compiler acceleration. Unsupported features and
+TorchDynamo failures issue a `RuntimeWarning` and rerun
 eagerly on the input device. User callbacks may graph-break and are not covered
 by the compiled contract. Multi-chart integration and intrinsic-adjoint losses
 are eager-only; compilation is optional, never selected automatically.

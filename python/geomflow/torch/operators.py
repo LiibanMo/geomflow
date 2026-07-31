@@ -16,6 +16,7 @@ from typing import Callable
 import torch
 
 from ._utils import batched_jacobian
+from .analytic_metric import AnalyticMetric
 
 
 def _coordinate_derivative(output: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
@@ -95,32 +96,71 @@ def divergence(
     if divergence_mode not in {"exact", "hutchinson"}:
         raise ValueError("divergence_mode must be 'exact' or 'hutchinson'")
 
-    if x.device.type == "cpu" and divergence_mode == "exact":
-        sqrtg = metric.sqrt_det(x)
-        value = vf(x)
-        if value.shape != x.shape:
-            raise ValueError(f"vf returned shape {value.shape}; expected {x.shape}")
+    metric.validate_points(x)
+    build_graph = torch.is_grad_enabled() and not torch.is_inference_mode_enabled()
+    with torch.inference_mode(False), torch.enable_grad():
+        point = x
+        if point.is_inference() or not point.requires_grad:
+            point = point.clone().requires_grad_(True)
+        result = _divergence_from_value(
+            vf(point),
+            point,
+            metric,
+            divergence_mode=divergence_mode,
+            generator=generator,
+        )
+        if not build_graph:
+            result = result.detach()
+    return result
+
+
+def _divergence_from_value(
+    value: torch.Tensor,
+    x: torch.Tensor,
+    metric: "AnalyticMetric",  # type: ignore[name-defined]  # noqa: F821
+    *,
+    divergence_mode: str = "exact",
+    generator: torch.Generator | None = None,
+) -> torch.Tensor:
+    """Differentiate a field value at a point already validated by the caller."""
+    if value.shape != x.shape:
+        raise ValueError(f"vf returned shape {value.shape}; expected {x.shape}")
+
+    exact_metric_type = type(metric) is AnalyticMetric
+    if metric.has_log_volume_gradient:
+        volume_gradient = (
+            metric._log_volume_gradient_unchecked(x)
+            if exact_metric_type
+            else metric.log_volume_gradient(x)
+        )
+        differentiated_value = value
+        divisor = None
+    else:
+        sqrtg = (
+            metric._sqrt_det_unchecked(x)
+            if exact_metric_type
+            else metric.sqrt_det(x)
+        )
+        differentiated_value = sqrtg.unsqueeze(-1) * value
+        divisor = sqrtg
+        volume_gradient = None
+
+    if divergence_mode == "exact":
         derivatives = [
-            _coordinate_derivative(sqrtg * value[..., i], x)[..., i]
+            _coordinate_derivative(differentiated_value[..., i], x)[..., i]
             for i in range(metric.dim)
         ]
-        return torch.stack(derivatives, -1).sum(-1) / sqrtg
-
-    def volume_weighted_field(point: torch.Tensor) -> torch.Tensor:
-        value = vf(point)
-        if value.shape != point.shape:
-            raise ValueError(f"vf returned shape {value.shape}; expected {point.shape}")
-        return metric.sqrt_det(point).unsqueeze(-1) * value
-
-    sqrtg = metric.sqrt_det(x)
-    jacobian = batched_jacobian(volume_weighted_field, x)
-    if divergence_mode == "exact":
-        trace = jacobian.diagonal(dim1=-2, dim2=-1).sum(-1)
+        trace = torch.stack(derivatives, -1).sum(-1)
     else:
         probe = torch.empty_like(x).bernoulli_(0.5, generator=generator)
         probe = probe.mul_(2.0).sub_(1.0)
-        trace = torch.einsum("...i,...ij,...j->...", probe, jacobian, probe)
-    return trace / sqrtg
+        projected = (differentiated_value * probe).sum(-1)
+        pullback = _coordinate_derivative(projected, x)
+        trace = (pullback * probe).sum(-1)
+
+    if volume_gradient is not None:
+        return trace + (value * volume_gradient).sum(-1)
+    return trace / divisor
 
 
 def gradient(

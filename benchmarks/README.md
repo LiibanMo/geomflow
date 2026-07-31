@@ -25,7 +25,8 @@ PYTHONPATH=python python benchmarks/run.py \
 events synchronized only at measurement boundaries. CPU timings use
 `perf_counter_ns`. Exact divergence is the only likelihood benchmark mode;
 `--divergence none` is a state-only diagnostic and cannot satisfy release
-performance gates. CUDA cases fail explicitly when CUDA is unavailable.
+performance gates. CUDA cases and benchmark execution errors return nonzero by
+default. `--allow-errors` is only for exploratory runs that inspect failed JSON.
 
 Profile the Phase 5 direct-autograd solver and capture transfer counts plus peak
 allocator memory with:
@@ -45,11 +46,18 @@ Benchmark JSON is a run artifact. Preserve release-candidate results outside
 ephemeral CI storage together with profiler traces. Do not compare runs from
 different hardware or software environments as regressions.
 
-Phase 10 performs a paired regression check on one ephemeral release host. It
-checks out the frozen Phase 1 revision, benchmarks it, restores the candidate
-wheel, and repeats the same matrix before the host is destroyed. This controls
-the hardware and software environment without requiring a permanently rented
-GPU runner.
+Phase 10 installs the frozen Phase 1 and candidate wheels into isolated package
+roots on one ephemeral release host. Persistent workers use balanced ABBA/BAAB
+CPU and CGGC/GCCG CPU/CUDA quartets, preserve raw samples, and apply confidence
+bounds with exact binomial-tail order-statistic ranks. Workers hash the imported
+package contents and reject identical baseline/candidate identities. The first
+batch whose CPU lower bound is at least 100 ms is the speed gate; a larger batch
+cannot replace an eligible failure. `--quick` and `--skip-cuda` produce explicit
+incomplete, non-release artifacts. This controls package, hardware,
+thermal-order, and dependency differences without requiring a permanently
+rented GPU runner. Scoped CUDA profiles enforce the same `aten::to`,
+`aten::_to_copy`, host-transfer, synchronization-count, and synchronization-time
+limits for ordinary and forced-switch solver paths.
 
 Run isolated differential-operator forward/backward timings with:
 
@@ -81,3 +89,12 @@ The script does not fabricate acceptance conclusions. Preserve
 its CPU samples with the frozen baseline on identical hardware before making a
 regression or speedup claim. NVTX emission is intentionally disabled: PyTorch
 profiler events and the JSON record are the Phase 8 outputs.
+
+The release performance protocol is frozen in `phase10_manifest.json`.
+`phase10_paired.py` runs separate baseline and candidate wheels through the
+candidate-owned persistent worker, uses balanced CPU and CPU/CUDA quartets, and
+computes deterministic block-bootstrap bounds without dropping outliers.
+`phase10_profile.py`, `phase10_resources.py`, `phase10_multichart.py`, and
+`phase10_compiler.py` separately gate scoped transfers, adjusted allocation,
+chart-control workloads, and the TorchInductor decision. `phase10_cpu_profile.py`
+captures exact function call counts for the frozen and optimized wheels.

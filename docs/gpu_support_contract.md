@@ -248,9 +248,10 @@ The supported Python versions are those built by the wheel matrix. The
 supported PyTorch range is the inclusive minimum and maximum minor version run
 by mandatory CPU and real-GPU CI for the release candidate. A CUDA runtime is
 supported only when its PyTorch wheel/runtime combination has a mandatory
-real-GPU CI job. The current project has no real-GPU CI, so the current
-production CUDA version range is empty; adding a version string to package
-metadata alone does not create support.
+real-GPU CI job. The ephemeral Vast.ai workflow executes on physical CUDA GPUs,
+but the production CUDA version range remains empty until its mandatory
+release-candidate verdict passes; adding a version string to package metadata
+alone does not create support.
 
 Production readiness requires all correctness, gradient, invariance, transfer,
 synchronization, memory, speed, CPU-regression, eager/declared-compile, wheel,

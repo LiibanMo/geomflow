@@ -88,10 +88,13 @@ def _make_compiled_solver(
             integral = integral + increment
         return x, integral
 
-    compiled = torch.compile(tensor_solver, backend="eager", dynamic=True)
+    def input_boundary(x0: torch.Tensor) -> torch.Tensor:
+        return x0.clone()
+
+    compiled_boundary = torch.compile(input_boundary, backend="eager", dynamic=True)
 
     def run(x0: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
-        return compiled(x0)
+        return tensor_solver(compiled_boundary(x0))
 
     return run
 

@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import gc
 import json
 import math
 import platform
@@ -36,13 +37,19 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--divergence", choices=("exact", "none"), default="exact")
     parser.add_argument("--workload", nargs="+", choices=("forward", "backward", "train"), default=["forward"])
     parser.add_argument("--warmup", type=int, default=1)
-    parser.add_argument("--repetitions", type=int, default=3)
+    parser.add_argument("--repetitions", type=int, default=5)
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--reference", action="store_true", help="compare output with CPU float64")
     parser.add_argument("--profile", action="store_true", help="export one Chrome trace per case")
     parser.add_argument("--trace-dir", type=Path, default=Path("benchmarks/traces"))
     parser.add_argument("--output", type=Path, default=Path("benchmarks/results/latest.json"))
-    parser.add_argument("--fail-on-error", action="store_true")
+    error_mode = parser.add_mutually_exclusive_group()
+    error_mode.add_argument(
+        "--allow-errors",
+        action="store_true",
+        help="return success after case errors for exploratory runs",
+    )
+    error_mode.add_argument("--fail-on-error", action="store_true", help=argparse.SUPPRESS)
     return parser.parse_args()
 
 
@@ -138,19 +145,26 @@ def scalar_objective(result) -> torch.Tensor:
 def one_iteration(case: BenchmarkCase, model, geometry, x, optimizer=None):
     if optimizer is not None:
         optimizer.zero_grad(set_to_none=True)
+    else:
+        model.zero_grad(set_to_none=True)
+    synchronize(case.device)
+    wall_start_ns = time.perf_counter_ns()
     result, forward_ms = time_call(lambda: integrate(case, model, geometry, x), case.device)
     backward_ms = 0.0
     optimizer_ms = 0.0
     if case.workload in {"backward", "train"}:
-        loss = scalar_objective(result)
-        _, backward_ms = time_call(loss.backward, case.device)
+        _, backward_ms = time_call(
+            lambda: scalar_objective(result).backward(), case.device
+        )
     if case.workload == "train":
         _, optimizer_ms = time_call(optimizer.step, case.device)
+    synchronize(case.device)
+    wall_ms = (time.perf_counter_ns() - wall_start_ns) / 1e6
     return result, {
         "forward_ms": forward_ms,
         "backward_ms": backward_ms,
         "optimizer_step_ms": optimizer_ms,
-        "wall_ms": forward_ms + backward_ms + optimizer_ms,
+        "wall_ms": wall_ms,
     }
 
 
@@ -220,6 +234,10 @@ def run_case(case: BenchmarkCase, args: argparse.Namespace) -> dict[str, Any]:
     peaks = []
     result = None
     for _ in range(args.repetitions):
+        if result is not None:
+            del result
+            result = None
+            gc.collect()
         if case.device.type == "cuda":
             torch.cuda.reset_peak_memory_stats(case.device)
         result, timing = one_iteration(case, model, geometry, x, optimizer)
@@ -312,12 +330,17 @@ def main() -> int:
                     "error": f"{type(error).__name__}: {error}",
                 }
             )
-    payload = {"schema_version": 1, "run": environment_metadata(), "cases": records}
+    payload = {
+        "schema_version": 1,
+        "status": "failed" if failed else "passed",
+        "run": environment_metadata(),
+        "cases": records,
+    }
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(payload, indent=2, default=str) + "\n")
     print_table(records)
     print(f"results: {args.output}")
-    return 1 if failed and args.fail_on_error else 0
+    return 1 if failed and not args.allow_errors else 0
 
 
 if __name__ == "__main__":

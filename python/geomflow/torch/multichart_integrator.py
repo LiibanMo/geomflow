@@ -7,13 +7,17 @@ import math
 
 import torch
 
-from ._utils import validate_autocast_disabled, validate_supported_floating_tensor
+from ._utils import (
+    validate_autocast_disabled,
+    validate_supported_floating_tensor,
+    validate_tensor_module_compatibility,
+)
 
 from ._schedule import FixedStepSchedule, checkpoint_due, validate_checkpoint_interval
-from .atlas import Atlas
+from .atlas import Atlas, Chart
 from .base_distribution import AtlasBaseDistribution, StandardNormalCoordinateBase
 from .multichart import MultiChartVectorField
-from .operators import divergence
+from .operators import _divergence_from_value
 
 
 @dataclass
@@ -39,6 +43,23 @@ class AcceptedChartSegment:
     target_coordinates: torch.Tensor
 
 
+@dataclass
+class MultiChartStatistics:
+    """Optional structural counters for benchmark and profiler assertions."""
+
+    chart_predicate_count: int = 0
+    scalar_decision_count: int = 0
+    rk_trial_count: int = 0
+    accepted_trial_count: int = 0
+    rejected_trial_count: int = 0
+    wasted_rk_stage_count: int = 0
+    field_call_count: int = 0
+    transition_predicate_count: int = 0
+    transition_map_count: int = 0
+    transition_jacobian_count: int = 0
+    transition_event_count: int = 0
+
+
 class MultiChartFlowResult:
     """Result of augmented flow integration across an atlas."""
 
@@ -50,6 +71,7 @@ class MultiChartFlowResult:
         trajectory: list[tuple[float, int, torch.Tensor, torch.Tensor]],
         transition_events: list[ChartTransitionEvent],
         operations: list[AcceptedChartSegment | ChartTransitionEvent] | None = None,
+        statistics: MultiChartStatistics | None = None,
         trajectory_checkpoint_interval: int = 1,
         trajectory_is_detached: bool = False,
     ) -> None:
@@ -59,6 +81,7 @@ class MultiChartFlowResult:
         self.trajectory = trajectory
         self.transition_events = transition_events
         self.operations = operations or []
+        self.statistics = statistics
         self.trajectory_checkpoint_interval = trajectory_checkpoint_interval
         self.trajectory_is_detached = trajectory_is_detached
 
@@ -109,6 +132,7 @@ def integrate_multichart(
     min_step: float | None = None,
     max_subdivisions: int = 20,
     record_operations: bool = False,
+    record_statistics: bool = False,
 ) -> MultiChartFlowResult:
     """Integrate ``x_dot=f`` and ``I_dot=div_g f`` with chart switching.
 
@@ -126,6 +150,7 @@ def integrate_multichart(
         )
     validate_autocast_disabled("integrate_multichart")
     validate_supported_floating_tensor(x0, "integrate_multichart")
+    validate_tensor_module_compatibility(x0, vf, "integrate_multichart")
     if start_chart not in atlas.charts:
         raise ValueError(f"unknown start chart {start_chart}")
     schedule = FixedStepSchedule(t0, t1, dt)
@@ -144,6 +169,16 @@ def integrate_multichart(
     trajectory: list[tuple[float, int, torch.Tensor, torch.Tensor]] = []
     transition_events: list[ChartTransitionEvent] = []
     operations: list[AcceptedChartSegment | ChartTransitionEvent] = []
+    statistics = MultiChartStatistics() if record_statistics else None
+
+    def count(name: str, amount: int = 1) -> None:
+        if statistics is not None:
+            setattr(statistics, name, getattr(statistics, name) + amount)
+
+    def decide(mask: torch.Tensor) -> bool:
+        count("scalar_decision_count")
+        return bool(mask.all())
+
     def checkpoint(time: float, chart_id: int) -> None:
         state = x.detach() if detach_trajectory else x.clone()
         density = integral.detach() if detach_trajectory else integral.clone()
@@ -152,44 +187,45 @@ def integrate_multichart(
     if track_trajectory:
         checkpoint(schedule.t0, current_chart)
 
-    build_graph = torch.is_grad_enabled()
+    build_graph = torch.is_grad_enabled() and not torch.is_inference_mode_enabled()
+    field_call = vf._solver_forward if type(vf) is MultiChartVectorField else vf
 
     def augmented_rhs(
         time: float, state: torch.Tensor, chart_id: int
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        time_tensor = torch.full(
-            state.shape[:-1], time, device=state.device, dtype=state.dtype
-        )
-        field_value = vf(time_tensor, state, chart_id)
+        count("field_call_count")
         if not compute_divergence:
-            return field_value, torch.zeros(
-                state.shape[:-1], device=state.device, dtype=state.dtype
-            )
+            time_tensor = state.new_full(state.shape[:-1], time)
+            field_value = field_call(time_tensor, state, chart_id)
+            return field_value, state.new_zeros(state.shape[:-1])
 
-        with torch.enable_grad():
+        with torch.inference_mode(False), torch.enable_grad():
             divergence_state = state
-            if not divergence_state.requires_grad:
+            if divergence_state.is_inference() or not divergence_state.requires_grad:
                 divergence_state = divergence_state.clone().requires_grad_(True)
+            time_tensor = divergence_state.new_full(
+                divergence_state.shape[:-1], time
+            )
+            field_value = field_call(time_tensor, divergence_state, chart_id)
 
-            def field_at_state(value: torch.Tensor) -> torch.Tensor:
-                stage_time = torch.full(
-                    value.shape[:-1], time, device=value.device, dtype=value.dtype
-                )
-                return vf(stage_time, value, chart_id)
-
-            divergence_value = divergence(
-                field_at_state,
+            divergence_value = _divergence_from_value(
+                field_value,
                 divergence_state,
                 atlas[chart_id].analytic_metric,
             )
             if not build_graph:
+                field_value = field_value.detach()
                 divergence_value = divergence_value.detach()
         return field_value, divergence_value
 
     def chart_contains(chart_id: int, state: torch.Tensor) -> torch.Tensor:
+        count("chart_predicate_count")
         chart = atlas[chart_id]
         predicate = getattr(chart, "contains", chart.is_inside)
-        return predicate(state)
+        return predicate(state) & chart.analytic_metric.contains(state)
+
+    if not decide(chart_contains(current_chart, x)):
+        raise RuntimeError(f"initial state is outside chart {current_chart}")
 
     def rk4_trial(
         time: float,
@@ -198,30 +234,44 @@ def integrate_multichart(
         h: float,
         chart_id: int,
     ) -> tuple[torch.Tensor, torch.Tensor] | None:
-        if not chart_contains(chart_id, state).all():
-            return None
+        count("rk_trial_count")
+        deferred = bool(getattr(atlas[chart_id], "_defer_trial_validation", False))
         half_h = h / 2.0
         k1_x, k1_i = augmented_rhs(time, state, chart_id)
         stage2 = state + half_h * k1_x
-        if not chart_contains(chart_id, stage2).all():
+        stage2_valid = chart_contains(chart_id, stage2)
+        if not deferred and not decide(stage2_valid):
+            count("rejected_trial_count")
+            count("wasted_rk_stage_count")
             return None
         k2_x, k2_i = augmented_rhs(time + half_h, stage2, chart_id)
         stage3 = state + half_h * k2_x
-        if not chart_contains(chart_id, stage3).all():
+        stage3_valid = chart_contains(chart_id, stage3)
+        if not deferred and not decide(stage3_valid):
+            count("rejected_trial_count")
+            count("wasted_rk_stage_count", 2)
             return None
         k3_x, k3_i = augmented_rhs(time + half_h, stage3, chart_id)
         stage4 = state + h * k3_x
-        if not chart_contains(chart_id, stage4).all():
+        stage4_valid = chart_contains(chart_id, stage4)
+        if not deferred and not decide(stage4_valid):
+            count("rejected_trial_count")
+            count("wasted_rk_stage_count", 3)
             return None
         k4_x, k4_i = augmented_rhs(time + h, stage4, chart_id)
         proposed_x = state + (h / 6.0) * (
             k1_x + 2.0 * k2_x + 2.0 * k3_x + k4_x
         )
-        if not chart_contains(chart_id, proposed_x).all():
+        proposed_valid = chart_contains(chart_id, proposed_x)
+        valid = stage2_valid & stage3_valid & stage4_valid & proposed_valid
+        if not decide(valid if deferred else proposed_valid):
+            count("rejected_trial_count")
+            count("wasted_rk_stage_count", 4)
             return None
         proposed_integral = integral_state + (h / 6.0) * (
             k1_i + 2.0 * k2_i + 2.0 * k3_i + k4_i
         )
+        count("accepted_trial_count")
         return proposed_x, proposed_integral
 
     max_segments_per_step = max_subdivisions + 1
@@ -272,10 +322,26 @@ def integrate_multichart(
             source = atlas[source_chart]
             if hasattr(source, "transitions"):
                 for candidate_id in sorted(source.transitions):
-                    if not source.can_transition_to(candidate_id, event_source).all():
+                    count("transition_predicate_count")
+                    transition_domain = (
+                        source._validate_mask(
+                            "transition domain",
+                            source.transitions[candidate_id].source_domain(event_source),
+                            event_source,
+                        )
+                        if type(source) is Chart
+                        else source.can_transition_to(candidate_id, event_source)
+                    )
+                    if not decide(transition_domain):
                         continue
-                    mapped = source.transition_to(candidate_id, event_source)
-                    if chart_contains(candidate_id, mapped).all():
+                    transition = (
+                        source._transition_unchecked
+                        if type(source) is Chart
+                        else source.transition_to
+                    )
+                    count("transition_map_count")
+                    mapped = transition(candidate_id, event_source)
+                    if decide(chart_contains(candidate_id, mapped)):
                         target_chart = candidate_id
                         event_target = mapped
                         break
@@ -303,7 +369,13 @@ def integrate_multichart(
                     )
                 )
             if hasattr(source, "jacobian"):
-                jacobian = source.jacobian(target_chart, event_source)
+                jacobian_fn = (
+                    source._jacobian_unchecked
+                    if type(source) is Chart
+                    else source.jacobian
+                )
+                jacobian = jacobian_fn(target_chart, event_source)
+                count("transition_jacobian_count")
             else:
                 eye = torch.eye(x.shape[-1], device=x.device, dtype=x.dtype)
                 jacobian = eye.expand(*x.shape[:-1], -1, -1)
@@ -316,6 +388,7 @@ def integrate_multichart(
                 jacobian.clone(),
             )
             transition_events.append(event)
+            count("transition_event_count")
             if record_operations:
                 operations.append(event)
             x = event_target
@@ -350,6 +423,7 @@ def integrate_multichart(
         trajectory,
         transition_events,
         operations,
+        statistics,
         checkpoint_interval,
         detach_trajectory,
     )
