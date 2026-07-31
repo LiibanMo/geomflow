@@ -291,10 +291,10 @@ jobs:
               "${gh_headers[@]}" --get \
               --data-urlencode "name=${RUNNER_LABEL}" \
               --data-urlencode 'per_page=100' \
-              "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/runners")" || true
+              "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/runners")" || runners='{}'
             if jq -e --arg name "$RUNNER_LABEL" \
               'any(.runners[]?; .name == $name and .status == "online")' \
-              <<<"${runners:-{}}" >/dev/null; then
+              <<<"$runners" >/dev/null; then
               echo "Runner ${RUNNER_LABEL} is online"
               exit 0
             fi
