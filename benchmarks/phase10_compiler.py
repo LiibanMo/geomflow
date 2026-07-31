@@ -172,8 +172,12 @@ def evaluate(device: torch.device, dtype: torch.dtype, steps: int) -> dict[str, 
             and launch_reduction >= 0.30
         )
         record["status"] = "accepted" if accepted else "rejected"
-    except Exception as error:
+    except torch._dynamo.exc.Unsupported as error:
         record["status"] = "rejected"
+        record["rejection_reason"] = "unsupported_fullgraph"
+        record["error"] = f"{type(error).__name__}: {error}"
+    except Exception as error:
+        record["status"] = "infrastructure_error"
         record["error"] = f"{type(error).__name__}: {error}"
     return record
 
@@ -207,6 +211,16 @@ def main() -> int:
             for steps in steps_matrix:
                 result["records"].append(evaluate(device, dtype, steps))
                 checkpoint()
+    infrastructure_errors = [
+        record
+        for record in result["records"]
+        if record["status"] == "infrastructure_error"
+    ]
+    if infrastructure_errors:
+        result["decision"] = "undetermined"
+        result["status"] = "infrastructure_error"
+        checkpoint()
+        return 1
     accepted = [record for record in result["records"] if record["status"] == "accepted"]
     result["decision"] = "accept_inductor" if accepted else "retain_eager"
     result["status"] = "passed"

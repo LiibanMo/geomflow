@@ -34,6 +34,10 @@ def _profile_module():
     return _benchmark_module("phase10_profile")
 
 
+def _compiler_module():
+    return _benchmark_module("phase10_compiler")
+
+
 def _block(first: tuple[float, float], second: tuple[float, float]):
     return {
         "first": [{"wall_ms": value} for value in first],
@@ -272,6 +276,51 @@ def test_resource_baseline_preserves_allocated_gradient_storage() -> None:
         assert parameter.grad is not None
         assert parameter.grad.data_ptr() == pointer
         assert torch.count_nonzero(parameter.grad) == 0
+
+
+def test_compiler_harness_errors_are_not_candidate_rejections(monkeypatch) -> None:
+    compiler = _compiler_module()
+
+    def fail_compile(*_args, **_kwargs):
+        raise RuntimeError("broken harness")
+
+    monkeypatch.setattr(compiler.torch, "compile", fail_compile)
+
+    record = compiler.evaluate(torch.device("cpu"), torch.float64, 1)
+
+    assert record["status"] == "infrastructure_error"
+    assert record["error"] == "RuntimeError: broken harness"
+
+
+def test_compiler_unsupported_fullgraph_is_a_candidate_rejection(monkeypatch) -> None:
+    compiler = _compiler_module()
+
+    def reject_graph(*_args, **_kwargs):
+        raise compiler.torch._dynamo.exc.Unsupported("unsupported graph")
+
+    monkeypatch.setattr(compiler.torch, "compile", reject_graph)
+
+    record = compiler.evaluate(torch.device("cpu"), torch.float64, 1)
+
+    assert record["status"] == "rejected"
+    assert record["rejection_reason"] == "unsupported_fullgraph"
+
+
+def test_compiler_harness_errors_fail_the_evidence_run(monkeypatch, tmp_path) -> None:
+    compiler = _compiler_module()
+    output = tmp_path / "compiler.json"
+    monkeypatch.setattr(sys, "argv", ["phase10_compiler.py", "--output", str(output), "--quick"])
+    monkeypatch.setattr(compiler.torch.cuda, "is_available", lambda: False)
+    monkeypatch.setattr(
+        compiler,
+        "evaluate",
+        lambda *_args: {"status": "infrastructure_error", "error": "broken"},
+    )
+
+    assert compiler.main() == 1
+    result = json.loads(output.read_text())
+    assert result["status"] == "infrastructure_error"
+    assert result["decision"] == "undetermined"
 
 
 def test_run_defaults_fail_closed_with_five_repetitions(monkeypatch) -> None:

@@ -222,7 +222,7 @@ jobs:
             max_dph="$VAST_MAX_SINGLE_GPU_DPH"
             gpu_filter=''
           fi
-          query="external=false rentable=true rented=false verified=true reliability>=${VAST_MIN_RELIABILITY} num_gpus=${REQUESTED_GPU_COUNT} gpu_frac=1 gpu_ram>=12 cpu_arch=amd64 cpu_cores_effective>=8 disk_space>=${VAST_DISK_GB} inet_down>=200 inet_down_cost<=${VAST_MAX_INET_DOWN_COST} inet_up_cost<=${VAST_MAX_INET_UP_COST} cuda_vers>=12.4 geolocation in [GB,IE,FR,DE,NL,BE,NO,SE,DK,FI,PL,CZ,AT,CH,ES,PT,IT]${gpu_filter}"
+          query="external=false rentable=true rented=false verified=true reliability>=${VAST_MIN_RELIABILITY} num_gpus=${REQUESTED_GPU_COUNT} gpu_frac=1 gpu_ram>=12 cpu_arch=amd64 cpu_cores_effective>=8 disk_space>=${VAST_DISK_GB} inet_down>=200 inet_down_cost<=${VAST_MAX_INET_DOWN_COST} inet_up_cost<=${VAST_MAX_INET_UP_COST} cuda_vers>=12.8 geolocation in [GB,IE,FR,DE,NL,BE,NO,SE,DK,FI,PL,CZ,AT,CH,ES,PT,IT]${gpu_filter}"
           offers="$(vast search offers "$query" --storage "$VAST_DISK_GB" \
             --order dph --limit 50 --raw)"
           offer="$(jq -cer --argjson cap "$max_dph" 'map(select(.dph_total <= $cap)) | sort_by(.dph_total) | first' <<<"$offers")"
@@ -259,7 +259,8 @@ jobs:
           tar -xzf runner.tar.gz
           rm runner.tar.gz
           ./bin/installdependencies.sh
-          exec ./run.sh --jitconfig '${jit_config}'
+          : "\${GEOMFLOW_JIT_CONFIG:?JIT runner configuration is unavailable}"
+          exec ./run.sh --jitconfig "\$GEOMFLOW_JIT_CONFIG"
           RUNNER
           )"
           encoded_script="$(printf '%s' "$runner_script" | gzip -9 | base64 -w 0)"
@@ -274,6 +275,7 @@ jobs:
             --disk "$VAST_DISK_GB" \
             --label "$RUNNER_LABEL" \
             --ssh \
+            --env "-e GEOMFLOW_JIT_CONFIG=${jit_config}" \
             --cancel-unavail \
             --onstart-cmd "printf '%s' '${encoded_script}' | base64 -d | gzip -d > /tmp/geomflow-runner.sh; chmod 700 /tmp/geomflow-runner.sh; exec /tmp/geomflow-runner.sh" \
             --raw)"
