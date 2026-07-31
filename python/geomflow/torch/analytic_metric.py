@@ -48,9 +48,8 @@ class AnalyticMetric:
         domain_fn: Optional[Callable[[torch.Tensor], torch.Tensor]] = None,
         canonicalize_fn: Optional[Callable[[torch.Tensor], torch.Tensor]] = None,
         debug_validation: bool = False,
-        log_volume_gradient_fn: Optional[
-            Callable[[torch.Tensor], torch.Tensor]
-        ] = None,
+        log_volume_gradient_fn: Optional[Callable[[torch.Tensor], torch.Tensor]] = None,
+        _solver_kind: str | None = None,
     ):
         if dim < 1:
             raise ValueError("metric dimension must be positive")
@@ -63,6 +62,30 @@ class AnalyticMetric:
         self._canonicalize_fn = canonicalize_fn
         self.debug_validation = debug_validation
         self._log_volume_gradient_fn = log_volume_gradient_fn
+        self._solver_kind = _solver_kind
+        self._solver_domain_fn = domain_fn if _solver_kind is not None else None
+
+    def _supports_tensor_solver(self) -> bool:
+        """Return whether this unmodified built-in metric permits tensor dispatch."""
+        if type(self) is not AnalyticMetric or self.debug_validation:
+            return False
+        if self._solver_kind == "euclidean":
+            return self._domain_fn is None and self._canonicalize_fn is None
+        if self._solver_kind == "sphere-stereographic":
+            return (
+                self._domain_fn is self._solver_domain_fn
+                and self._canonicalize_fn is None
+            )
+        return False
+
+    def _tensor_log_volume_gradient_unchecked(self, x: torch.Tensor) -> torch.Tensor:
+        """Return a compiler-safe built-in volume gradient for solver internals."""
+        if self._solver_kind == "euclidean":
+            return torch.zeros_like(x)
+        if self._solver_kind == "sphere-stereographic":
+            squared_radius = x.square().sum(dim=-1, keepdim=True)
+            return (-2.0 * self.dim / (1.0 + squared_radius)) * x
+        raise RuntimeError("metric is not eligible for tensor value-and-trace")
 
     def _validate_callback_output(
         self,

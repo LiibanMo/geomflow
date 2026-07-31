@@ -374,14 +374,6 @@ jobs:
             --index-url https://download.pytorch.org/whl/cu128
           python -m pip install --force-reinstall --no-deps dist/*.whl
 
-      - name: Profile exact-divergence hot paths
-        if: needs.provision.outputs.gpu_count == '2'
-        continue-on-error: true
-        run: |
-          python benchmarks/phase10_profile.py \
-            --output benchmarks/results/ci-vast-profile.json \
-            --trace-dir benchmarks/results/ci-vast-traces
-
       - name: Validate direct-autograd memory scaling
         if: needs.provision.outputs.gpu_count == '2'
         continue-on-error: true
@@ -427,6 +419,23 @@ jobs:
             --baseline-wheel /tmp/geomflow-phase1-dist/*.whl \
             --candidate-wheel dist/*.whl \
             --output benchmarks/results/ci-vast-phase10-paired.json
+
+      - name: Reconstruct paired decisions from raw evidence
+        if: needs.provision.outputs.gpu_count == '2'
+        continue-on-error: true
+        run: |
+          python benchmarks/phase10_verify.py \
+            benchmarks/results/ci-vast-phase10-paired.json \
+            --allow-failed
+
+      - name: Profile current first-eligible release cases
+        if: needs.provision.outputs.gpu_count == '2'
+        continue-on-error: true
+        run: |
+          python benchmarks/phase10_profile.py \
+            --paired benchmarks/results/ci-vast-phase10-paired.json \
+            --output benchmarks/results/ci-vast-profile.json \
+            --trace-dir benchmarks/results/ci-vast-traces
 
       - name: Upload CUDA evidence
         if: always()
@@ -901,9 +910,14 @@ jobs:
     needs: [authorize, provision, cuda, billing-watchdog, cleanup]
     permissions:
       actions: read
+      contents: read
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
       - name: Require current-attempt CUDA and verified teardown
         env:
           AUTHORIZED_ATTEMPT: ${{ needs.authorize.outputs.run_attempt }}
@@ -967,7 +981,6 @@ jobs:
               raise SystemExit("two-rank DDP evidence did not pass")
 
           for name in (
-              "ci-vast-phase10-paired.json",
               "ci-vast-profile.json",
               "ci-vast-resources.json",
               "ci-vast-adjoint.json",
@@ -975,6 +988,10 @@ jobs:
               "ci-vast-compiler.json",
               "ci-vast-soak.json",
           ):
-              if load(name).get("status") != "passed":
-                  raise SystemExit(f"{name} did not pass")
+              evidence = load(name)
+              if evidence.get("status") != "passed":
+                  details = evidence.get("failures") or evidence.get("inconclusive") or []
+                  raise SystemExit(f"{name} did not pass: {details}")
           PY
+          python benchmarks/phase10_verify.py \
+            cuda-evidence/ci-vast-phase10-paired.json

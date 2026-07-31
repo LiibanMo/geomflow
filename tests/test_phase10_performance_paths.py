@@ -42,9 +42,7 @@ class CountingMultiField(MultiChartVectorField):
         self.public_calls = 0
         self.unchecked_calls = 0
 
-    def forward(
-        self, t: torch.Tensor, x: torch.Tensor, chart_id: int
-    ) -> torch.Tensor:
+    def forward(self, t: torch.Tensor, x: torch.Tensor, chart_id: int) -> torch.Tensor:
         self.public_calls += 1
         return super().forward(t, x, chart_id)
 
@@ -76,6 +74,70 @@ def test_rk4_uses_one_field_call_per_stage() -> None:
     assert all(parameter.grad is not None for parameter in field.parameters())
 
 
+@pytest.mark.parametrize("metric_factory", [EuclideanSpace, SphereStereographicMetric])
+def test_tensor_value_and_trace_matches_exact_component_gradients(
+    metric_factory,
+) -> None:
+    torch.manual_seed(4)
+    field = ManifoldVectorField(2, hidden_dim=5, n_layers=2).double()
+    metric = metric_factory(2)
+    x = torch.randn(3, 2, dtype=torch.float64, requires_grad=True)
+    time = torch.full((3,), 0.3, dtype=torch.float64)
+
+    value, trace = field._tensor_value_and_trace_unchecked(time, x)
+    actual = trace + (value * metric._tensor_log_volume_gradient_unchecked(x)).sum(-1)
+    expected = divergence(lambda point: field(time, point), x, metric)
+    torch.testing.assert_close(value, field(time, x), rtol=1e-12, atol=1e-12)
+    torch.testing.assert_close(actual, expected, rtol=1e-11, atol=1e-11)
+
+    variables = (x, *field.parameters())
+    actual_first = torch.autograd.grad(actual.sum(), variables, create_graph=True)
+    expected_first = torch.autograd.grad(expected.sum(), variables, create_graph=True)
+    for actual_value, expected_value in zip(actual_first, expected_first, strict=True):
+        torch.testing.assert_close(actual_value, expected_value, rtol=1e-10, atol=1e-10)
+    actual_second = torch.autograd.grad(
+        sum(value.square().sum() for value in actual_first),
+        variables,
+        allow_unused=True,
+    )
+    expected_second = torch.autograd.grad(
+        sum(value.square().sum() for value in expected_first),
+        variables,
+        allow_unused=True,
+    )
+    for actual_value, expected_value in zip(
+        actual_second, expected_second, strict=True
+    ):
+        if actual_value is None or expected_value is None:
+            assert actual_value is expected_value
+        else:
+            torch.testing.assert_close(
+                actual_value, expected_value, rtol=1e-9, atol=1e-9
+            )
+
+
+def test_tensor_core_eligibility_is_narrow_and_solver_reports_backend() -> None:
+    field = ManifoldVectorField(2, hidden_dim=4, n_layers=1)
+    assert field._supports_tensor_value_and_trace()
+    result = integrate_rk4(field, EuclideanSpace(2), torch.randn(3, 2), 0.0, 0.1, 0.1)
+    assert result._execution_backend == "tensor-eager"
+    assert result._fallback_reason is None
+
+    handle = field.net[-1].register_forward_hook(lambda *_args: None)
+    try:
+        assert not field._supports_tensor_value_and_trace()
+        fallback = integrate_rk4(
+            field, EuclideanSpace(2), torch.randn(3, 2), 0.0, 0.1, 0.1
+        )
+    finally:
+        handle.remove()
+    assert fallback._execution_backend == "component-gradient-eager"
+    assert not ManifoldVectorField(2, periodic=True)._supports_tensor_value_and_trace()
+    assert not ManifoldVectorField(
+        2, activation=torch.nn.Tanh
+    )._supports_tensor_value_and_trace()
+
+
 def test_solver_preserves_custom_forward_dispatch_and_hooks() -> None:
     field = CountingField()
     hook_calls = 0
@@ -103,9 +165,7 @@ def test_solver_preserves_global_module_forward_hooks() -> None:
 
     handle = torch.nn.modules.module.register_module_forward_hook(count_global)
     try:
-        integrate_rk4(
-            field, EuclideanSpace(2), torch.randn(4, 2), 0.0, 0.25, 0.25
-        )
+        integrate_rk4(field, EuclideanSpace(2), torch.randn(4, 2), 0.0, 0.25, 0.25)
     finally:
         handle.remove()
     assert field_calls == 4
@@ -177,9 +237,7 @@ def test_solver_reuses_stage_validation_for_generic_volume_callback() -> None:
     counts = {"domain": 0, "sqrt_det": 0}
 
     def metric_fn(x: torch.Tensor) -> torch.Tensor:
-        return torch.eye(2, device=x.device, dtype=x.dtype).expand(
-            *x.shape[:-1], 2, 2
-        )
+        return torch.eye(2, device=x.device, dtype=x.dtype).expand(*x.shape[:-1], 2, 2)
 
     def sqrt_det_fn(x: torch.Tensor) -> torch.Tensor:
         counts["sqrt_det"] += 1
@@ -189,9 +247,7 @@ def test_solver_reuses_stage_validation_for_generic_volume_callback() -> None:
         counts["domain"] += 1
         return torch.ones_like(x[..., 0], dtype=torch.bool)
 
-    metric = AnalyticMetric(
-        2, metric_fn, sqrt_det_fn=sqrt_det_fn, domain_fn=domain_fn
-    )
+    metric = AnalyticMetric(2, metric_fn, sqrt_det_fn=sqrt_det_fn, domain_fn=domain_fn)
     field = CountingField()
     integrate_rk4(field, metric, torch.randn(4, 2), 0.0, 0.25, 0.25)
 
@@ -219,6 +275,29 @@ def test_multichart_rk4_uses_one_field_call_per_stage() -> None:
     assert result.statistics.rejected_trial_count == 0
     assert result.statistics.chart_predicate_count == 5
     assert result.statistics.scalar_decision_count == 2
+
+
+def test_multichart_tensor_core_reports_backend_and_hooks_force_fallback() -> None:
+    atlas = Sphere2DAtlas()
+    field = MultiChartVectorField(atlas, hidden_dim=4, n_layers=1)
+    x = 0.1 * torch.randn(4, 2)
+    result = integrate_multichart(field, atlas, x, 0, 0.0, 0.1, 0.1)
+    assert result._execution_backend == "tensor-eager"
+
+    handle = field.head(0).net[-1].register_forward_hook(lambda *_args: None)
+    try:
+        fallback = integrate_multichart(field, atlas, x, 0, 0.0, 0.1, 0.1)
+    finally:
+        handle.remove()
+    assert fallback._execution_backend == "component-gradient-eager"
+
+    original_domain = atlas[0]._domain
+    atlas[0]._domain = lambda value: torch.ones_like(value[..., 0], dtype=torch.bool)
+    try:
+        changed_domain = integrate_multichart(field, atlas, x, 0, 0.0, 0.1, 0.1)
+    finally:
+        atlas[0]._domain = original_domain
+    assert changed_domain._execution_backend == "component-gradient-eager"
 
 
 def test_multichart_solver_preserves_exact_class_hooks() -> None:
@@ -437,9 +516,7 @@ def test_chart_subclass_public_overrides_are_preserved() -> None:
         [selection_source, Chart(1, 1, None, EuclideanSpace(1), domain=always)],
         0,
     )
-    selection = selection_atlas.find_chart(
-        torch.zeros(1, 1), source_chart=0, prefer=1
-    )
+    selection = selection_atlas.find_chart(torch.zeros(1, 1), source_chart=0, prefer=1)
     torch.testing.assert_close(selection.coordinates, torch.tensor([[101.0]]))
     assert selection_source.transition_calls == 1
 

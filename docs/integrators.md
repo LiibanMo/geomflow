@@ -27,25 +27,27 @@ Chart-gap searches use `min_step` and `max_subdivisions` as hard bounds. Trial
 steps are functional: rejected trials do not replace accepted state, density,
 trajectory, or chart data. Transition maps remain in the autograd graph.
 
-The fixed-step Python loop is intentionally not represented as a functional
-scan or one fully unrolled compiled graph. Current PyTorch scan support does not
-cover stage-local exact divergence and chart control flow uniformly, while
-unrolling large schedules creates impractically large graphs. The lazy bounded
-loop supports large scalar schedules without materializing them.
+Eligible built-in `Linear`/`SiLU` vector fields propagate coordinate tangents
+alongside field values. This computes the exact intrinsic identity
+`div_g f = trace(Df) + <f, d log sqrt(|g|)>` without nested `autograd.grad`
+calls. Arbitrary fields, metrics, activations, periodic features, subclasses,
+hooks, callbacks, trajectory capture, and diagnostic recording retain the
+component-gradient eager implementation.
 
-Single-chart `integrate_rk4` remains eager by default. Passing `compile=True`
-opts into a bounded cached TorchDynamo input wrapper using `backend="eager"` for direct autograd when neither
-trajectory capture nor a stage callback is requested. Dynamic batch sizes reuse
-the same variant, while device, dtype, schedule, divergence choice, gradient
-mode, field, and metric distinguish variants. The cache holds at most eight
-entries and is exposed through `compilation_cache_info()` and
-`clear_compilation_cache()`.
+The `compile` argument is tri-state. The default `None` automatically selects
+TorchInductor for eligible CUDA solves, `False` forces exact eager execution,
+and `True` explicitly requests compilation and warns before eager fallback.
+Eligible CPU solves use the tensor-eager implementation by default. CUDA
+variants are static-batch full graphs using `mode="reduce-overhead"`; explicitly
+compiled CPU variants retain dynamic batches. Device, dtype, schedule,
+divergence choice, gradient mode, field, metric, and CUDA shape distinguish
+variants. `compilation_cache_info()` reports the bounded eight-entry cache and
+`clear_compilation_cache()` clears successful and failed variants.
 
-The exact-divergence solver remains eager because supported PyTorch versions do
-not trace its higher-order `autograd.grad` operations consistently. This path
-captures only the safe tensor-input boundary and does not invoke TorchInductor, generate
-Triton kernels, or provide compiler acceleration. Unsupported features and
-TorchDynamo failures issue a `RuntimeWarning` and rerun
-eagerly on the input device. User callbacks may graph-break and are not covered
-by the compiled contract. Multi-chart integration and intrinsic-adjoint losses
-are eager-only; compilation is optional, never selected automatically.
+Compiled forward execution is connected through an exact autograd bridge.
+Backward recomputes the differentiable tensor solver, which preserves first and
+second input and parameter derivatives without relying on unsupported compiled
+double backward. The built-in stereographic atlas may speculatively compile a
+complete no-switch solve; any failed stage-validity or final chart check reruns
+the original adaptive router from the untouched input. Adaptive transitions,
+arbitrary atlases, and intrinsic-adjoint losses remain eager.

@@ -10,8 +10,11 @@ from conftest import requires_cuda
 from geomflow.torch import (
     EuclideanSpace,
     ManifoldVectorField,
+    MultiChartVectorField,
+    Sphere2DAtlas,
     clear_compilation_cache,
     compilation_cache_info,
+    integrate_multichart,
     integrate_rk4,
 )
 
@@ -48,6 +51,48 @@ def test_compiled_forward_and_backward_match_eager() -> None:
 
 
 @pytest.mark.compilation
+def test_compiled_solver_recomputes_exact_graph_for_double_backward() -> None:
+    clear_compilation_cache()
+    eager_field = _field()
+    compiled_field = _field()
+    x = torch.randn(3, 2, dtype=torch.double)
+
+    eager = integrate_rk4(
+        eager_field, EuclideanSpace(2), x, 0.0, 0.1, 0.1, compile=False
+    )
+    compiled = integrate_rk4(
+        compiled_field, EuclideanSpace(2), x, 0.0, 0.1, 0.1, compile=True
+    )
+    eager_first = torch.autograd.grad(
+        eager.divergence_integral.sum(),
+        tuple(eager_field.parameters()),
+        create_graph=True,
+    )
+    compiled_first = torch.autograd.grad(
+        compiled.divergence_integral.sum(),
+        tuple(compiled_field.parameters()),
+        create_graph=True,
+    )
+    eager_second = torch.autograd.grad(
+        sum(value.square().sum() for value in eager_first),
+        tuple(eager_field.parameters()),
+        allow_unused=True,
+    )
+    compiled_second = torch.autograd.grad(
+        sum(value.square().sum() for value in compiled_first),
+        tuple(compiled_field.parameters()),
+        allow_unused=True,
+    )
+    for actual, expected in zip(compiled_first, eager_first, strict=True):
+        torch.testing.assert_close(actual, expected)
+    for actual, expected in zip(compiled_second, eager_second, strict=True):
+        if actual is None or expected is None:
+            assert actual is expected
+        else:
+            torch.testing.assert_close(actual, expected)
+
+
+@pytest.mark.compilation
 def test_dynamic_batch_reuses_one_compiled_variant() -> None:
     clear_compilation_cache()
     field = _field()
@@ -65,6 +110,25 @@ def test_dynamic_batch_reuses_one_compiled_variant() -> None:
         assert result.x_final.shape == (batch_size, 2)
     info = compilation_cache_info()
     assert (info.misses, info.hits, info.currsize) == (1, 1, 1)
+
+
+@pytest.mark.compilation
+def test_compiled_no_switch_atlas_matches_tensor_eager() -> None:
+    clear_compilation_cache()
+    atlas = Sphere2DAtlas()
+    eager_field = MultiChartVectorField(atlas, hidden_dim=4, n_layers=1).double()
+    compiled_field = MultiChartVectorField(atlas, hidden_dim=4, n_layers=1).double()
+    compiled_field.load_state_dict(eager_field.state_dict())
+    x = 0.1 * torch.randn(3, 2, dtype=torch.double)
+
+    eager = integrate_multichart(eager_field, atlas, x, 0, 0.0, 0.2, 0.1, compile=False)
+    compiled = integrate_multichart(
+        compiled_field, atlas, x, 0, 0.0, 0.2, 0.1, compile=True
+    )
+    torch.testing.assert_close(compiled.x_final, eager.x_final)
+    torch.testing.assert_close(compiled.divergence_integral, eager.divergence_integral)
+    assert compiled.chart_final == eager.chart_final == 0
+    assert compiled._execution_backend == "inductor"
 
 
 @pytest.mark.compilation

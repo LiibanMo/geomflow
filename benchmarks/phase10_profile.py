@@ -22,7 +22,6 @@ from geomflow.torch import (
 
 from scenarios import BenchmarkCase, make_geometry, make_input, make_model
 
-
 MAX_SYNCHRONIZATION_DURATION_FRACTION = 0.05
 SYNCHRONIZATION_LIMITS = {
     "euclidean": 84,
@@ -55,7 +54,9 @@ def event_in_scope(event: dict[str, object], start: float, end: float) -> bool:
     except (KeyError, TypeError, ValueError):
         return False
     duration = event_duration_us(event) or 0.0
-    return math.isfinite(timestamp) and timestamp <= end and timestamp + duration >= start
+    return (
+        math.isfinite(timestamp) and timestamp <= end and timestamp + duration >= start
+    )
 
 
 def is_cuda_synchronization(name: str) -> bool:
@@ -93,15 +94,11 @@ def profiler_summary(
     if not scopes:
         raise ValueError(f"profiler trace is missing scope {scope_name!r}")
     try:
-        scope_ranges = [
-            (float(event["ts"]), float(event["dur"])) for event in scopes
-        ]
+        scope_ranges = [(float(event["ts"]), float(event["dur"])) for event in scopes]
     except (KeyError, TypeError, ValueError) as error:
         raise ValueError(f"profiler scope {scope_name!r} has invalid timing") from error
     if any(
-        not math.isfinite(start)
-        or not math.isfinite(duration)
-        or duration < 0.0
+        not math.isfinite(start) or not math.isfinite(duration) or duration < 0.0
         for start, duration in scope_ranges
     ):
         raise ValueError(f"profiler scope {scope_name!r} has invalid timing")
@@ -239,10 +236,16 @@ def timed_cuda_operation(operation):
     return result, (time.perf_counter_ns() - start) / 1e3
 
 
-def run_case(scenario: str, trace_path: Path) -> dict[str, object]:
+def run_case(
+    scenario: str,
+    workload: str,
+    batch_size: int,
+    trace_path: Path,
+    expected_backend: str | None = None,
+) -> dict[str, object]:
     case = BenchmarkCase(
         scenario=scenario,
-        batch_size=256,
+        batch_size=batch_size,
         dim=2,
         hidden_width=32,
         hidden_depth=2,
@@ -250,7 +253,7 @@ def run_case(scenario: str, trace_path: Path) -> dict[str, object]:
         dtype=torch.float32,
         device=torch.device("cuda"),
         divergence_mode="exact",
-        workload="forward",
+        workload=workload,
         seed=0,
     )
     torch.manual_seed(case.seed)
@@ -261,11 +264,18 @@ def run_case(scenario: str, trace_path: Path) -> dict[str, object]:
 
     def operation():
         if scenario == "sphere-atlas":
-            return integrate_multichart(model, geometry, x, start_chart=0, **kwargs)
-        return integrate_rk4(model, geometry, x, **kwargs)
+            result = integrate_multichart(model, geometry, x, start_chart=0, **kwargs)
+        else:
+            result = integrate_rk4(model, geometry, x, **kwargs)
+        if workload == "backward":
+            loss = result.x_final.square().mean() + result.divergence_integral.mean()
+            loss.backward()
+        return result
 
+    model.zero_grad(set_to_none=True)
     operation()
     torch.cuda.synchronize()
+    model.zero_grad(set_to_none=True)
     timed_result, end_to_end_us = timed_cuda_operation(operation)
     assert torch.isfinite(timed_result.x_final).all()
     assert torch.isfinite(timed_result.divergence_integral).all()
@@ -281,6 +291,7 @@ def run_case(scenario: str, trace_path: Path) -> dict[str, object]:
         profile_memory=True,
         with_stack=True,
     ) as profiler:
+        model.zero_grad(set_to_none=True)
         with torch.profiler.record_function("geomflow_solver"):
             result = operation()
             torch.cuda.synchronize()
@@ -295,18 +306,27 @@ def run_case(scenario: str, trace_path: Path) -> dict[str, object]:
     )
     failures = profiler_failures(
         summary,
-        expected_linear_count=192,
+        expected_linear_count=None,
         synchronization_limit=SYNCHRONIZATION_LIMITS[scenario],
     )
+    backend = getattr(result, "_execution_backend", "component-gradient-eager")
+    fallback_reason = getattr(result, "_fallback_reason", None)
+    if expected_backend is not None and backend != expected_backend:
+        failures.append(f"expected backend {expected_backend}, observed {backend}")
+    if fallback_reason is not None:
+        failures.append(f"solver used fallback: {fallback_reason}")
     return {
         "scenario": scenario,
+        "workload": workload,
+        "batch_size": batch_size,
         "trace": str(trace_path),
-        "field_call_count": summary["linear_count"] // 3,
         "rk_step_count": case.steps,
         "rk_stage_count": case.steps * 4,
         "functional_transform_attempt_count": 0,
         "functional_transform_fallback_count": 0,
         "exact_divergence_strategy": "component-gradient-with-connected-value",
+        "backend": backend,
+        "fallback_reason": fallback_reason,
         "peak_allocated_bytes": peak_allocated_bytes,
         **summary,
         "failures": failures,
@@ -371,9 +391,7 @@ def run_switch_case(trace_path: Path) -> dict[str, object]:
     failures = profiler_failures(
         summary,
         expected_linear_count=None,
-        synchronization_limit=SYNCHRONIZATION_LIMITS[
-            "sphere-atlas-forced-switch"
-        ],
+        synchronization_limit=SYNCHRONIZATION_LIMITS["sphere-atlas-forced-switch"],
     )
     if len(result.transition_events) != 1:
         failures.append("forced-switch run did not preserve one transition")
@@ -390,6 +408,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--trace-dir", type=Path, required=True)
+    parser.add_argument("--paired", type=Path)
     args = parser.parse_args()
     if not torch.cuda.is_available():
         raise RuntimeError("Phase 10 profiling requires CUDA")
@@ -403,13 +422,43 @@ def main() -> int:
         temporary.replace(args.output)
 
     checkpoint()
+    if args.paired is None:
+        expected_backend = None
+        profile_cases = [
+            {"scenario": scenario, "workload": workload, "batch_size": 256}
+            for scenario in ("euclidean", "sphere-atlas")
+            for workload in ("forward", "backward")
+        ]
+    else:
+        paired = json.loads(args.paired.read_text())
+        expected_backend = paired.get("selected_cuda_backend")
+        if not isinstance(expected_backend, str) or not expected_backend:
+            raise ValueError("paired evidence does not identify one CUDA backend")
+        profile_cases = [
+            gate["case"] for gate in paired.get("speed_gates", {}).values()
+        ]
+        if len(profile_cases) != 4:
+            raise ValueError("paired evidence must contain four selected speed gates")
+
     records = result["records"]
-    for scenario in ("euclidean", "sphere-atlas"):
+    for case in profile_cases:
+        scenario = case["scenario"]
+        workload = case["workload"]
+        batch_size = int(case["batch_size"])
         records.append(
-            run_case(scenario, args.trace_dir / f"ci-vast-profile-{scenario}.json")
+            run_case(
+                scenario,
+                workload,
+                batch_size,
+                args.trace_dir
+                / f"ci-vast-profile-{scenario}-{workload}-b{batch_size}.json",
+                expected_backend,
+            )
         )
         checkpoint()
-    records.append(run_switch_case(args.trace_dir / "ci-vast-profile-forced-switch.json"))
+    records.append(
+        run_switch_case(args.trace_dir / "ci-vast-profile-forced-switch.json")
+    )
     checkpoint()
     failures = [failure for record in records for failure in record["failures"]]
     result["status"] = "failed" if failures else "passed"

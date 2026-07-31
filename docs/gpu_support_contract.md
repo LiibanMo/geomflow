@@ -114,32 +114,37 @@ methods. Result dataclasses include all public density/Jacobian aliases.
 
 ## Compilation Scope
 
-`integrate_rk4(..., compile=True)` is an explicit opt-in for single-chart,
-direct-autograd, fixed-step tensor execution. The current implementation uses
-`torch.compile` with the `eager` backend and dynamic batch shapes. Compilation
-is not the default and no speedup is promised without a preserved benchmark on
-the target system. The scalar schedule is fixed in each compiled variant; the
-batch dimension is dynamic.
+`integrate_rk4(..., compile=None)` and `integrate_multichart(..., compile=None)`
+automatically select a narrow fixed-step tensor implementation for eligible
+built-in `Linear`/`SiLU` fields and analytic Euclidean or stereographic-sphere
+geometry. `compile=False` forces exact component-gradient eager execution.
+`compile=True` explicitly requests TorchInductor and retains warning-based eager
+fallback. No acceleration is promised without preserved target-system evidence.
 
 Compiled variants are held in an eight-entry least-recently-used cache keyed by
 the vector field, metric, input device and dtype, scalar schedule, divergence
-choice, and gradient mode. Batch size is deliberately absent from the key.
+choice, and gradient mode. CUDA variants also include the static input shape;
+explicit CPU variants permit dynamic batch reuse.
 `compilation_cache_info()` reports reuse and `clear_compilation_cache()` drops
 all variants. This bound prevents unbounded growth when applications create
 new fields, metrics, or schedules.
 
-Stage callbacks and trajectory capture are Python-observable features and
-therefore remain eager. Requesting them together with `compile=True` emits a
+Stage callbacks, trajectory capture, hooks, subclasses, unsupported
+activations, periodic fields, and arbitrary geometry are Python-observable or
+not structurally eligible and therefore remain eager. Requesting them together
+with `compile=True` emits a
 `RuntimeWarning` and executes the complete operation eagerly on the original
 device. Compiler construction or execution failures follow the same warning
 and eager-fallback contract. User metric, vector-field, transition, and domain
 callbacks may introduce graph breaks; they are never assumed compilable.
 
-Multi-chart integration and all intrinsic-adjoint entry points are eager-only.
-There is no `compile` argument for those APIs, and wrapping them externally in
-`torch.compile` does not establish support. Atlas selection, rejected trials,
-chart transitions, sparse operation recording, and the adjoint's custom replay
-remain outside the supported compile scope.
+The built-in stereographic atlas may speculatively compile a complete
+chart-local no-switch solve. Stage validity is accumulated on-device and a
+failed validity or final chart check reruns the original adaptive router from
+the untouched input. Atlas selection, rejected trials, chart transitions,
+sparse operation recording, arbitrary atlases, and the adjoint's custom replay
+remain outside the compiled scope. Backward uses exact tensor-solver
+recomputation so compiled forward preserves required higher-order derivatives.
 
 `benchmarks/phase8_compile.py` records graph-break reports, compile cold/warm
 latency, dynamic-batch reuse, eager/compiled direct parity, eager intrinsic
