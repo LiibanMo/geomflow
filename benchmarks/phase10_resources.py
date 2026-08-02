@@ -21,6 +21,23 @@ def zero_gradients_preserving_storage(model: torch.nn.Module) -> None:
     model.zero_grad(set_to_none=False)
 
 
+def adjusted_memory_ratio(records: list[dict[str, object]], scenario: str) -> float:
+    selected = [row for row in records if row.get("scenario") == scenario]
+    if len(selected) != 2 or {row.get("batch_size") for row in selected} != {256, 512}:
+        raise ValueError(f"{scenario} memory records are duplicate or missing")
+    by_batch = {int(row["batch_size"]): row for row in selected}
+    adjusted = []
+    for batch in (256, 512):
+        row = by_batch[batch]
+        expected = int(row["peak_allocated_bytes"]) - int(row["fixed_allocated_bytes"])
+        if row.get("adjusted_peak_bytes") != expected:
+            raise ValueError(f"{scenario} adjusted peak allocation does not reproduce")
+        adjusted.append(expected)
+    if any(value <= 0 for value in adjusted):
+        raise ValueError(f"{scenario} adjusted peak allocation is not positive")
+    return adjusted[1] / adjusted[0]
+
+
 def child_measurement(scenario: str, batch_size: int) -> dict[str, object]:
     case = BenchmarkCase(
         scenario=scenario,
@@ -131,13 +148,15 @@ def main() -> int:
     failures = []
     ratios = {}
     for scenario in ("euclidean", "sphere-atlas"):
-        selected = {row["batch_size"]: row for row in records if row["scenario"] == scenario}
-        adjusted = [selected[batch]["adjusted_peak_bytes"] for batch in (256, 512)]
-        if any(value <= 0 for value in adjusted):
-            failures.append(f"{scenario} adjusted peak allocation is not positive")
+        selected = {
+            row["batch_size"]: row for row in records if row["scenario"] == scenario
+        }
+        try:
+            ratio = adjusted_memory_ratio(records, scenario)
+        except (KeyError, TypeError, ValueError) as error:
+            failures.append(str(error))
             ratios[scenario] = None
             continue
-        ratio = adjusted[1] / adjusted[0]
         ratios[scenario] = ratio
         if ratio > 2.2:
             failures.append(f"{scenario} adjusted 2B/B memory ratio {ratio:.3f} > 2.2")

@@ -78,6 +78,22 @@ def test_balanced_quartets_cancel_linear_order_drift() -> None:
     assert max(abs(value) for value in logs) < 5e-4
 
 
+def test_balanced_quartets_bound_nonlinear_order_drift() -> None:
+    paired = _module()
+    blocks = []
+    sample_index = 0
+    for index in range(10):
+        order = ("ABBA", "BAAB")[index % 2]
+        samples = {"A": [], "B": []}
+        for label in order:
+            drifted = 100.0 + 0.02 * sample_index**2
+            samples[label].append(drifted * (1.05 if label == "B" else 1.0))
+            sample_index += 1
+        blocks.append(_block(tuple(samples["A"]), tuple(samples["B"])))
+    summary = paired.ratio_summary(blocks, alpha=0.05)
+    assert summary["lower"] <= 1.05 <= summary["upper"]
+
+
 def test_deterministic_block_bootstrap_uses_requested_alpha() -> None:
     paired = _module()
     values = [float(value) for value in range(10)]
@@ -94,6 +110,29 @@ def test_ratio_summary_rejects_single_block() -> None:
     blocks = [_block((1.0, 1.0), (1.0, 1.0))]
     with pytest.raises(ValueError, match="at least two"):
         paired.ratio_summary(blocks, alpha=0.00625)
+
+
+def test_ratio_summary_threshold_equality_and_crossing_interval() -> None:
+    paired = _module()
+    exact = paired.ratio_summary(
+        [_block((100.0, 100.0), (110.0, 110.0)) for _ in range(10)],
+        alpha=0.05,
+    )
+    assert exact["ratio"] == pytest.approx(1.10)
+    assert exact["upper"] == pytest.approx(1.10)
+    assert exact["upper"] <= 1.10
+
+    noisy = paired.ratio_summary(
+        [
+            _block(
+                (100.0, 100.0),
+                ((90.0, 90.0) if index % 2 == 0 else (130.0, 130.0)),
+            )
+            for index in range(10)
+        ],
+        alpha=0.05,
+    )
+    assert noisy["lower"] < 1.10 < noisy["upper"]
 
 
 def test_incomplete_modes_never_produce_passed_status() -> None:
@@ -223,8 +262,17 @@ def _release_payload():
         "hidden_depth": 2,
         "steps": 16,
         "dtype": "float32",
+        "device_execution": "eager direct autograd",
+        "divergence": "exact intrinsic component gradients",
+        "seed": 0,
         "quartets": 10,
         "warmup": 3,
+        "cpu_order": ["ABBA", "BAAB"],
+        "cpu_cuda_order": ["CGGC", "GCCG"],
+        "timing": "host wall time synchronized at measurement boundaries",
+        "confidence": "deterministic percentile block bootstrap of medians",
+        "bootstrap_seed": 0,
+        "bootstrap_resamples": 20_000,
     }
     digest = "a" * 64
     manifest = {
@@ -237,6 +285,7 @@ def _release_payload():
         "candidate_wheel_sha256": digest,
         "worker_sha256": digest,
         "scenarios_sha256": digest,
+        "frozen_manifest_path": "/benchmarks/phase10_manifest.json",
         "frozen_manifest_sha256": digest,
     }
     environment = {
@@ -249,15 +298,17 @@ def _release_payload():
         "torch_num_interop_threads": 1,
         "package_root": "/candidate",
         "package_sha256": "candidate",
+        "declared_revision": "candidate",
     }
     environments = {
         "baseline_cpu": {
             **environment,
             "package_root": "/baseline",
             "package_sha256": "baseline",
+            "declared_revision": "baseline",
         },
         "candidate_cpu": environment,
-        "candidate_cuda": environment,
+        "candidate_cuda": dict(environment),
     }
 
     def sample(wall_ms, backend="tensor-eager"):
@@ -337,7 +388,12 @@ def _release_payload():
                 "backends": ["inductor"],
                 "fallback_reasons": [],
             }
-    return frozen, {
+    source_digests = {
+        "frozen_manifest_sha256": digest,
+        "worker_sha256": digest,
+        "scenarios_sha256": digest,
+    }
+    return frozen, source_digests, {
         "schema_version": 2,
         "status": "passed",
         "manifest": manifest,
@@ -355,26 +411,145 @@ def _release_payload():
 
 def test_release_verifier_reconstructs_raw_decisions_and_rejects_fallback() -> None:
     verifier = _verify_module()
-    frozen, payload = _release_payload()
-    verifier.verify_release_payload(payload, frozen)
+    frozen, source_digests, payload = _release_payload()
+    verifier.verify_release_payload(payload, frozen, source_digests)
 
     changed = copy.deepcopy(payload)
     changed["speed_gates"]["euclidean-forward"]["blocks"][0]["second"][0][
         "fallback_reason"
     ] = "unsupported"
     with pytest.raises(AssertionError, match="used fallback"):
-        verifier.verify_release_payload(changed, frozen)
+        verifier.verify_release_payload(changed, frozen, source_digests)
 
 
 def test_release_verifier_rejects_later_batch_after_eligible_case() -> None:
     verifier = _verify_module()
-    frozen, payload = _release_payload()
+    frozen, source_digests, payload = _release_payload()
     family = "euclidean-forward"
     first = payload["crossover"][f"{family}-eligibility"][0]
     payload["crossover"][f"{family}-eligibility"].append({**first, "batch_size": 512})
     payload["speed_gates"][family]["case"]["batch_size"] = 512
     with pytest.raises(AssertionError, match="skipped an earlier eligible batch"):
-        verifier.verify_release_payload(payload, frozen)
+        verifier.verify_release_payload(payload, frozen, source_digests)
+
+
+def test_release_verifier_rejects_duplicate_json_keys(tmp_path: Path) -> None:
+    verifier = _verify_module()
+    evidence = tmp_path / "evidence.json"
+    evidence.write_text('{"status":"passed","status":"failed"}')
+    with pytest.raises(ValueError, match="duplicate JSON key: status"):
+        verifier._load_json(evidence)
+
+
+def test_release_verifier_reconstructs_no_eligible_batch() -> None:
+    paired = _module()
+    verifier = _verify_module()
+    frozen, source_digests, payload = _release_payload()
+    family = "euclidean-forward"
+    eligibility = []
+    for batch in (256, 512, 1024, 2048, 4096):
+        samples = [90.0] * 20
+        bounds = paired.deterministic_block_bootstrap_bounds(samples, 0.05 / 4.0)
+        eligibility.append(
+            {
+                "batch_size": batch,
+                "samples_ms": samples,
+                "lower_ms": bounds["lower"],
+                "bound_method": bounds["bound_method"],
+                "bound_requested_alpha": bounds["requested_alpha"],
+                "bound_resamples": bounds["resamples"],
+                "bound_seed": bounds["seed"],
+            }
+        )
+    payload["crossover"][f"{family}-eligibility"] = eligibility
+    del payload["speed_gates"][family]
+    payload["failures"] = [f"no objectively eligible CUDA speed batch: {family}"]
+    payload["status"] = "failed"
+    verifier.verify_release_payload(payload, frozen, source_digests)
+
+
+def test_release_verifier_accepts_eligibility_exactly_at_threshold() -> None:
+    paired = _module()
+    verifier = _verify_module()
+    frozen, source_digests, payload = _release_payload()
+    family = "euclidean-forward"
+    samples = [100.0] * 20
+    bounds = paired.deterministic_block_bootstrap_bounds(samples, 0.05 / 4.0)
+    row = payload["crossover"][f"{family}-eligibility"][0]
+    row.update(
+        {
+            "samples_ms": samples,
+            "lower_ms": bounds["lower"],
+            "bound_method": bounds["bound_method"],
+            "bound_requested_alpha": bounds["requested_alpha"],
+            "bound_resamples": bounds["resamples"],
+            "bound_seed": bounds["seed"],
+        }
+    )
+    payload["speed_gates"][family]["cpu_duration_lower_ms"] = bounds["lower"]
+    verifier.verify_release_payload(payload, frozen, source_digests)
+
+
+@pytest.mark.parametrize(
+    ("mutation", "message"),
+    [
+        ("manifest", "manifest.seed differs"),
+        ("source_digest", "worker_sha256 differs from source"),
+        ("incomplete", "release evidence is incomplete"),
+        ("revision", "candidate_cuda worker revision differs"),
+        ("case", "euclidean-b256-forward case differs"),
+        ("order", "euclidean-b256-forward has wrong block order"),
+        ("missing_block", "invalid quartet count"),
+        ("duplicate_block", "invalid quartet count"),
+        ("timing", "wall_ms must be finite"),
+        ("cuda_timing", "wall_ms must be finite"),
+        ("backend", "backend summary differs"),
+        ("eligibility", "eligibility batches are not a frozen prefix"),
+    ],
+)
+def test_release_verifier_rejects_tampered_evidence(
+    mutation: str, message: str
+) -> None:
+    verifier = _verify_module()
+    frozen, source_digests, payload = _release_payload()
+    if mutation == "manifest":
+        payload["manifest"]["seed"] = 1
+    elif mutation == "source_digest":
+        payload["manifest"]["worker_sha256"] = "b" * 64
+    elif mutation == "incomplete":
+        payload["incomplete"] = ["partial artifact"]
+    elif mutation == "revision":
+        payload["environments"]["candidate_cuda"]["declared_revision"] = "other"
+    elif mutation == "case":
+        payload["cpu_regression"]["euclidean-b256-forward"]["case"][
+            "batch_size"
+        ] = 512
+    elif mutation == "order":
+        payload["cpu_regression"]["euclidean-b256-forward"]["blocks"][0][
+            "order"
+        ] = "BAAB"
+    elif mutation == "missing_block":
+        payload["cpu_regression"]["euclidean-b256-forward"]["blocks"].pop()
+    elif mutation == "duplicate_block":
+        blocks = payload["cpu_regression"]["euclidean-b256-forward"]["blocks"]
+        blocks.append(copy.deepcopy(blocks[0]))
+    elif mutation == "timing":
+        payload["cpu_regression"]["euclidean-b256-forward"]["blocks"][0][
+            "first"
+        ][0]["wall_ms"] = float("nan")
+    elif mutation == "cuda_timing":
+        payload["speed_gates"]["euclidean-forward"]["blocks"][0]["second"][0][
+            "wall_ms"
+        ] = float("inf")
+    elif mutation == "backend":
+        payload["speed_gates"]["euclidean-forward"]["backends"] = ["eager"]
+    elif mutation == "eligibility":
+        payload["crossover"]["euclidean-forward-eligibility"][0][
+            "batch_size"
+        ] = 512
+        payload["speed_gates"]["euclidean-forward"]["case"]["batch_size"] = 512
+    with pytest.raises(AssertionError, match=message):
+        verifier.verify_release_payload(payload, frozen, source_digests)
 
 
 def test_profiler_transfer_bytes_fails_closed() -> None:
@@ -403,6 +578,12 @@ def test_profiler_gates_all_sync_variants_durations_and_transfers(
             "dur": 1.0,
             "args": {"bytes": 4096},
         },
+        {
+            "name": "Memcpy DtoH (Device -> Pageable)",
+            "ts": 650.0,
+            "dur": 1.0,
+            "args": {"bytes": 4},
+        },
         {"name": "aten::to", "ts": 700.0, "dur": 1.0},
         {"name": "aten::_to_copy", "ts": 701.0, "dur": 1.0},
     ]
@@ -427,6 +608,9 @@ def test_profiler_gates_all_sync_variants_durations_and_transfers(
     assert summary["synchronization_count"] == 5
     assert summary["synchronization_duration_us"] == pytest.approx(65.0)
     assert summary["synchronization_duration_fraction"] == pytest.approx(0.065)
+    assert summary["scalar_copy_count"] == 1
+    assert summary["scalar_copy_bytes"] == 4
+    assert summary["materializing_full_transfer_bytes"] == 4096
 
     failures = profile.profiler_failures(
         summary, expected_linear_count=192, synchronization_limit=4
@@ -505,6 +689,31 @@ def test_resource_baseline_preserves_allocated_gradient_storage() -> None:
         assert parameter.grad is not None
         assert parameter.grad.data_ptr() == pointer
         assert torch.count_nonzero(parameter.grad) == 0
+
+
+def test_resource_ratio_reconstructs_fixed_memory_subtraction() -> None:
+    resources = _benchmark_module("phase10_resources")
+    records = [
+        {
+            "scenario": "euclidean",
+            "batch_size": 256,
+            "fixed_allocated_bytes": 100,
+            "peak_allocated_bytes": 300,
+            "adjusted_peak_bytes": 200,
+        },
+        {
+            "scenario": "euclidean",
+            "batch_size": 512,
+            "fixed_allocated_bytes": 1000,
+            "peak_allocated_bytes": 1400,
+            "adjusted_peak_bytes": 400,
+        },
+    ]
+    assert resources.adjusted_memory_ratio(records, "euclidean") == 2.0
+
+    records[1]["adjusted_peak_bytes"] = 1400
+    with pytest.raises(ValueError, match="does not reproduce"):
+        resources.adjusted_memory_ratio(records, "euclidean")
 
 
 def test_compiler_harness_errors_are_not_candidate_rejections(monkeypatch) -> None:

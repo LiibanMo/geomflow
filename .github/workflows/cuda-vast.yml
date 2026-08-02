@@ -25,7 +25,7 @@ env:
   VAST_MAX_TWO_GPU_DPH: '0.40'
   VAST_MAX_INET_DOWN_COST: '0.02'
   VAST_MAX_INET_UP_COST: '0.02'
-  VAST_LEASE_SECONDS: '3900'
+  VAST_LEASE_SECONDS: '6300'
   VAST_OFFLINE_CHECKS: '10'
   VAST_PROVISION_GRACE_SECONDS: '1200'
   VAST_QUEUE_CHECKS: '10'
@@ -310,7 +310,7 @@ jobs:
     permissions:
       contents: read
     runs-on: [self-hosted, linux, x64, 'geomflow-vast-${{ github.run_id }}-${{ github.run_attempt }}']
-    timeout-minutes: 50
+    timeout-minutes: 90
     env:
       GEOMFLOW_REQUIRE_CUDA: '1'
       SETUPTOOLS_SCM_PRETEND_VERSION: 0.0.dev0
@@ -464,7 +464,7 @@ jobs:
     permissions:
       actions: write
     runs-on: ubuntu-24.04
-    timeout-minutes: 90
+    timeout-minutes: 120
     outputs:
       run_attempt: ${{ steps.watchdog.outputs.run_attempt }}
       verified: ${{ steps.watchdog.outputs.verified }}
