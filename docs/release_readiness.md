@@ -64,6 +64,11 @@ runner registrations were verified absent after artifact collection.
 
 ## Infrastructure gates
 
+The active repository ruleset `protect main` (ruleset `19928537`) requires the
+Ubuntu GCC/Clang, macOS GCC/Clang, Python bindings, Python source, required slow
+mathematics, and CPU-only wheel checks. Its configuration is available at
+`https://github.com/LiibanMo/geomflow/rules/19928537`.
+
 The Vast.ai workflow creates a uniquely labelled self-hosted runner for each run
 attempt. Repository administrators must require the `2x RTX 3060 release
 verdict` check for release candidates and approve any infrastructure-outage
@@ -105,12 +110,12 @@ x64 checksum must be refreshed within 30 days of a GitHub runner release.
 
 After environment authorization, provisioning and a GitHub-hosted billing
 watchdog start independently. The watchdog discovers contracts by exact label,
-enforces a 65-minute lease from the Vast.ai start time, detects an offline
+enforces a 105-minute lease from the Vast.ai start time, detects an offline
 runner or a CUDA job left queued without assignment, and verifies instance and
 runner removal before cancelling a failed run. The unconditional cleanup job
 performs the same exact-label verification without relying on provision outputs.
 `.github/workflows/cuda-vast-reaper.yml` runs every ten minutes and removes
-managed contracts older than 75 minutes if the original workflow is lost or
+managed contracts older than 110 minutes if the original workflow is lost or
 force-cancelled. It also reconciles old managed runner registrations that have
 no corresponding instance.
 
@@ -121,7 +126,7 @@ the CUDA job.
 
 The scheduled reaper still depends on the GitHub Actions control plane. During
 a prolonged GitHub outage, check the Vast.ai console for labels beginning with
-`geomflow-vast-` and destroy any contract beyond the 65-minute lease.
+`geomflow-vast-` and destroy any contract beyond the 105-minute lease.
 
 ## Known limitations
 
@@ -129,9 +134,9 @@ a prolonged GitHub outage, check the Vast.ai console for labels beginning with
 - The intrinsic adjoint is single-chart and first-order only; backward replay
   reduces memory at the cost of potentially substantial recomputation.
 - Multi-chart training uses direct autograd.
-- Eligible built-in CUDA solves use automatic TorchInductor forward execution
-  with exact tensor-eager backward recomputation. `compile=False` forces the
-  component-gradient oracle. Production acceleration remains provisional until
-  all four frozen speed gates pass without fallback.
+- Eligible built-in CUDA solves use exact tensor-eager execution by default.
+  `compile=True` requests TorchInductor with exact eager fallback and backward
+  recomputation. Automatic compiler selection remains disabled until all four
+  frozen speed gates pass without fallback.
 - The header-only C++ and pybind APIs are CPU-only.
 - MPS is best-effort, not production-supported.

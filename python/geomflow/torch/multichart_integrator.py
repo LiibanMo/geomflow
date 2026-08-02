@@ -14,10 +14,14 @@ from ._utils import (
 )
 
 from ._schedule import FixedStepSchedule, checkpoint_due, validate_checkpoint_interval
+from .analytic_metric import AnalyticMetric
 from .atlas import Atlas, Chart
 from .base_distribution import AtlasBaseDistribution, StandardNormalCoordinateBase
 from .multichart import MultiChartVectorField
 from .operators import _divergence_from_value
+
+_BASE_CHART_CONTAINS = Chart.contains
+_BASE_METRIC_CONTAINS = AnalyticMetric.contains
 
 
 @dataclass
@@ -167,22 +171,47 @@ def integrate_multichart(
     minimum_step = schedule.dt * 1e-4 if min_step is None else float(min_step)
     if not math.isfinite(minimum_step) or minimum_step <= 0.0:
         raise ValueError("min_step must be a finite positive magnitude")
+    builtin_solver_charts = (
+        type(atlas) is Atlas
+        and getattr(atlas, "_solver_kind", None) == "sphere-2d-stereographic"
+        and all(
+            type(chart) is Chart
+            and type(chart).contains is _BASE_CHART_CONTAINS
+            and chart._domain is getattr(chart, "_solver_domain_fn", None)
+            and "contains" not in chart.__dict__
+            and chart.analytic_metric._supports_tensor_solver()
+            and type(chart.analytic_metric).contains is _BASE_METRIC_CONTAINS
+            and "contains" not in chart.analytic_metric.__dict__
+            for chart in atlas.charts.values()
+        )
+    )
     tensor_eligible = (
-        compile is not False
-        and compute_divergence
+        compute_divergence
         and not track_trajectory
         and not record_operations
         and not record_statistics
         and type(vf) is MultiChartVectorField
-        and type(atlas) is Atlas
-        and getattr(atlas, "_solver_kind", None) == "sphere-2d-stereographic"
+        and builtin_solver_charts
         and all(
-            type(chart) is Chart
-            and chart._domain is getattr(chart, "_solver_domain_fn", None)
-            and chart.analytic_metric._supports_tensor_solver()
-            and vf._supports_tensor_value_and_trace(chart_id)
-            for chart_id, chart in atlas.charts.items()
+            vf._supports_tensor_value_and_trace(chart_id)
+            for chart_id in atlas.charts
         )
+    )
+    prevalidated_domains = (
+        {
+            chart_id: (chart._domain, chart.analytic_metric._domain_fn)
+            for chart_id, chart in atlas.charts.items()
+        }
+        if builtin_solver_charts
+        else {}
+    )
+    prevalidated_metrics = (
+        {
+            chart_id: chart.analytic_metric
+            for chart_id, chart in atlas.charts.items()
+        }
+        if builtin_solver_charts
+        else {}
     )
     execution_backend = (
         "tensor-eager" if tensor_eligible else "component-gradient-eager"
@@ -215,6 +244,11 @@ def integrate_multichart(
 
     build_graph = torch.is_grad_enabled() and not torch.is_inference_mode_enabled()
     field_call = vf._solver_forward if type(vf) is MultiChartVectorField else vf
+    tensor_heads = (
+        {chart_id: vf.head(chart_id) for chart_id in atlas.charts}
+        if tensor_eligible
+        else {}
+    )
 
     def augmented_rhs(
         time: float, state: torch.Tensor, chart_id: int
@@ -227,12 +261,14 @@ def integrate_multichart(
 
         if tensor_eligible:
             time_tensor = state.new_full(state.shape[:-1], time)
-            field_value, trace = vf._tensor_value_and_trace_unchecked(
-                time_tensor, state, chart_id
-            )
-            volume_gradient = atlas[
+            field_value, trace = tensor_heads[
                 chart_id
-            ].analytic_metric._tensor_log_volume_gradient_unchecked(state)
+            ]._tensor_value_and_trace_unchecked(
+                time_tensor, state
+            )
+            volume_gradient = prevalidated_metrics[
+                chart_id
+            ]._tensor_log_volume_gradient_unchecked(state)
             return field_value, trace + (field_value * volume_gradient).sum(-1)
 
         with torch.inference_mode(False), torch.enable_grad():
@@ -241,11 +277,15 @@ def integrate_multichart(
                 divergence_state = divergence_state.clone().requires_grad_(True)
             time_tensor = divergence_state.new_full(divergence_state.shape[:-1], time)
             field_value = field_call(time_tensor, divergence_state, chart_id)
-
+            metric = (
+                prevalidated_metrics[chart_id]
+                if chart_id in prevalidated_metrics
+                else atlas[chart_id].analytic_metric
+            )
             divergence_value = _divergence_from_value(
                 field_value,
                 divergence_state,
-                atlas[chart_id].analytic_metric,
+                metric,
             )
             if not build_graph:
                 field_value = field_value.detach()
@@ -254,6 +294,15 @@ def integrate_multichart(
 
     def chart_contains(chart_id: int, state: torch.Tensor) -> torch.Tensor:
         count("chart_predicate_count")
+        domains = prevalidated_domains.get(chart_id)
+        if domains is not None:
+            chart_domain, metric_domain = domains
+            mask = torch.isfinite(state).all(dim=-1)
+            if chart_domain is not None:
+                mask = mask & chart_domain(state)
+            if metric_domain is not None:
+                mask = mask & metric_domain(state)
+            return mask
         chart = atlas[chart_id]
         predicate = getattr(chart, "contains", chart.is_inside)
         return predicate(state) & chart.analytic_metric.contains(state)
@@ -261,10 +310,13 @@ def integrate_multichart(
     if not decide(chart_contains(current_chart, x)):
         raise RuntimeError(f"initial state is outside chart {current_chart}")
 
-    request_compilation = compile is True or (
-        compile is None and x0.device.type == "cuda" and tensor_eligible
-    )
-    if request_compilation and tensor_eligible:
+    request_compilation = compile is True
+    if request_compilation and not tensor_eligible:
+        from .compilation import _warn_fallback
+
+        fallback_reason = "field, atlas, or options are not eligible for tensor compilation"
+        _warn_fallback(fallback_reason)
+    elif request_compilation:
         from .compilation import _integrate_rk4_compiled
 
         chart = atlas[current_chart]

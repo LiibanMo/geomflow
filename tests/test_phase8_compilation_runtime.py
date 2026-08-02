@@ -160,6 +160,41 @@ def test_compilation_cache_is_bounded_and_reuses_recent_entries(monkeypatch) -> 
 
 
 @pytest.mark.compilation
+def test_compilation_cache_invalidates_structure_but_not_parameter_values(
+    monkeypatch,
+) -> None:
+    clear_compilation_cache()
+    builds = 0
+
+    def fake_compile(vf, metric, schedule, compute_divergence):
+        del metric, schedule, compute_divergence
+        nonlocal builds
+        builds += 1
+
+        def solver(x):
+            offset = next(vf.parameters()).sum()
+            return x + offset, x.new_zeros(x.shape[:-1])
+
+        return solver
+
+    monkeypatch.setattr(compilation_runtime, "_make_compiled_solver", fake_compile)
+    field = _field()
+    metric = EuclideanSpace(2)
+    x = torch.zeros(1, 2, dtype=torch.double)
+
+    first = integrate_rk4(field, metric, x, 0.0, 0.1, 0.1, compile=True)
+    with torch.no_grad():
+        next(field.parameters()).add_(1.0)
+    updated = integrate_rk4(field, metric, x, 0.0, 0.1, 0.1, compile=True)
+    assert builds == 1
+    assert not torch.equal(first.x_final, updated.x_final)
+
+    field.net[-1] = torch.nn.Linear(4, 2, dtype=torch.double)
+    integrate_rk4(field, metric, x, 0.0, 0.1, 0.1, compile=True)
+    assert builds == 2
+
+
+@pytest.mark.compilation
 def test_callback_and_compiler_failure_warn_and_fall_back_eager(monkeypatch) -> None:
     clear_compilation_cache()
     field = _field()

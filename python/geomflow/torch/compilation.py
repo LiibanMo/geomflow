@@ -114,9 +114,48 @@ def _cache_key(
     schedule: FixedStepSchedule,
     compute_divergence: bool,
 ) -> tuple[object, ...]:
+    structure = tuple(
+        (
+            name,
+            type(module),
+            id(module),
+            tuple(
+                (
+                    parameter_name,
+                    id(parameter),
+                    tuple(parameter.shape),
+                    parameter.device,
+                    parameter.dtype,
+                )
+                for parameter_name, parameter in module.named_parameters(recurse=False)
+            ),
+            tuple(
+                (
+                    buffer_name,
+                    id(buffer),
+                    tuple(buffer.shape),
+                    buffer.device,
+                    buffer.dtype,
+                )
+                for buffer_name, buffer in module.named_buffers(recurse=False)
+            ),
+        )
+        for name, module in vf.named_modules()
+    )
+    metric_structure = (
+        type(metric),
+        metric._solver_kind,
+        metric.debug_validation,
+        id(metric._metric_fn),
+        id(metric._domain_fn),
+        id(metric._canonicalize_fn),
+        id(metric._log_volume_gradient_fn),
+    )
     key = (
         vf,
+        structure,
         metric,
+        metric_structure,
         x.device.type,
         x.device.index,
         x.dtype,
@@ -134,6 +173,7 @@ def _make_compiled_solver(
     metric: AnalyticMetric,
     schedule: FixedStepSchedule,
     compute_divergence: bool,
+    compile_mode: str | None = None,
 ) -> Callable[[torch.Tensor], tuple[torch.Tensor, torch.Tensor]]:
     steps = tuple(schedule)
     parameters = tuple(vf.parameters())
@@ -230,7 +270,9 @@ def _make_compiled_solver(
         "fullgraph": True,
         "dynamic": device_type != "cuda",
     }
-    if device_type == "cuda":
+    if compile_mode is not None and compile_mode != "default":
+        compile_options["mode"] = compile_mode
+    elif device_type == "cuda" and compile_mode is None:
         compile_options["mode"] = "reduce-overhead"
     compiled_solver = torch.compile(tensor_solver, **compile_options)
 

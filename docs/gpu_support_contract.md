@@ -74,7 +74,7 @@ and compilation status is **Eager**.
 | `gradient` | differential operator | Required | Required | values, input and function-parameter gradients | Leading | Eager |
 | `covariant_derivative_tensor` | differential operator | Required | Required | values, input and parameter gradients | Leading | Eager |
 | `FlowResult` | integrator result | Required | Required | tensor properties preserve solver graph | Scalar/config | Eager |
-| `integrate_rk4` | integrator | Required | Required | direct-autograd input and parameter gradients | Batch | Eager by default; optional compile for the scoped single-chart path |
+| `integrate_rk4` | integrator | Required | Required | direct-autograd input and parameter gradients | Batch | Exact tensor-eager for eligible built-ins; optional TorchInductor |
 | `CNFLossTerms` | adjoint/loss result | Required | Required | component and total gradients | Scalar/config | Eager |
 | `cnf_log_prob` | adjoint/loss | Required | Required | direct-autograd input and parameter gradients | Batch | Eager |
 | `cnf_loss_terms` | adjoint/loss | Required | Required | direct-autograd input and parameter gradients | Batch | Eager |
@@ -88,7 +88,7 @@ and compilation status is **Eager**.
 | `Atlas` | atlas | Required | Required | transition gradients; selection is nondifferentiable | Batch | Eager |
 | `MultiChartVectorField` | vector field | Required | Required | input, time, and selected-head parameter gradients | Batch | Eager |
 | `overlap_consistency_loss` | vector-field loss | Required | Required | input and both-head parameter gradients | Batch | Eager |
-| `integrate_multichart` | integrator | Required | Required | direct-autograd input and traversed-head parameter gradients | Batch | Eager only |
+| `integrate_multichart` | integrator | Required | Required | direct-autograd input and traversed-head parameter gradients | Batch | Exact tensor-eager for eligible no-switch built-ins; optional TorchInductor |
 | `replay_transition_pullbacks` | coordinate transform | Required | Required | covector and transition-Jacobian gradients | Leading | Eager |
 | `MultiChartFlowResult` | integrator result | Required | Required | tensor properties preserve solver graph | Scalar/config | Eager |
 | `ChartTransitionEvent` | atlas/integrator metadata | Required | Required | stored tensors retain declared graph | Scalar/config | Eager |
@@ -117,14 +117,15 @@ methods. Result dataclasses include all public density/Jacobian aliases.
 `integrate_rk4(..., compile=None)` and `integrate_multichart(..., compile=None)`
 automatically select a narrow fixed-step tensor implementation for eligible
 built-in `Linear`/`SiLU` fields and analytic Euclidean or stereographic-sphere
-geometry. `compile=False` forces exact component-gradient eager execution.
-`compile=True` explicitly requests TorchInductor and retains warning-based eager
-fallback. No acceleration is promised without preserved target-system evidence.
+geometry. `compile=None` and `compile=False` retain exact eager execution;
+eligible built-ins use the tensor-only derivative core. `compile=True` explicitly
+requests TorchInductor and retains warning-based eager fallback. No compiler
+acceleration is selected automatically without preserved target-system evidence.
 
 Compiled variants are held in an eight-entry least-recently-used cache keyed by
-the vector field, metric, input device and dtype, scalar schedule, divergence
-choice, and gradient mode. CUDA variants also include the static input shape;
-explicit CPU variants permit dynamic batch reuse.
+the vector field and its structure, metric callbacks, input device and dtype,
+scalar schedule, divergence choice, and gradient mode. CUDA variants also
+include the static input shape; explicit CPU variants permit dynamic batch reuse.
 `compilation_cache_info()` reports reuse and `clear_compilation_cache()` drops
 all variants. This bound prevents unbounded growth when applications create
 new fields, metrics, or schedules.
