@@ -34,10 +34,11 @@ calls. Arbitrary fields, metrics, activations, periodic features, subclasses,
 hooks, callbacks, trajectory capture, and diagnostic recording retain the
 component-gradient eager implementation.
 
-The `compile` argument is tri-state. The default `None` automatically selects
-TorchInductor for eligible CUDA solves, `False` forces exact eager execution,
-and `True` explicitly requests compilation and warns before eager fallback.
-Eligible CPU solves use the tensor-eager implementation by default. CUDA
+The `compile` argument is tri-state. The default `None` selects exact
+tensor-eager execution for eligible built-ins, `False` forces eager execution,
+and `True` explicitly requests TorchInductor and warns before eager fallback.
+Eligible built-in solves retain the tensor-eager derivative core when
+compilation is disabled. CUDA
 variants are static-batch full graphs using `mode="reduce-overhead"`; explicitly
 compiled CPU variants retain dynamic batches. Device, dtype, schedule,
 divergence choice, gradient mode, field, metric, and CUDA shape distinguish

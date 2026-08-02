@@ -77,7 +77,7 @@ def metadata(args: argparse.Namespace) -> dict[str, object]:
             key: str(value) if isinstance(value, Path) else value
             for key, value in vars(args).items()
         },
-        "compile_backend": "eager",
+        "compile_backend": "mixed exact eager and TorchInductor",
         "compile_dynamic_shapes": True,
         "nvtx": "disabled: profiler events and JSON are the benchmark outputs",
     }

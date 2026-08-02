@@ -143,7 +143,10 @@ class AnalyticMetric:
     def canonicalize(self, x: torch.Tensor) -> torch.Tensor:
         """Return the canonical representative of identified coordinates."""
         self.validate_points(x)
-        return self._canonicalize_unchecked(x)
+        result = self._canonicalize_unchecked(x)
+        if self._canonicalize_fn is not None:
+            self.validate_points(result)
+        return result
 
     def _canonicalize_unchecked(self, x: torch.Tensor) -> torch.Tensor:
         """Canonicalize coordinates already validated by a solver stage."""

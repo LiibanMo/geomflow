@@ -12,7 +12,8 @@ import time
 import torch
 
 from geomflow.torch import EuclideanSpace, ManifoldVectorField
-from geomflow.torch.compilation import _with_exact_higher_order_fallback
+from geomflow.torch._schedule import FixedStepSchedule
+from geomflow.torch.compilation import _make_compiled_solver
 
 
 def make_field(device: torch.device, dtype: torch.dtype) -> ManifoldVectorField:
@@ -53,11 +54,21 @@ def synchronize(device: torch.device) -> None:
         torch.cuda.synchronize(device)
 
 
-def gradients(function, x: torch.Tensor, field: torch.nn.Module, *, second_order: bool):
+def gradients(
+    function,
+    x: torch.Tensor,
+    field: torch.nn.Module,
+    *,
+    second_order: bool,
+    create_graph: bool,
+):
     state, divergence = function(x)
     objective = state.square().mean() + divergence.mean()
     first = torch.autograd.grad(
-        objective, (x, *field.parameters()), create_graph=True, allow_unused=False
+        objective,
+        (x, *field.parameters()),
+        create_graph=create_graph,
+        allow_unused=False,
     )
     second = (
         torch.autograd.grad(
@@ -101,6 +112,23 @@ def cuda_launches(function, x: torch.Tensor) -> int | None:
     )
 
 
+def cuda_peak_bytes(
+    function, x: torch.Tensor, *, baseline_bytes: int | None = None
+) -> int | None:
+    if x.device.type != "cuda":
+        return None
+    torch.cuda.empty_cache()
+    baseline = (
+        torch.cuda.memory_allocated(x.device)
+        if baseline_bytes is None
+        else baseline_bytes
+    )
+    torch.cuda.reset_peak_memory_stats(x.device)
+    function(x)
+    torch.cuda.synchronize(x.device)
+    return torch.cuda.max_memory_allocated(x.device) - baseline
+
+
 def evaluate(
     device: torch.device, dtype: torch.dtype, steps: int, mode: str = "default"
 ) -> dict[str, object]:
@@ -117,23 +145,40 @@ def evaluate(
         "status": "running",
     }
     try:
+        precompile_allocated = (
+            torch.cuda.memory_allocated(device) if device.type == "cuda" else None
+        )
+        eager_backward = lambda value: gradients(
+            eager, value, field, second_order=False, create_graph=False
+        )
+        eager_peak_bytes = cuda_peak_bytes(
+            eager_backward, x, baseline_bytes=precompile_allocated
+        )
         torch._dynamo.reset()
         if hasattr(torch._dynamo.config, "trace_autograd_ops"):
             torch._dynamo.config.trace_autograd_ops = True
         counters = torch._dynamo.utils.counters
         counters.clear()
         compile_start = time.perf_counter_ns()
-        compile_options = {"backend": "inductor", "fullgraph": True, "dynamic": False}
-        if mode != "default":
-            compile_options["mode"] = mode
-        compiled_raw = torch.compile(eager, **compile_options)
-        compiled = _with_exact_higher_order_fallback(compiled_raw, eager, field)
+        schedule = FixedStepSchedule(0.0, steps / 16.0, 1.0 / 16.0)
+        compiled = _make_compiled_solver(
+            field,
+            EuclideanSpace(2),
+            schedule,
+            True,
+            compile_mode=mode,
+        )
         compiled(x)
+        compiled_first_values = gradients(
+            compiled, x, field, second_order=False, create_graph=False
+        )
         synchronize(device)
         record["cold_compile_ms"] = (time.perf_counter_ns() - compile_start) / 1e6
 
-        eager_values = gradients(eager, x, field, second_order=True)
-        compiled_values = gradients(compiled, x, field, second_order=True)
+        eager_values = gradients(
+            eager, x, field, second_order=False, create_graph=False
+        )
+        compiled_values = compiled_first_values
         tolerance = 3e-4 if dtype == torch.float32 else 2e-9
         for expected, actual in zip(eager_values, compiled_values, strict=True):
             expected_values = expected if isinstance(expected, tuple) else (expected,)
@@ -151,24 +196,102 @@ def evaluate(
                     actual_value, expected_value, rtol=tolerance, atol=tolerance
                 )
 
+        eager_higher = gradients(
+            eager, x, field, second_order=True, create_graph=True
+        )
+        compiled_higher = gradients(
+            compiled, x, field, second_order=True, create_graph=True
+        )
+        for expected, actual in zip(eager_higher, compiled_higher, strict=True):
+            expected_values = expected if isinstance(expected, tuple) else (expected,)
+            actual_values = actual if isinstance(actual, tuple) else (actual,)
+            for expected_value, actual_value in zip(
+                expected_values, actual_values, strict=True
+            ):
+                if expected_value is None or actual_value is None:
+                    if expected_value is not actual_value:
+                        raise AssertionError(
+                            "higher-order gradient availability differs"
+                        )
+                    continue
+                torch.testing.assert_close(
+                    actual_value, expected_value, rtol=tolerance, atol=tolerance
+                )
+
         eager_samples = timed(eager, x, device)
         compiled_samples = timed(compiled, x, device)
+        eager_backward_samples = timed(
+            lambda value: gradients(
+                eager, value, field, second_order=False, create_graph=False
+            ),
+            x,
+            device,
+        )
+        compiled_backward_samples = timed(
+            lambda value: gradients(
+                compiled, value, field, second_order=False, create_graph=False
+            ),
+            x,
+            device,
+        )
         eager_launches = cuda_launches(eager, x)
         compiled_launches = cuda_launches(compiled, x)
+        compiled_backward = lambda value: gradients(
+            compiled, value, field, second_order=False, create_graph=False
+        )
+        eager_backward_launches = cuda_launches(eager_backward, x)
+        compiled_backward_launches = cuda_launches(compiled_backward, x)
+        compiled_peak_bytes = cuda_peak_bytes(
+            compiled_backward, x, baseline_bytes=precompile_allocated
+        )
         speedup = statistics.median(eager_samples) / statistics.median(compiled_samples)
+        backward_speedup = statistics.median(
+            eager_backward_samples
+        ) / statistics.median(compiled_backward_samples)
         launch_reduction = (
             None
             if eager_launches in (None, 0) or compiled_launches is None
             else 1.0 - compiled_launches / eager_launches
+        )
+        backward_launch_reduction = (
+            None
+            if eager_backward_launches in (None, 0)
+            or compiled_backward_launches is None
+            else 1.0 - compiled_backward_launches / eager_backward_launches
+        )
+        peak_memory_ratio = (
+            None
+            if eager_peak_bytes in (None, 0) or compiled_peak_bytes is None
+            else compiled_peak_bytes / eager_peak_bytes
+        )
+        saved_per_training_call_ms = statistics.median(
+            eager_backward_samples
+        ) - statistics.median(
+            compiled_backward_samples
+        )
+        cold_training_break_even_calls = (
+            None
+            if saved_per_training_call_ms <= 0.0
+            else record["cold_compile_ms"] / saved_per_training_call_ms
         )
         record.update(
             {
                 "eager_samples_ms": eager_samples,
                 "inductor_samples_ms": compiled_samples,
                 "warm_speedup": speedup,
+                "eager_forward_backward_samples_ms": eager_backward_samples,
+                "inductor_forward_backward_samples_ms": compiled_backward_samples,
+                "warm_forward_backward_speedup": backward_speedup,
                 "eager_cuda_launches": eager_launches,
                 "inductor_cuda_launches": compiled_launches,
                 "cuda_launch_reduction": launch_reduction,
+                "eager_backward_cuda_launches": eager_backward_launches,
+                "inductor_backward_cuda_launches": compiled_backward_launches,
+                "backward_cuda_launch_reduction": backward_launch_reduction,
+                "eager_peak_allocated_bytes": eager_peak_bytes,
+                "inductor_peak_allocated_bytes": compiled_peak_bytes,
+                "peak_memory_ratio": peak_memory_ratio,
+                "cold_training_break_even_calls": cold_training_break_even_calls,
                 "graph_break_count": sum(counters.get("graph_break", {}).values()),
                 "generated_kernel_count": sum(
                     counters.get("inductor", {}).get(key, 0)
@@ -181,8 +304,14 @@ def evaluate(
             device.type == "cuda"
             and record["graph_break_count"] == 0
             and speedup >= 1.20
+            and backward_speedup >= 1.20
             and launch_reduction is not None
             and launch_reduction >= 0.30
+            and backward_launch_reduction is not None
+            and backward_launch_reduction >= 0.30
+            and peak_memory_ratio is not None
+            and peak_memory_ratio <= 1.10
+            and cold_training_break_even_calls is not None
         )
         record["status"] = "accepted" if accepted else "rejected"
     except torch._dynamo.exc.Unsupported as error:
@@ -242,10 +371,24 @@ def main() -> int:
         result["status"] = "infrastructure_error"
         checkpoint()
         return 1
-    accepted = [
-        record for record in result["records"] if record["status"] == "accepted"
-    ]
-    result["decision"] = "accept_inductor" if accepted else "retain_eager"
+    cuda_records = [record for record in result["records"] if record["device"] == "cuda"]
+    accepted_modes = sorted(
+        {
+            record["mode"]
+            for record in cuda_records
+            if all(
+                candidate["status"] == "accepted"
+                for candidate in cuda_records
+                if candidate["mode"] == record["mode"]
+            )
+        }
+    )
+    result["accepted_modes"] = accepted_modes
+    result["decision"] = (
+        "accept_inductor"
+        if "reduce-overhead" in accepted_modes
+        else "retain_eager"
+    )
     result["status"] = "passed"
     checkpoint()
     return 0

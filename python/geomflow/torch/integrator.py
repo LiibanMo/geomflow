@@ -67,15 +67,17 @@ def _augmented_rk4_step(
     compute_divergence: bool = True,
     stage_callback: Callable[[float, torch.Tensor], None] | None = None,
     use_tensor_core: bool = False,
+    initial_state_validated: bool = False,
 ) -> tuple[torch.Tensor, torch.Tensor]:
     """Advance one intrinsic augmented RK4 step."""
     build_graph = torch.is_grad_enabled() and not torch.is_inference_mode_enabled()
     field_call = vf._solver_forward if type(vf) is ManifoldVectorField else vf
 
     def augmented_rhs(
-        stage_time: float, state: torch.Tensor
+        stage_time: float, state: torch.Tensor, *, validate_state: bool = True
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        metric.validate_points(state)
+        if validate_state:
+            metric.validate_points(state)
         if stage_callback is not None:
             stage_callback(stage_time, state)
         if not compute_divergence:
@@ -112,7 +114,9 @@ def _augmented_rk4_step(
         return field_value, divergence_value
 
     half_h = step_size / 2.0
-    k1_x, k1_i = augmented_rhs(time, x)
+    k1_x, k1_i = augmented_rhs(
+        time, x, validate_state=not initial_state_validated
+    )
     k2_x, k2_i = augmented_rhs(time + half_h, x + half_h * k1_x)
     k3_x, k3_i = augmented_rhs(time + half_h, x + half_h * k2_x)
     k4_x, k4_i = augmented_rhs(time + step_size, x + step_size * k3_x)
@@ -143,8 +147,8 @@ def integrate_rk4(
     step's sign. Trajectory entries are ``(time, state, divergence_integral)``.
     By default they retain autograd history. ``detach_trajectory=True`` stores
     replay-only checkpoints, and ``checkpoint_interval`` controls their spacing.
-    ``compile=None`` automatically selects eligible CUDA acceleration,
-    ``False`` forces exact eager execution, and ``True`` requests compilation.
+    ``compile=None`` selects exact tensor-eager execution when eligible,
+    ``False`` forces eager execution, and ``True`` requests TorchInductor.
     """
     if x0.dim() < 1:
         raise ValueError("x0 must have shape (..., dim); got 0-d tensor")
@@ -160,38 +164,37 @@ def integrate_rk4(
         and type(vf) is ManifoldVectorField
         and vf._supports_tensor_value_and_trace()
     )
-    use_tensor_core = compile is not False and compute_divergence and tensor_eligible
+    use_tensor_core = compute_divergence and tensor_eligible
     execution_backend = (
         "tensor-eager" if use_tensor_core else "component-gradient-eager"
     )
     fallback_reason = None
     metric.validate_points(x0)
 
-    request_compilation = compile is True or (
-        compile is None and x0.device.type == "cuda" and tensor_eligible
-    )
+    request_compilation = compile is True
     if request_compilation:
         from .compilation import _integrate_rk4_compiled
 
+        unsupported_reason = (
+            "stage callbacks require eager execution"
+            if stage_callback is not None
+            else (
+                "trajectory capture requires eager execution"
+                if track_trajectory
+                else (
+                    "field or metric is not eligible for tensor compilation"
+                    if not tensor_eligible
+                    else None
+                )
+            )
+        )
         compiled = _integrate_rk4_compiled(
             vf,
             metric,
             x0,
             schedule,
             compute_divergence=compute_divergence,
-            unsupported_reason=(
-                "stage callbacks require eager execution"
-                if stage_callback is not None
-                else (
-                    "trajectory capture requires eager execution"
-                    if track_trajectory
-                    else (
-                        "field or metric is not eligible for tensor compilation"
-                        if not tensor_eligible
-                        else None
-                    )
-                )
-            ),
+            unsupported_reason=unsupported_reason,
             warn_fallback=compile is True,
         )
         if compiled is not None:
@@ -204,9 +207,11 @@ def integrate_rk4(
                 detach_trajectory,
                 execution_backend="inductor",
             )
-        fallback_reason = "compiled acceleration unavailable"
+        fallback_reason = unsupported_reason or "compiled acceleration unavailable"
 
     x = metric._canonicalize_unchecked(x0.clone())
+    if metric._canonicalize_fn is not None:
+        metric.validate_points(x)
     integral = torch.zeros(x0.shape[:-1], device=x0.device, dtype=x0.dtype)
     trajectory: list[tuple[float, torch.Tensor, torch.Tensor]] = []
 
@@ -228,6 +233,7 @@ def integrate_rk4(
             compute_divergence=compute_divergence,
             stage_callback=stage_callback,
             use_tensor_core=use_tensor_core,
+            initial_state_validated=True,
         )
         integral = integral + integral_increment
         if track_trajectory and checkpoint_due(
