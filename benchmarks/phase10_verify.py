@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import math
 from pathlib import Path
@@ -17,6 +18,22 @@ from phase10_paired import (
     ratio_summary,
     validate_worker_environments,
 )
+
+
+def _reject_duplicate_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    result: dict[str, Any] = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError(f"duplicate JSON key: {key}")
+        result[key] = value
+    return result
+
+
+def _load_json(path: Path) -> dict[str, Any]:
+    payload = json.loads(path.read_text(), object_pairs_hook=_reject_duplicate_keys)
+    if not isinstance(payload, dict):
+        raise ValueError(f"{path} must contain a JSON object")
+    return payload
 
 
 def _require(condition: bool, message: str) -> None:
@@ -88,28 +105,41 @@ def _verify_ratio_summary(
     return expected
 
 
-def _verify_manifest(payload: dict[str, Any], frozen: dict[str, Any]) -> None:
+def _verify_manifest(
+    payload: dict[str, Any],
+    frozen: dict[str, Any],
+    source_digests: dict[str, str],
+) -> None:
     manifest = payload.get("manifest", {})
-    expected = {
-        "scenarios": frozen["scenarios"],
-        "workloads": frozen["workloads"],
-        "regression_batches": frozen["regression_batches"],
-        "crossover_batches": frozen["crossover_batches"],
-        "dimension": frozen["dimension"],
-        "hidden_width": frozen["hidden_width"],
-        "hidden_depth": frozen["hidden_depth"],
-        "steps": frozen["steps"],
-        "dtype": frozen["dtype"],
-        "quartets": frozen["quartets"],
-        "warmup": frozen["warmup"],
-        "baseline_revision": frozen["baseline_revision"],
-        "mode": "release",
-        "release_matrix_complete": True,
+    runtime_keys = {
+        "mode",
+        "release_matrix_complete",
+        "candidate_revision",
+        "baseline_wheel_sha256",
+        "candidate_wheel_sha256",
+        "worker_sha256",
+        "scenarios_sha256",
+        "frozen_manifest_path",
+        "frozen_manifest_sha256",
     }
-    for key, value in expected.items():
+    _require(
+        set(manifest) == set(frozen) | runtime_keys,
+        "manifest keys differ from the frozen release schema",
+    )
+    _require(
+        set(source_digests)
+        == {"frozen_manifest_sha256", "worker_sha256", "scenarios_sha256"},
+        "source digest set differs",
+    )
+    for key, value in frozen.items():
         _require(
             manifest.get(key) == value, f"manifest.{key} differs from frozen protocol"
         )
+    _require(manifest.get("mode") == "release", "manifest.mode is not release")
+    _require(
+        manifest.get("release_matrix_complete") is True,
+        "manifest release matrix is incomplete",
+    )
     for key in (
         "baseline_wheel_sha256",
         "candidate_wheel_sha256",
@@ -124,22 +154,48 @@ def _verify_manifest(payload: dict[str, Any], frozen: dict[str, Any]) -> None:
             and all(character in "0123456789abcdef" for character in digest),
             f"manifest.{key} is not a SHA-256 digest",
         )
+    for key, digest in source_digests.items():
+        _require(manifest.get(key) == digest, f"manifest.{key} differs from source")
 
 
-def verify_release_payload(payload: dict[str, Any], frozen: dict[str, Any]) -> None:
+def verify_release_payload(
+    payload: dict[str, Any],
+    frozen: dict[str, Any],
+    source_digests: dict[str, str],
+) -> None:
     """Raise ``AssertionError`` unless every decision reproduces from raw evidence."""
     _require(payload.get("schema_version") == 2, "unsupported paired schema")
-    _verify_manifest(payload, frozen)
+    _verify_manifest(payload, frozen, source_digests)
+    _require(payload.get("incomplete") == [], "release evidence is incomplete")
+    _require(
+        set(payload.get("environments", {}))
+        == {"baseline_cpu", "candidate_cpu", "candidate_cuda"},
+        "worker environment set differs",
+    )
     validate_worker_environments(payload.get("environments", {}))
 
     manifest = payload["manifest"]
+    environments = payload["environments"]
+    _require(
+        environments["baseline_cpu"].get("declared_revision")
+        == manifest.get("baseline_revision"),
+        "baseline worker revision differs",
+    )
+    for name in ("candidate_cpu", "candidate_cuda"):
+        _require(
+            environments[name].get("declared_revision")
+            == manifest.get("candidate_revision"),
+            f"{name} worker revision differs",
+        )
     quartets = manifest["quartets"]
-    expected_cpu = {
-        case_name(case_payload(scenario, batch, workload))
+    expected_cpu_cases = {
+        case_name(case): case
         for scenario in manifest["scenarios"]
         for workload in manifest["workloads"]
         for batch in manifest["regression_batches"]
+        for case in (case_payload(scenario, batch, workload),)
     }
+    expected_cpu = set(expected_cpu_cases)
     _require(
         set(payload.get("cpu_regression", {})) == expected_cpu, "CPU case set differs"
     )
@@ -150,6 +206,7 @@ def verify_release_payload(payload: dict[str, Any], frozen: dict[str, Any]) -> N
     expected_failures = []
     expected_inconclusive = []
     for name, summary in payload["cpu_regression"].items():
+        _require(summary.get("case") == expected_cpu_cases[name], f"{name} case differs")
         expected = _verify_ratio_summary(
             summary,
             alpha=cpu_alpha,
@@ -205,8 +262,14 @@ def verify_release_payload(payload: dict[str, Any], frozen: dict[str, Any]) -> N
     ]
     expected_families = set(expected_family_order)
     _require(
-        set(payload.get("speed_gates", {})) == expected_families,
-        "speed-gate set differs",
+        set(payload.get("speed_gates", {})) <= expected_families,
+        "speed-gate set contains unexpected families",
+    )
+    _require(
+        set(payload.get("crossover", {}))
+        == expected_families
+        | {f"{family}-eligibility" for family in expected_families},
+        "crossover set differs",
     )
     for family in expected_family_order:
         pilot = payload.get("crossover", {}).get(family)
@@ -231,10 +294,28 @@ def verify_release_payload(payload: dict[str, Any], frozen: dict[str, Any]) -> N
             isinstance(eligibility, list) and eligibility,
             f"{family} eligibility is missing",
         )
-        selected = payload["speed_gates"][family]
+        eligible_batches = [
+            batch for batch in manifest["crossover_batches"] if batch >= 256
+        ]
+        observed_eligibility_batches = [
+            row.get("batch_size") for row in eligibility
+        ]
         _require(
-            selected.get("case", {}).get("batch_size")
-            == eligibility[-1].get("batch_size"),
+            observed_eligibility_batches
+            == eligible_batches[: len(observed_eligibility_batches)],
+            f"{family} eligibility batches are not a frozen prefix",
+        )
+        selected = payload["speed_gates"].get(family)
+        if selected is None:
+            _require(
+                observed_eligibility_batches == eligible_batches,
+                f"{family} stopped eligibility measurements early",
+            )
+        selected_batch = None if selected is None else selected.get("case", {}).get(
+            "batch_size"
+        )
+        _require(
+            selected is None or selected_batch == eligibility[-1].get("batch_size"),
             f"{family} did not select the first eligible batch",
         )
         for index, row in enumerate(eligibility):
@@ -258,15 +339,44 @@ def verify_release_payload(payload: dict[str, Any], frozen: dict[str, Any]) -> N
             _close(
                 row.get("lower_ms"), bounds["lower"], f"{family}.eligibility[{index}]"
             )
+            for key, expected in (
+                ("bound_method", bounds["bound_method"]),
+                ("bound_requested_alpha", bounds["requested_alpha"]),
+                ("bound_resamples", bounds["resamples"]),
+                ("bound_seed", bounds["seed"]),
+            ):
+                _close(row.get(key), expected, f"{family}.eligibility[{index}].{key}")
             if index + 1 < len(eligibility):
                 _require(
                     bounds["lower"] < 100.0,
                     f"{family} skipped an earlier eligible batch",
                 )
-            else:
+            elif selected is not None:
                 _require(
                     bounds["lower"] >= 100.0, f"{family} selected an ineligible batch"
                 )
+            else:
+                _require(
+                    bounds["lower"] < 100.0,
+                    f"{family} omitted an eligible speed gate",
+                )
+
+        if selected is None:
+            expected_failures.append(
+                f"no objectively eligible CUDA speed batch: {family}"
+            )
+            continue
+
+        scenario, workload = family.rsplit("-", 1)
+        _require(
+            selected.get("case") == case_payload(scenario, selected_batch, workload),
+            f"{family} selected case differs",
+        )
+        _close(
+            selected.get("cpu_duration_lower_ms"),
+            eligibility[-1].get("lower_ms"),
+            f"{family}.cpu_duration_lower_ms",
+        )
 
         blocks = selected.get("blocks", [])
         _verify_blocks(blocks, quartets, ("CGGC", "GCCG"), family)
@@ -336,11 +446,20 @@ def verify_release_payload(payload: dict[str, Any], frozen: dict[str, Any]) -> N
         for gate in payload["speed_gates"].values()
         for backend in gate["backends"]
     }
-    _require(len(selected_backends) == 1, "release gates used different CUDA backends")
-    _require(
-        payload.get("selected_cuda_backend") == next(iter(selected_backends)),
-        "selected CUDA backend differs from raw samples",
-    )
+    if selected_backends:
+        _require(
+            len(selected_backends) == 1,
+            "release gates used different CUDA backends",
+        )
+        _require(
+            payload.get("selected_cuda_backend") == next(iter(selected_backends)),
+            "selected CUDA backend differs from raw samples",
+        )
+    else:
+        _require(
+            payload.get("selected_cuda_backend") is None,
+            "selected CUDA backend exists without a measured speed gate",
+        )
     _require(
         payload.get("status") == expected_status, "top-level status does not reproduce"
     )
@@ -356,10 +475,24 @@ def main() -> int:
     )
     parser.add_argument("--allow-failed", action="store_true")
     args = parser.parse_args()
-    payload = json.loads(args.evidence.read_text())
-    frozen = json.loads(args.manifest.read_text())
     try:
-        verify_release_payload(payload, frozen)
+        payload = _load_json(args.evidence)
+        frozen = _load_json(args.manifest)
+    except (json.JSONDecodeError, TypeError, ValueError) as error:
+        print(f"invalid paired evidence: {error}")
+        return 1
+    manifest_bytes = args.manifest.read_bytes()
+    source_digests = {
+        "frozen_manifest_sha256": hashlib.sha256(manifest_bytes).hexdigest(),
+        "worker_sha256": hashlib.sha256(
+            Path(__file__).with_name("phase10_worker.py").read_bytes()
+        ).hexdigest(),
+        "scenarios_sha256": hashlib.sha256(
+            Path(__file__).with_name("scenarios.py").read_bytes()
+        ).hexdigest(),
+    }
+    try:
+        verify_release_payload(payload, frozen, source_digests)
     except (AssertionError, KeyError, TypeError, ValueError) as error:
         print(f"invalid paired evidence: {error}")
         return 1
