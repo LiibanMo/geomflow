@@ -288,7 +288,9 @@ def integrate_multichart(
                     [],
                     execution_backend="inductor",
                 )
-        fallback_reason = "compiled acceleration unavailable or left the active chart"
+            fallback_reason = "compiled result left the active chart"
+        else:
+            fallback_reason = "compiled acceleration unavailable"
 
     def rk4_trial(
         time: float,

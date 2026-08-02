@@ -423,20 +423,24 @@ def main() -> int:
 
     checkpoint()
     if args.paired is None:
-        expected_backend = None
         profile_cases = [
-            {"scenario": scenario, "workload": workload, "batch_size": 256}
+            {
+                "scenario": scenario,
+                "workload": workload,
+                "batch_size": 256,
+                "expected_backend": None,
+            }
             for scenario in ("euclidean", "sphere-atlas")
             for workload in ("forward", "backward")
         ]
     else:
         paired = json.loads(args.paired.read_text())
-        expected_backend = paired.get("selected_cuda_backend")
-        if not isinstance(expected_backend, str) or not expected_backend:
-            raise ValueError("paired evidence does not identify one CUDA backend")
-        profile_cases = [
-            gate["case"] for gate in paired.get("speed_gates", {}).values()
-        ]
+        profile_cases = []
+        for gate in paired.get("speed_gates", {}).values():
+            backends = gate.get("backends", [])
+            if len(backends) != 1 or not isinstance(backends[0], str):
+                raise ValueError("each selected speed gate must identify one backend")
+            profile_cases.append({**gate["case"], "expected_backend": backends[0]})
         if len(profile_cases) != 4:
             raise ValueError("paired evidence must contain four selected speed gates")
 
@@ -452,7 +456,7 @@ def main() -> int:
                 batch_size,
                 args.trace_dir
                 / f"ci-vast-profile-{scenario}-{workload}-b{batch_size}.json",
-                expected_backend,
+                case["expected_backend"],
             )
         )
         checkpoint()
