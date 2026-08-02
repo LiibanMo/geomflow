@@ -439,6 +439,60 @@ def test_profiler_gates_all_sync_variants_durations_and_transfers(
     assert any("duration fraction" in failure for failure in failures)
 
 
+def test_profiler_uses_each_speed_gate_backend(monkeypatch, tmp_path: Path) -> None:
+    profile = _profile_module()
+    paired_path = tmp_path / "paired.json"
+    output_path = tmp_path / "profile.json"
+    gates = {
+        f"{scenario}-{workload}": {
+            "case": {
+                "scenario": scenario,
+                "workload": workload,
+                "batch_size": 256,
+            },
+            "backends": [backend],
+        }
+        for scenario, backend in (
+            ("euclidean", "inductor"),
+            ("sphere-atlas", "tensor-eager"),
+        )
+        for workload in ("forward", "backward")
+    }
+    paired_path.write_text(json.dumps({"speed_gates": gates}))
+    observed = []
+
+    def run_case(scenario, workload, batch_size, trace_path, expected_backend):
+        del trace_path
+        observed.append((scenario, workload, batch_size, expected_backend))
+        return {"failures": []}
+
+    monkeypatch.setattr(profile.torch.cuda, "is_available", lambda: True)
+    monkeypatch.setattr(profile, "run_case", run_case)
+    monkeypatch.setattr(profile, "run_switch_case", lambda _path: {"failures": []})
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "phase10_profile.py",
+            "--paired",
+            str(paired_path),
+            "--output",
+            str(output_path),
+            "--trace-dir",
+            str(tmp_path / "traces"),
+        ],
+    )
+
+    assert profile.main() == 0
+    assert json.loads(output_path.read_text())["status"] == "passed"
+    assert {entry[3] for entry in observed if entry[0] == "euclidean"} == {
+        "inductor"
+    }
+    assert {entry[3] for entry in observed if entry[0] == "sphere-atlas"} == {
+        "tensor-eager"
+    }
+
+
 def test_resource_baseline_preserves_allocated_gradient_storage() -> None:
     resources = _benchmark_module("phase10_resources")
     model = torch.nn.Linear(2, 1)
