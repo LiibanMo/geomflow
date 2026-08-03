@@ -324,7 +324,15 @@ def run_case(
         "rk_stage_count": case.steps * 4,
         "functional_transform_attempt_count": 0,
         "functional_transform_fallback_count": 0,
-        "exact_divergence_strategy": "component-gradient-with-connected-value",
+        "exact_divergence_strategy": (
+            "compiled-tensor-value-and-trace"
+            if backend == "inductor"
+            else (
+                "tensor-value-and-trace"
+                if backend == "tensor-eager"
+                else "component-gradient-with-connected-value"
+            )
+        ),
         "backend": backend,
         "fallback_reason": fallback_reason,
         "peak_allocated_bytes": peak_allocated_bytes,

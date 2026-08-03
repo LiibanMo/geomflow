@@ -310,7 +310,9 @@ def integrate_multichart(
     if not decide(chart_contains(current_chart, x)):
         raise RuntimeError(f"initial state is outside chart {current_chart}")
 
-    request_compilation = compile is True
+    request_compilation = compile is True or (
+        compile is None and x0.device.type == "cuda" and tensor_eligible
+    )
     if request_compilation and not tensor_eligible:
         from .compilation import _warn_fallback
 
