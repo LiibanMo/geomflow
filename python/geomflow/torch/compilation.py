@@ -49,7 +49,7 @@ def _with_exact_higher_order_fallback(
             if not torch.is_grad_enabled():
                 gradients = compiled_vjp(x0, *parameter_values, grad_x, grad_integral)
                 direct = tuple(
-                    gradient if needed else None
+                    gradient.clone() if needed and gradient is not None else None
                     for gradient, needed in zip(
                         gradients, ctx.needs_input_grad[2:], strict=True
                     )
@@ -77,8 +77,10 @@ def _with_exact_higher_order_fallback(
     def run(x0: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         with torch.no_grad():
             compiled_x, compiled_integral = compiled_solver(x0, *parameters)
+            compiled_x = compiled_x.clone()
+            compiled_integral = compiled_integral.clone()
         return ExactHigherOrderBridge.apply(
-            compiled_x.detach(), compiled_integral.detach(), x0, *parameters
+            compiled_x, compiled_integral, x0, *parameters
         )
 
     return run
@@ -319,6 +321,7 @@ def _integrate_rk4_compiled(
             _warn_fallback(failed_reason)
         return None
     solver = _cache.get(key)
+    new_solver = solver is None
     if solver is None:
         _misses += 1
         try:
@@ -331,21 +334,34 @@ def _integrate_rk4_compiled(
             if warn_fallback:
                 _warn_fallback(reason)
             return None
-        _cache[key] = solver
-        _cache.move_to_end(key)
-        while len(_cache) > _CACHE_LIMIT:
-            _cache.popitem(last=False)
     else:
         _hits += 1
         _cache.move_to_end(key)
 
     try:
+        if new_solver and torch.is_grad_enabled():
+            probe_x = x0.detach().requires_grad_(True)
+            probe_x_final, probe_integral = solver(probe_x)
+            requested = (
+                probe_x,
+                *(value for value in vf.parameters() if value.requires_grad),
+            )
+            torch.autograd.grad(
+                probe_x_final.sum() + probe_integral.sum(),
+                requested,
+                allow_unused=True,
+            )
         result = solver(x0)
         if not torch.isfinite(result[0]).all():
             _cache.pop(key, None)
             if warn_fallback:
                 _warn_fallback("compiled stage validation failed")
             return None
+        if new_solver:
+            _cache[key] = solver
+            _cache.move_to_end(key)
+            while len(_cache) > _CACHE_LIMIT:
+                _cache.popitem(last=False)
         return result
     except Exception as error:
         _cache.pop(key, None)

@@ -117,10 +117,10 @@ methods. Result dataclasses include all public density/Jacobian aliases.
 `integrate_rk4(..., compile=None)` and `integrate_multichart(..., compile=None)`
 automatically select a narrow fixed-step tensor implementation for eligible
 built-in `Linear`/`SiLU` fields and analytic Euclidean or stereographic-sphere
-geometry. `compile=None` and `compile=False` retain exact eager execution;
-eligible built-ins use the tensor-only derivative core. `compile=True` explicitly
-requests TorchInductor and retains warning-based eager fallback. No compiler
-acceleration is selected automatically without preserved target-system evidence.
+geometry. `compile=None` automatically selects TorchInductor for eligible CUDA
+built-ins, while `compile=False` retains exact tensor-eager execution.
+`compile=True` explicitly requests TorchInductor and retains warning-based eager
+fallback.
 
 Compiled variants are held in an eight-entry least-recently-used cache keyed by
 the vector field and its structure, metric callbacks, input device and dtype,

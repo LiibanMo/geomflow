@@ -195,6 +195,69 @@ def test_compilation_cache_invalidates_structure_but_not_parameter_values(
 
 
 @pytest.mark.compilation
+def test_compiled_bridge_owns_outputs_across_repeated_calls() -> None:
+    field = _field()
+    output_buffer = torch.empty(1, 2, dtype=torch.double)
+    integral_buffer = torch.empty(1, dtype=torch.double)
+
+    def compiled_solver(x, *_parameters):
+        output_buffer.copy_(x)
+        integral_buffer.copy_(x.sum(-1))
+        return output_buffer, integral_buffer
+
+    def compiled_vjp(x, *values):
+        parameter_count = len(tuple(field.parameters()))
+        grad_x = values[parameter_count]
+        return (grad_x, *(torch.zeros_like(parameter) for parameter in field.parameters()))
+
+    def eager_solver(x, *_parameters):
+        return x, x.sum(-1)
+
+    solver = compilation_runtime._with_exact_higher_order_fallback(
+        compiled_solver, compiled_vjp, eager_solver, field
+    )
+    first_x, first_integral = solver(torch.tensor([[1.0, 2.0]], dtype=torch.double))
+    solver(torch.tensor([[3.0, 4.0]], dtype=torch.double))
+
+    torch.testing.assert_close(
+        first_x, torch.tensor([[1.0, 2.0]], dtype=torch.double)
+    )
+    torch.testing.assert_close(first_integral, torch.tensor([3.0], dtype=torch.double))
+
+
+@pytest.mark.compilation
+def test_lazy_compiled_vjp_failure_falls_back_before_return(monkeypatch) -> None:
+    clear_compilation_cache()
+
+    class BrokenVjp(torch.autograd.Function):
+        @staticmethod
+        def forward(ctx, x):
+            return x.clone()
+
+        @staticmethod
+        def backward(ctx, grad_output):
+            raise RuntimeError("broken compiled vjp")
+
+    def fake_compile(vf, metric, schedule, compute_divergence):
+        del vf, metric, schedule, compute_divergence
+
+        def solver(x):
+            return BrokenVjp.apply(x), x.new_zeros(x.shape[:-1])
+
+        return solver
+
+    monkeypatch.setattr(compilation_runtime, "_make_compiled_solver", fake_compile)
+    field = _field()
+    x = torch.randn(2, 2, dtype=torch.double)
+    with pytest.warns(RuntimeWarning, match="broken compiled vjp"):
+        result = integrate_rk4(
+            field, EuclideanSpace(2), x, 0.0, 0.1, 0.1, compile=True
+        )
+    assert result._execution_backend == "tensor-eager"
+    assert compilation_cache_info().currsize == 0
+
+
+@pytest.mark.compilation
 def test_callback_and_compiler_failure_warn_and_fall_back_eager(monkeypatch) -> None:
     clear_compilation_cache()
     field = _field()

@@ -171,7 +171,9 @@ def integrate_rk4(
     fallback_reason = None
     metric.validate_points(x0)
 
-    request_compilation = compile is True
+    request_compilation = compile is True or (
+        compile is None and x0.device.type == "cuda" and tensor_eligible
+    )
     if request_compilation:
         from .compilation import _integrate_rk4_compiled
 
