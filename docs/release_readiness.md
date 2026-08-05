@@ -54,6 +54,12 @@ preserved under `benchmarks/results/run37`; GitHub run `30999740128` records
 artifact digest
 `sha256:9faf7681f9dcf15a1ce36b4a15131a59b7eacaf04fda1d7527af07a841dc0bce`.
 
+The optimized tensor-eager oracle that preceded compiler selection is
+preserved under `benchmarks/results/run29`. Its scoped profile passed with zero
+materializing host transfers and no silent derivative fallback. Its failed
+speed verdict is retained rather than rewritten: Run 37 compares the accepted
+production backend against that exact eager implementation.
+
 The July 2026 release-candidate run on a verified Norwegian 2x RTX 3060 host
 passed 253 built-wheel tests with zero skips under both PyTorch 2.5.1/CUDA 12.4
 and PyTorch 2.7.1/CUDA 12.8. Two-rank NCCL validation passed direct-autograd,
@@ -132,12 +138,12 @@ x64 checksum must be refreshed within 30 days of a GitHub runner release.
 
 After environment authorization, provisioning and a GitHub-hosted billing
 watchdog start independently. The watchdog discovers contracts by exact label,
-enforces a 105-minute lease from the Vast.ai start time, detects an offline
+enforces a 150-minute lease from the Vast.ai start time, detects an offline
 runner or a CUDA job left queued without assignment, and verifies instance and
 runner removal before cancelling a failed run. The unconditional cleanup job
 performs the same exact-label verification without relying on provision outputs.
 `.github/workflows/cuda-vast-reaper.yml` runs every ten minutes and removes
-managed contracts older than 110 minutes if the original workflow is lost or
+managed contracts older than 155 minutes if the original workflow is lost or
 force-cancelled. It also reconciles old managed runner registrations that have
 no corresponding instance.
 
@@ -148,7 +154,7 @@ the CUDA job.
 
 The scheduled reaper still depends on the GitHub Actions control plane. During
 a prolonged GitHub outage, check the Vast.ai console for labels beginning with
-`geomflow-vast-` and destroy any contract beyond the 105-minute lease.
+`geomflow-vast-` and destroy any contract beyond the 150-minute lease.
 
 ## Known limitations
 

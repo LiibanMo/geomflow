@@ -25,7 +25,7 @@ env:
   VAST_MAX_TWO_GPU_DPH: '0.40'
   VAST_MAX_INET_DOWN_COST: '0.02'
   VAST_MAX_INET_UP_COST: '0.02'
-  VAST_LEASE_SECONDS: '6300'
+  VAST_LEASE_SECONDS: '9000'
   VAST_OFFLINE_CHECKS: '10'
   VAST_PROVISION_GRACE_SECONDS: '1200'
   VAST_QUEUE_CHECKS: '10'
@@ -310,7 +310,7 @@ jobs:
     permissions:
       contents: read
     runs-on: [self-hosted, linux, x64, 'geomflow-vast-${{ github.run_id }}-${{ github.run_attempt }}']
-    timeout-minutes: 90
+    timeout-minutes: 140
     env:
       GEOMFLOW_REQUIRE_CUDA: '1'
       SETUPTOOLS_SCM_PRETEND_VERSION: 0.0.dev0
@@ -389,6 +389,11 @@ jobs:
         continue-on-error: true
         run: python benchmarks/phase10_multichart.py --output benchmarks/results/ci-vast-multichart.json
 
+      - name: Compare exact divergence derivative candidates
+        if: needs.provision.outputs.gpu_count == '2'
+        continue-on-error: true
+        run: python benchmarks/phase10_derivative_candidates.py --output benchmarks/results/ci-vast-derivative-candidates.json
+
       - name: Evaluate TorchInductor decision gate
         if: needs.provision.outputs.gpu_count == '2'
         continue-on-error: true
@@ -464,7 +469,7 @@ jobs:
     permissions:
       actions: write
     runs-on: ubuntu-24.04
-    timeout-minutes: 120
+    timeout-minutes: 180
     outputs:
       run_attempt: ${{ steps.watchdog.outputs.run_attempt }}
       verified: ${{ steps.watchdog.outputs.verified }}
@@ -966,6 +971,7 @@ jobs:
               "ci-vast-resources.json",
               "ci-vast-adjoint.json",
               "ci-vast-multichart.json",
+              "ci-vast-derivative-candidates.json",
               "ci-vast-compiler.json",
               "ci-vast-soak.json",
           ):

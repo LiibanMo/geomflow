@@ -1,0 +1,5276 @@
+{
+  "schema_version": 2,
+  "status": "failed",
+  "timestamp_utc": "2026-08-03T00:41:54.969716+00:00",
+  "manifest": {
+    "schema_version": 1,
+    "baseline_revision": "19cf027bd80d336112d9674474d8596d6b4209f3",
+    "scenarios": [
+      "euclidean",
+      "sphere-atlas"
+    ],
+    "workloads": [
+      "forward",
+      "backward"
+    ],
+    "regression_batches": [
+      256,
+      512
+    ],
+    "crossover_batches": [
+      1,
+      64,
+      256,
+      512,
+      1024,
+      2048,
+      4096
+    ],
+    "dimension": 2,
+    "hidden_width": 32,
+    "hidden_depth": 2,
+    "steps": 16,
+    "dtype": "float32",
+    "device_execution": "eager direct autograd",
+    "divergence": "exact intrinsic component gradients",
+    "seed": 0,
+    "warmup": 3,
+    "quartets": 10,
+    "cpu_order": [
+      "ABBA",
+      "BAAB"
+    ],
+    "cpu_cuda_order": [
+      "CGGC",
+      "GCCG"
+    ],
+    "timing": "host wall time synchronized at measurement boundaries",
+    "confidence": "deterministic percentile block bootstrap of medians",
+    "bootstrap_seed": 0,
+    "bootstrap_resamples": 20000,
+    "mode": "release",
+    "release_matrix_complete": true,
+    "candidate_revision": "280f8def3cb5dfa762ed1b9b9b78476361bee2ef",
+    "baseline_wheel_sha256": "c66a8b2bde7146b01e0379a245be8d72184e15cdb07d8a737f3abc602a7bd1d7",
+    "candidate_wheel_sha256": "228eff498a464801e26deea02bbe98685734eaa7460c3ec4a51cdb7387e06c44",
+    "worker_sha256": "080d02828270f9cd093512c167266f2fa972b367430b0fc9268070342dc75542",
+    "scenarios_sha256": "b659de3d9533624bf6e40721918b310aa62b1557d05bbb68feccde1b387ecb73",
+    "frozen_manifest_path": "/opt/actions-runner/_work/geomflow/geomflow/benchmarks/phase10_manifest.json",
+    "frozen_manifest_sha256": "7a76927414e0e92c302ec0e8ab768273243dcf8cfd5971f336e1ee0b07353f04"
+  },
+  "cpu_regression": {
+    "euclidean-b256-forward": {
+      "ratio": 0.6829856293638705,
+      "lower": 0.6782877905422474,
+      "upper": 0.6895735817204408,
+      "bound_method": "deterministic percentile block bootstrap of medians",
+      "bound_requested_alpha": 0.00625,
+      "bound_resamples": 20000,
+      "bound_seed": 0,
+      "block_log_ratios": [
+        -0.3818827788603496,
+        -0.37168186993661045,
+        -0.3977160738914076,
+        -0.38247845249224,
+        -0.38068014133076034,
+        -0.3778497753773795,
+        -0.37510782448125735,
+        -0.3833206476525639,
+        -0.3881836112772499,
+        -0.3665337581755006
+      ],
+      "blocks": [
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 105.765045,
+              "backward_ms": 0.000551,
+              "wall_ms": 105.765596,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 105.275921,
+              "backward_ms": 0.000642,
+              "wall_ms": 105.276563,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 71.766537,
+              "backward_ms": 0.000667,
+              "wall_ms": 71.767204,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 72.284862,
+              "backward_ms": 0.000594,
+              "wall_ms": 72.285456,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 104.223518,
+              "backward_ms": 0.000619,
+              "wall_ms": 104.224137,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 104.137633,
+              "backward_ms": 0.000658,
+              "wall_ms": 104.138291,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 71.898403,
+              "backward_ms": 0.000596,
+              "wall_ms": 71.898999,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 71.781401,
+              "backward_ms": 0.000861,
+              "wall_ms": 71.782262,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 106.249462,
+              "backward_ms": 0.000658,
+              "wall_ms": 106.25012,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 107.539449,
+              "backward_ms": 0.000625,
+              "wall_ms": 107.540074,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 71.95452,
+              "backward_ms": 0.000633,
+              "wall_ms": 71.955153,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 71.677468,
+              "backward_ms": 0.000563,
+              "wall_ms": 71.678031,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 105.445536,
+              "backward_ms": 0.000587,
+              "wall_ms": 105.446123,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 105.039326,
+              "backward_ms": 0.000503,
+              "wall_ms": 105.039829,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 71.838814,
+              "backward_ms": 0.000492,
+              "wall_ms": 71.839306,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 71.746826,
+              "backward_ms": 0.000535,
+              "wall_ms": 71.747361,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 105.445607,
+              "backward_ms": 0.000622,
+              "wall_ms": 105.446229,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 105.335527,
+              "backward_ms": 0.000537,
+              "wall_ms": 105.336064,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 72.432548,
+              "backward_ms": 0.000512,
+              "wall_ms": 72.43306,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 71.616507,
+              "backward_ms": 0.000594,
+              "wall_ms": 71.617101,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 105.476411,
+              "backward_ms": 0.000526,
+              "wall_ms": 105.476937,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 104.834193,
+              "backward_ms": 0.000595,
+              "wall_ms": 104.834788,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 71.754098,
+              "backward_ms": 0.000531,
+              "wall_ms": 71.754629,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 72.379095,
+              "backward_ms": 0.000619,
+              "wall_ms": 72.379714,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 107.277353,
+              "backward_ms": 0.001037,
+              "wall_ms": 107.27839,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 105.232628,
+              "backward_ms": 0.00072,
+              "wall_ms": 105.233348,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 71.771421,
+              "backward_ms": 0.000518,
+              "wall_ms": 71.771939,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 74.283628,
+              "backward_ms": 0.00057,
+              "wall_ms": 74.284198,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 105.23895,
+              "backward_ms": 0.000498,
+              "wall_ms": 105.239448,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 104.802306,
+              "backward_ms": 0.000581,
+              "wall_ms": 104.802887,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 71.683825,
+              "backward_ms": 0.000602,
+              "wall_ms": 71.684427,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 71.478491,
+              "backward_ms": 0.000581,
+              "wall_ms": 71.479072,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 106.205759,
+              "backward_ms": 0.000546,
+              "wall_ms": 106.206305,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 105.331186,
+              "backward_ms": 0.000539,
+              "wall_ms": 105.331725,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 71.785747,
+              "backward_ms": 0.000556,
+              "wall_ms": 71.786303,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 71.695625,
+              "backward_ms": 0.000537,
+              "wall_ms": 71.696162,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 105.10577,
+              "backward_ms": 0.000609,
+              "wall_ms": 105.106379,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 104.753608,
+              "backward_ms": 0.000645,
+              "wall_ms": 104.754253,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 73.905892,
+              "backward_ms": 0.000547,
+              "wall_ms": 73.906439,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 71.572804,
+              "backward_ms": 0.000536,
+              "wall_ms": 71.57334,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        }
+      ],
+      "case": {
+        "scenario": "euclidean",
+        "batch_size": 256,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 16,
+        "dtype": "float32",
+        "workload": "forward",
+        "seed": 0
+      },
+      "decision": "passed"
+    },
+    "euclidean-b512-forward": {
+      "ratio": 0.7338798878862915,
+      "lower": 0.7202443746797568,
+      "upper": 0.772614229517251,
+      "bound_method": "deterministic percentile block bootstrap of medians",
+      "bound_requested_alpha": 0.00625,
+      "bound_resamples": 20000,
+      "bound_seed": 0,
+      "block_log_ratios": [
+        -0.28221758289012655,
+        -0.24227568300744018,
+        -0.3143744410689928,
+        -0.34825801500350195,
+        -0.317286537474466,
+        -0.3281647152808951,
+        -0.23373323954321812,
+        -0.30444536741116224,
+        -0.3000335309709943,
+        -0.3212182049822081
+      ],
+      "blocks": [
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 124.321481,
+              "backward_ms": 0.000552,
+              "wall_ms": 124.322033,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 124.922557,
+              "backward_ms": 0.000618,
+              "wall_ms": 124.923175,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 95.672914,
+              "backward_ms": 0.000567,
+              "wall_ms": 95.673481,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 92.313631,
+              "backward_ms": 0.000559,
+              "wall_ms": 92.31419,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 124.142997,
+              "backward_ms": 0.000557,
+              "wall_ms": 124.143554,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 124.012134,
+              "backward_ms": 0.000586,
+              "wall_ms": 124.01272,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 90.98129,
+              "backward_ms": 0.000637,
+              "wall_ms": 90.981927,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 104.230579,
+              "backward_ms": 0.000514,
+              "wall_ms": 104.231093,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 124.932372,
+              "backward_ms": 0.000564,
+              "wall_ms": 124.932936,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 124.903202,
+              "backward_ms": 0.000506,
+              "wall_ms": 124.903708,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 91.140365,
+              "backward_ms": 0.000535,
+              "wall_ms": 91.1409,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 91.300724,
+              "backward_ms": 0.000541,
+              "wall_ms": 91.301265,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 123.994727,
+              "backward_ms": 0.000547,
+              "wall_ms": 123.995274,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 138.59971,
+              "backward_ms": 0.000663,
+              "wall_ms": 138.600373,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 91.019348,
+              "backward_ms": 0.000588,
+              "wall_ms": 91.019936,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 94.088665,
+              "backward_ms": 0.00057,
+              "wall_ms": 94.089235,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 125.406121,
+              "backward_ms": 0.000599,
+              "wall_ms": 125.40672,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 124.788995,
+              "backward_ms": 0.000567,
+              "wall_ms": 124.789562,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 91.030108,
+              "backward_ms": 0.000519,
+              "wall_ms": 91.030627,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 91.141778,
+              "backward_ms": 0.000515,
+              "wall_ms": 91.142293,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 123.972617,
+              "backward_ms": 0.000572,
+              "wall_ms": 123.973189,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 131.459613,
+              "backward_ms": 0.000625,
+              "wall_ms": 131.460238,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 90.906308,
+              "backward_ms": 0.000519,
+              "wall_ms": 90.906827,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 92.999955,
+              "backward_ms": 0.000578,
+              "wall_ms": 93.000533,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 124.223124,
+              "backward_ms": 0.000614,
+              "wall_ms": 124.223738,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 124.172904,
+              "backward_ms": 0.000514,
+              "wall_ms": 124.173418,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 95.266626,
+              "backward_ms": 0.00063,
+              "wall_ms": 95.267256,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 101.453913,
+              "backward_ms": 0.000621,
+              "wall_ms": 101.454534,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 125.224275,
+              "backward_ms": 0.000707,
+              "wall_ms": 125.224982,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 123.378941,
+              "backward_ms": 0.000567,
+              "wall_ms": 123.379508,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 91.149126,
+              "backward_ms": 0.000553,
+              "wall_ms": 91.149679,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 92.201636,
+              "backward_ms": 0.0005,
+              "wall_ms": 92.202136,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 123.636419,
+              "backward_ms": 0.000937,
+              "wall_ms": 123.637356,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 124.723011,
+              "backward_ms": 0.000546,
+              "wall_ms": 124.723557,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 92.948382,
+              "backward_ms": 0.000572,
+              "wall_ms": 92.948954,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 91.042732,
+              "backward_ms": 0.000544,
+              "wall_ms": 91.043276,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 127.112319,
+              "backward_ms": 0.00062,
+              "wall_ms": 127.112939,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 124.519794,
+              "backward_ms": 0.000558,
+              "wall_ms": 124.520352,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 91.056886,
+              "backward_ms": 0.000559,
+              "wall_ms": 91.057445,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 91.433553,
+              "backward_ms": 0.000517,
+              "wall_ms": 91.43407,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        }
+      ],
+      "case": {
+        "scenario": "euclidean",
+        "batch_size": 512,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 16,
+        "dtype": "float32",
+        "workload": "forward",
+        "seed": 0
+      },
+      "decision": "passed"
+    },
+    "euclidean-b256-backward": {
+      "ratio": 0.8454368549750312,
+      "lower": 0.8391651431125432,
+      "upper": 0.8740560314454582,
+      "bound_method": "deterministic percentile block bootstrap of medians",
+      "bound_requested_alpha": 0.00625,
+      "bound_resamples": 20000,
+      "bound_seed": 0,
+      "block_log_ratios": [
+        -0.17534775861523322,
+        -0.17534358962265006,
+        -0.171720524826938,
+        -0.12657761933365386,
+        -0.16289824191068014,
+        -0.16751879756452137,
+        -0.16828479659779116,
+        -0.157689783334666,
+        -0.23918711652349423,
+        -0.11153180901769222
+      ],
+      "blocks": [
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 106.340954,
+              "backward_ms": 94.242813,
+              "wall_ms": 200.583767,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 104.71183,
+              "backward_ms": 91.987523,
+              "wall_ms": 196.699353,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 71.904223,
+              "backward_ms": 94.744997,
+              "wall_ms": 166.64922,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 71.8232,
+              "backward_ms": 94.897798,
+              "wall_ms": 166.720998,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 104.363,
+              "backward_ms": 96.600011,
+              "wall_ms": 200.963011,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 104.451161,
+              "backward_ms": 92.310813,
+              "wall_ms": 196.761974,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 72.265349,
+              "backward_ms": 94.516132,
+              "wall_ms": 166.781481,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 71.985863,
+              "backward_ms": 94.972419,
+              "wall_ms": 166.958282,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 104.458533,
+              "backward_ms": 92.422541,
+              "wall_ms": 196.881074,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 106.084694,
+              "backward_ms": 93.009739,
+              "wall_ms": 199.094433,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 72.000911,
+              "backward_ms": 94.985717,
+              "wall_ms": 166.986628,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 71.813181,
+              "backward_ms": 94.69165,
+              "wall_ms": 166.504831,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 104.299397,
+              "backward_ms": 91.904544,
+              "wall_ms": 196.203941,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 104.041039,
+              "backward_ms": 93.206733,
+              "wall_ms": 197.247772,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 71.948121,
+              "backward_ms": 107.607488,
+              "wall_ms": 179.555609,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 71.862927,
+              "backward_ms": 95.468276,
+              "wall_ms": 167.331203,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 104.660765,
+              "backward_ms": 92.182395,
+              "wall_ms": 196.84316,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 104.161483,
+              "backward_ms": 92.091912,
+              "wall_ms": 196.253395,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 71.863364,
+              "backward_ms": 95.745615,
+              "wall_ms": 167.608979,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 71.823828,
+              "backward_ms": 94.574367,
+              "wall_ms": 166.398195,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 104.456745,
+              "backward_ms": 92.250013,
+              "wall_ms": 196.706758,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 104.237118,
+              "backward_ms": 92.805237,
+              "wall_ms": 197.042355,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 71.947137,
+              "backward_ms": 94.666498,
+              "wall_ms": 166.613635,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 71.744804,
+              "backward_ms": 94.659039,
+              "wall_ms": 166.403843,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 105.282518,
+              "backward_ms": 92.924611,
+              "wall_ms": 198.207129,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 104.328988,
+              "backward_ms": 92.166167,
+              "wall_ms": 196.495155,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 71.91235,
+              "backward_ms": 94.956722,
+              "wall_ms": 166.869072,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 71.736897,
+              "backward_ms": 94.959015,
+              "wall_ms": 166.695912,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 105.025911,
+              "backward_ms": 92.934875,
+              "wall_ms": 197.960786,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 104.348591,
+              "backward_ms": 92.343207,
+              "wall_ms": 196.691798,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 71.777323,
+              "backward_ms": 95.357129,
+              "wall_ms": 167.134452,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 72.045362,
+              "backward_ms": 97.908811,
+              "wall_ms": 169.954173,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 129.773745,
+              "backward_ms": 107.784306,
+              "wall_ms": 237.558051,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 100.356232,
+              "backward_ms": 88.804187,
+              "wall_ms": 189.160419,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 71.823893,
+              "backward_ms": 94.844624,
+              "wall_ms": 166.668517,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 71.899601,
+              "backward_ms": 95.206059,
+              "wall_ms": 167.10566,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 100.348604,
+              "backward_ms": 89.116028,
+              "wall_ms": 189.464632,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 100.160193,
+              "backward_ms": 89.016535,
+              "wall_ms": 189.176728,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 76.286545,
+              "backward_ms": 95.409423,
+              "wall_ms": 171.695968,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 71.814367,
+              "backward_ms": 95.202551,
+              "wall_ms": 167.016918,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        }
+      ],
+      "case": {
+        "scenario": "euclidean",
+        "batch_size": 256,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 16,
+        "dtype": "float32",
+        "workload": "backward",
+        "seed": 0
+      },
+      "decision": "passed"
+    },
+    "euclidean-b512-backward": {
+      "ratio": 0.8750104176144842,
+      "lower": 0.8652930913864522,
+      "upper": 0.8894223010834242,
+      "bound_method": "deterministic percentile block bootstrap of medians",
+      "bound_requested_alpha": 0.00625,
+      "bound_resamples": 20000,
+      "bound_seed": 0,
+      "block_log_ratios": [
+        -0.1456445777505948,
+        -0.12015481248208282,
+        -0.13533863600044782,
+        -0.11718312691876687,
+        -0.10658782662316657,
+        -0.12465544612758883,
+        -0.13170033770009582,
+        -0.14166854227916126,
+        -0.14468699546874753,
+        -0.13622661787500245
+      ],
+      "blocks": [
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 119.76984,
+              "backward_ms": 111.740477,
+              "wall_ms": 231.510317,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 119.755984,
+              "backward_ms": 111.946392,
+              "wall_ms": 231.702376,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 91.93711,
+              "backward_ms": 107.708897,
+              "wall_ms": 199.646007,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 91.149647,
+              "backward_ms": 109.63705,
+              "wall_ms": 200.786697,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 120.478676,
+              "backward_ms": 111.447755,
+              "wall_ms": 231.926431,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 119.203359,
+              "backward_ms": 111.886443,
+              "wall_ms": 231.089802,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 91.675559,
+              "backward_ms": 114.476698,
+              "wall_ms": 206.152257,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 93.914411,
+              "backward_ms": 110.531198,
+              "wall_ms": 204.445609,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 119.526527,
+              "backward_ms": 111.251425,
+              "wall_ms": 230.777952,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 120.630751,
+              "backward_ms": 113.191413,
+              "wall_ms": 233.822164,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 92.430457,
+              "backward_ms": 111.005871,
+              "wall_ms": 203.436328,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 92.223911,
+              "backward_ms": 110.123586,
+              "wall_ms": 202.347497,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 120.071802,
+              "backward_ms": 113.28491,
+              "wall_ms": 233.356712,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 120.528811,
+              "backward_ms": 113.448961,
+              "wall_ms": 233.977772,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 91.548283,
+              "backward_ms": 110.468831,
+              "wall_ms": 202.017114,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 102.819602,
+              "backward_ms": 110.987814,
+              "wall_ms": 213.807416,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 119.222999,
+              "backward_ms": 111.423569,
+              "wall_ms": 230.646568,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 120.331549,
+              "backward_ms": 111.448678,
+              "wall_ms": 231.780227,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 100.748295,
+              "backward_ms": 110.941992,
+              "wall_ms": 211.690287,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 94.298027,
+              "backward_ms": 109.754247,
+              "wall_ms": 204.052274,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 120.400419,
+              "backward_ms": 111.13954,
+              "wall_ms": 231.539959,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 119.438751,
+              "backward_ms": 111.379864,
+              "wall_ms": 230.818615,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 94.760459,
+              "backward_ms": 112.104834,
+              "wall_ms": 206.865293,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 91.419911,
+              "backward_ms": 109.922287,
+              "wall_ms": 201.342198,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 119.550825,
+              "backward_ms": 111.535617,
+              "wall_ms": 231.086442,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 120.580278,
+              "backward_ms": 111.459273,
+              "wall_ms": 232.039551,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 92.765066,
+              "backward_ms": 107.913866,
+              "wall_ms": 200.678932,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 94.065019,
+              "backward_ms": 111.259702,
+              "wall_ms": 205.324721,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 120.688017,
+              "backward_ms": 113.042034,
+              "wall_ms": 233.730051,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 120.358287,
+              "backward_ms": 113.429413,
+              "wall_ms": 233.7877,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 92.553389,
+              "backward_ms": 110.275486,
+              "wall_ms": 202.828875,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 92.879846,
+              "backward_ms": 110.054099,
+              "wall_ms": 202.933945,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 120.476166,
+              "backward_ms": 113.326813,
+              "wall_ms": 233.802979,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 120.656677,
+              "backward_ms": 111.517038,
+              "wall_ms": 232.173715,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 91.34838,
+              "backward_ms": 110.541151,
+              "wall_ms": 201.889531,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 91.55451,
+              "backward_ms": 109.760318,
+              "wall_ms": 201.314828,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 119.925466,
+              "backward_ms": 112.846798,
+              "wall_ms": 232.772264,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 118.426089,
+              "backward_ms": 110.654295,
+              "wall_ms": 229.080384,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 91.947808,
+              "backward_ms": 109.893954,
+              "wall_ms": 201.841762,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 91.340619,
+              "backward_ms": 109.838623,
+              "wall_ms": 201.179242,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        }
+      ],
+      "case": {
+        "scenario": "euclidean",
+        "batch_size": 512,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 16,
+        "dtype": "float32",
+        "workload": "backward",
+        "seed": 0
+      },
+      "decision": "passed"
+    },
+    "sphere-atlas-b256-forward": {
+      "ratio": 0.6378284002099566,
+      "lower": 0.6362561733295469,
+      "upper": 0.6417519315481435,
+      "bound_method": "deterministic percentile block bootstrap of medians",
+      "bound_requested_alpha": 0.00625,
+      "bound_resamples": 20000,
+      "bound_seed": 0,
+      "block_log_ratios": [
+        -0.4495575447842164,
+        -0.4494731737872195,
+        -0.45007335115360814,
+        -0.44355344942140285,
+        -0.45515139108402103,
+        -0.44279016336653854,
+        -0.4507452885271146,
+        -0.447459743366899,
+        -0.4521540084854232,
+        -0.4498144492220364
+      ],
+      "blocks": [
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 126.58218,
+              "backward_ms": 0.000557,
+              "wall_ms": 126.582737,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 126.558899,
+              "backward_ms": 0.00067,
+              "wall_ms": 126.559569,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 80.929187,
+              "backward_ms": 0.000609,
+              "wall_ms": 80.929796,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 80.552169,
+              "backward_ms": 0.000568,
+              "wall_ms": 80.552737,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 126.606476,
+              "backward_ms": 0.000548,
+              "wall_ms": 126.607024,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 126.498632,
+              "backward_ms": 0.000562,
+              "wall_ms": 126.499194,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 80.516016,
+              "backward_ms": 0.000518,
+              "wall_ms": 80.516534,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 80.956203,
+              "backward_ms": 0.000544,
+              "wall_ms": 80.956747,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 126.843673,
+              "backward_ms": 0.000487,
+              "wall_ms": 126.84416,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 126.50843,
+              "backward_ms": 0.000527,
+              "wall_ms": 126.508957,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 80.950595,
+              "backward_ms": 0.000507,
+              "wall_ms": 80.951102,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 80.58189,
+              "backward_ms": 0.000518,
+              "wall_ms": 80.582408,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 126.610307,
+              "backward_ms": 0.000532,
+              "wall_ms": 126.610839,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 126.598307,
+              "backward_ms": 0.000525,
+              "wall_ms": 126.598832,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 81.20926,
+              "backward_ms": 0.000635,
+              "wall_ms": 81.209895,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 81.287293,
+              "backward_ms": 0.000626,
+              "wall_ms": 81.287919,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 126.91349,
+              "backward_ms": 0.000533,
+              "wall_ms": 126.914023,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 126.658807,
+              "backward_ms": 0.000562,
+              "wall_ms": 126.659369,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 80.605421,
+              "backward_ms": 0.000507,
+              "wall_ms": 80.605928,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 80.24854,
+              "backward_ms": 0.000616,
+              "wall_ms": 80.249156,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 126.986548,
+              "backward_ms": 0.00053,
+              "wall_ms": 126.987078,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 127.013324,
+              "backward_ms": 0.000543,
+              "wall_ms": 127.013867,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 81.651311,
+              "backward_ms": 0.000601,
+              "wall_ms": 81.651912,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 81.477633,
+              "backward_ms": 0.000611,
+              "wall_ms": 81.478244,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 126.965323,
+              "backward_ms": 0.000531,
+              "wall_ms": 126.965854,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 126.954584,
+              "backward_ms": 0.000527,
+              "wall_ms": 126.955111,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 81.426151,
+              "backward_ms": 0.000671,
+              "wall_ms": 81.426822,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 80.362589,
+              "backward_ms": 0.000618,
+              "wall_ms": 80.363207,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 126.804513,
+              "backward_ms": 0.000553,
+              "wall_ms": 126.805066,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 126.393476,
+              "backward_ms": 0.000735,
+              "wall_ms": 126.394211,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 80.96058,
+              "backward_ms": 0.000542,
+              "wall_ms": 80.961122,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 80.895572,
+              "backward_ms": 0.000731,
+              "wall_ms": 80.896303,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 126.835387,
+              "backward_ms": 0.000529,
+              "wall_ms": 126.835916,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 126.870458,
+              "backward_ms": 0.000538,
+              "wall_ms": 126.870996,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 80.815713,
+              "backward_ms": 0.000637,
+              "wall_ms": 80.81635,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 80.605735,
+              "backward_ms": 0.000639,
+              "wall_ms": 80.606374,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 126.570906,
+              "backward_ms": 0.000553,
+              "wall_ms": 126.571459,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 127.916051,
+              "backward_ms": 0.000543,
+              "wall_ms": 127.916594,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 80.995981,
+              "backward_ms": 0.000528,
+              "wall_ms": 80.996509,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 81.299465,
+              "backward_ms": 0.000902,
+              "wall_ms": 81.300367,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        }
+      ],
+      "case": {
+        "scenario": "sphere-atlas",
+        "batch_size": 256,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 16,
+        "dtype": "float32",
+        "workload": "forward",
+        "seed": 0
+      },
+      "decision": "passed"
+    },
+    "sphere-atlas-b512-forward": {
+      "ratio": 0.6943907052691539,
+      "lower": 0.6917934328527501,
+      "upper": 0.7684827109148998,
+      "bound_method": "deterministic percentile block bootstrap of medians",
+      "bound_requested_alpha": 0.00625,
+      "bound_resamples": 20000,
+      "bound_seed": 0,
+      "block_log_ratios": [
+        -0.3678150615813722,
+        -0.3676570871341065,
+        -0.3691206891484349,
+        -0.30153214804246087,
+        -0.2972064643862833,
+        -0.36416714736653155,
+        -0.3732427188299887,
+        -0.36527385462277984,
+        -0.263337213439506,
+        -0.2536611655656822
+      ],
+      "blocks": [
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 147.642142,
+              "backward_ms": 0.000544,
+              "wall_ms": 147.642686,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 146.559976,
+              "backward_ms": 0.000508,
+              "wall_ms": 146.560484,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 102.170142,
+              "backward_ms": 0.000634,
+              "wall_ms": 102.170776,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 101.489217,
+              "backward_ms": 0.000498,
+              "wall_ms": 101.489715,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 146.703177,
+              "backward_ms": 0.000551,
+              "wall_ms": 146.703728,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 146.243359,
+              "backward_ms": 0.000534,
+              "wall_ms": 146.243893,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 101.421756,
+              "backward_ms": 0.000658,
+              "wall_ms": 101.422414,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 101.400378,
+              "backward_ms": 0.00058,
+              "wall_ms": 101.400958,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 146.424631,
+              "backward_ms": 0.00065,
+              "wall_ms": 146.425281,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 146.461433,
+              "backward_ms": 0.00052,
+              "wall_ms": 146.461953,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 101.264076,
+              "backward_ms": 0.0007,
+              "wall_ms": 101.264776,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 101.2199,
+              "backward_ms": 0.000564,
+              "wall_ms": 101.220464,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 145.89444,
+              "backward_ms": 0.000534,
+              "wall_ms": 145.894974,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 145.975989,
+              "backward_ms": 0.000547,
+              "wall_ms": 145.976536,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 101.738587,
+              "backward_ms": 0.000616,
+              "wall_ms": 101.739203,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 114.531614,
+              "backward_ms": 0.000574,
+              "wall_ms": 114.532188,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 147.507743,
+              "backward_ms": 0.000525,
+              "wall_ms": 147.508268,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 146.731076,
+              "backward_ms": 0.000905,
+              "wall_ms": 146.731981,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 112.812364,
+              "backward_ms": 0.000607,
+              "wall_ms": 112.812971,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 105.883796,
+              "backward_ms": 0.000573,
+              "wall_ms": 105.884369,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 146.436468,
+              "backward_ms": 0.00055,
+              "wall_ms": 146.437018,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 146.219863,
+              "backward_ms": 0.000512,
+              "wall_ms": 146.220375,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 101.65287,
+              "backward_ms": 0.001001,
+              "wall_ms": 101.653871,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 101.676515,
+              "backward_ms": 0.000616,
+              "wall_ms": 101.677131,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 146.49181,
+              "backward_ms": 0.00052,
+              "wall_ms": 146.49233,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 146.414118,
+              "backward_ms": 0.000528,
+              "wall_ms": 146.414646,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 101.241576,
+              "backward_ms": 0.00062,
+              "wall_ms": 101.242196,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 100.424815,
+              "backward_ms": 0.000533,
+              "wall_ms": 100.425348,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 146.43434,
+              "backward_ms": 0.000559,
+              "wall_ms": 146.434899,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 146.146572,
+              "backward_ms": 0.000502,
+              "wall_ms": 146.147074,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 101.544599,
+              "backward_ms": 0.000641,
+              "wall_ms": 101.54524,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 101.507616,
+              "backward_ms": 0.00086,
+              "wall_ms": 101.508476,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 146.532459,
+              "backward_ms": 0.00053,
+              "wall_ms": 146.532989,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 147.147338,
+              "backward_ms": 0.000587,
+              "wall_ms": 147.147925,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 112.695387,
+              "backward_ms": 0.000545,
+              "wall_ms": 112.695932,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 112.991946,
+              "backward_ms": 0.000527,
+              "wall_ms": 112.992473,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 146.556052,
+              "backward_ms": 0.000547,
+              "wall_ms": 146.556599,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 146.40094,
+              "backward_ms": 0.000539,
+              "wall_ms": 146.401479,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 113.812288,
+              "backward_ms": 0.000747,
+              "wall_ms": 113.813035,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 113.508683,
+              "backward_ms": 0.000644,
+              "wall_ms": 113.509327,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        }
+      ],
+      "case": {
+        "scenario": "sphere-atlas",
+        "batch_size": 512,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 16,
+        "dtype": "float32",
+        "workload": "forward",
+        "seed": 0
+      },
+      "decision": "passed"
+    },
+    "sphere-atlas-b256-backward": {
+      "ratio": 0.7020620094040704,
+      "lower": 0.6974046635279367,
+      "upper": 0.7044333132100449,
+      "bound_method": "deterministic percentile block bootstrap of medians",
+      "bound_requested_alpha": 0.00625,
+      "bound_resamples": 20000,
+      "bound_seed": 0,
+      "block_log_ratios": [
+        -0.3503616104487737,
+        -0.3456236464434488,
+        -0.3537773622866922,
+        -0.35368973045926655,
+        -0.3540210038562357,
+        -0.3532027272035574,
+        -0.35415230246372076,
+        -0.35078217903974895,
+        -0.36594897229765344,
+        -0.3603894577426736
+      ],
+      "blocks": [
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 126.313838,
+              "backward_ms": 136.71882,
+              "wall_ms": 263.032658,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 126.884637,
+              "backward_ms": 137.226045,
+              "wall_ms": 264.110682,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 81.127801,
+              "backward_ms": 104.055717,
+              "wall_ms": 185.183518,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 80.783584,
+              "backward_ms": 105.37072,
+              "wall_ms": 186.154304,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 127.533965,
+              "backward_ms": 136.578716,
+              "wall_ms": 264.112681,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 126.337767,
+              "backward_ms": 136.964007,
+              "wall_ms": 263.301774,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 81.040911,
+              "backward_ms": 107.020332,
+              "wall_ms": 188.061243,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 81.088264,
+              "backward_ms": 104.153476,
+              "wall_ms": 185.24174,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 126.537043,
+              "backward_ms": 137.866556,
+              "wall_ms": 264.403599,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 126.566174,
+              "backward_ms": 136.601664,
+              "wall_ms": 263.167838,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 81.075688,
+              "backward_ms": 104.153537,
+              "wall_ms": 185.229225,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 80.749628,
+              "backward_ms": 104.391776,
+              "wall_ms": 185.141404,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 127.128202,
+              "backward_ms": 136.954846,
+              "wall_ms": 264.083048,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 126.527836,
+              "backward_ms": 136.275164,
+              "wall_ms": 262.803,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 81.942587,
+              "backward_ms": 102.854079,
+              "wall_ms": 184.796666,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 81.159037,
+              "backward_ms": 103.966237,
+              "wall_ms": 185.125274,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 126.558619,
+              "backward_ms": 137.044267,
+              "wall_ms": 263.602886,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 126.821478,
+              "backward_ms": 136.768755,
+              "wall_ms": 263.590233,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 81.417069,
+              "backward_ms": 103.891206,
+              "wall_ms": 185.308275,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 81.008448,
+              "backward_ms": 103.699645,
+              "wall_ms": 184.708093,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 126.850353,
+              "backward_ms": 136.824117,
+              "wall_ms": 263.67447,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 127.035115,
+              "backward_ms": 136.627867,
+              "wall_ms": 263.662982,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 81.117858,
+              "backward_ms": 103.910258,
+              "wall_ms": 185.028116,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 81.110918,
+              "backward_ms": 104.28131,
+              "wall_ms": 185.392228,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 126.845298,
+              "backward_ms": 136.564733,
+              "wall_ms": 263.410031,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 126.682322,
+              "backward_ms": 136.888243,
+              "wall_ms": 263.570565,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 80.966012,
+              "backward_ms": 104.962819,
+              "wall_ms": 185.928831,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 80.708133,
+              "backward_ms": 103.186772,
+              "wall_ms": 183.894905,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 127.936304,
+              "backward_ms": 136.888058,
+              "wall_ms": 264.824362,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 126.419271,
+              "backward_ms": 136.871115,
+              "wall_ms": 263.290386,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 82.844797,
+              "backward_ms": 103.875867,
+              "wall_ms": 186.720664,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 81.039902,
+              "backward_ms": 104.106392,
+              "wall_ms": 185.146294,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 126.976858,
+              "backward_ms": 137.002264,
+              "wall_ms": 263.979122,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 130.464726,
+              "backward_ms": 139.028822,
+              "wall_ms": 269.493548,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 81.15215,
+              "backward_ms": 104.033033,
+              "wall_ms": 185.185183,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 80.931066,
+              "backward_ms": 103.847877,
+              "wall_ms": 184.778943,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 126.660222,
+              "backward_ms": 139.296538,
+              "wall_ms": 265.95676,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 126.630037,
+              "backward_ms": 138.08309,
+              "wall_ms": 264.713127,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 81.009267,
+              "backward_ms": 103.891955,
+              "wall_ms": 184.901222,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 81.088153,
+              "backward_ms": 104.101375,
+              "wall_ms": 185.189528,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        }
+      ],
+      "case": {
+        "scenario": "sphere-atlas",
+        "batch_size": 256,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 16,
+        "dtype": "float32",
+        "workload": "backward",
+        "seed": 0
+      },
+      "decision": "passed"
+    },
+    "sphere-atlas-b512-backward": {
+      "ratio": 0.713149744848505,
+      "lower": 0.7102934619706252,
+      "upper": 0.7226961454335595,
+      "bound_method": "deterministic percentile block bootstrap of medians",
+      "bound_requested_alpha": 0.00625,
+      "bound_resamples": 20000,
+      "bound_seed": 0,
+      "block_log_ratios": [
+        -0.3367541514707506,
+        -0.336937236637322,
+        -0.3383565267358293,
+        -0.3377711928516396,
+        -0.34056567234027035,
+        -0.24487960219628935,
+        -0.339286140218956,
+        -0.35085301502980926,
+        -0.34207706762354384,
+        -0.32476641427106223
+      ],
+      "blocks": [
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 147.177767,
+              "backward_ms": 162.037394,
+              "wall_ms": 309.215161,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 146.750268,
+              "backward_ms": 162.295706,
+              "wall_ms": 309.045974,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 102.797207,
+              "backward_ms": 117.038877,
+              "wall_ms": 219.836084,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 102.259893,
+              "backward_ms": 119.398383,
+              "wall_ms": 221.658276,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 146.816411,
+              "backward_ms": 162.855677,
+              "wall_ms": 309.672088,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 146.488071,
+              "backward_ms": 162.539764,
+              "wall_ms": 309.027835,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 101.982198,
+              "backward_ms": 120.430655,
+              "wall_ms": 222.412853,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 101.604338,
+              "backward_ms": 117.716459,
+              "wall_ms": 219.320797,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 146.692476,
+              "backward_ms": 161.98754,
+              "wall_ms": 308.680016,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 146.538053,
+              "backward_ms": 163.661173,
+              "wall_ms": 310.199226,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 102.559844,
+              "backward_ms": 118.973739,
+              "wall_ms": 221.533583,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 100.58585,
+              "backward_ms": 119.107498,
+              "wall_ms": 219.693348,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 147.381769,
+              "backward_ms": 162.532982,
+              "wall_ms": 309.914751,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 147.10687,
+              "backward_ms": 162.823543,
+              "wall_ms": 309.930413,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 102.496284,
+              "backward_ms": 117.712906,
+              "wall_ms": 220.20919,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 101.500469,
+              "backward_ms": 120.465642,
+              "wall_ms": 221.966111,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 146.786845,
+              "backward_ms": 162.594563,
+              "wall_ms": 309.381408,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 146.898666,
+              "backward_ms": 163.033695,
+              "wall_ms": 309.932361,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 101.464362,
+              "backward_ms": 120.073188,
+              "wall_ms": 221.53755,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 100.690185,
+              "backward_ms": 118.339109,
+              "wall_ms": 219.029294,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 147.063212,
+              "backward_ms": 165.582644,
+              "wall_ms": 312.645856,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 146.487972,
+              "backward_ms": 162.352901,
+              "wall_ms": 308.840873,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 108.66919,
+              "backward_ms": 153.624009,
+              "wall_ms": 262.293199,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 103.230723,
+              "backward_ms": 122.349332,
+              "wall_ms": 225.580055,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 146.58253,
+              "backward_ms": 162.374358,
+              "wall_ms": 308.956888,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 147.821586,
+              "backward_ms": 164.236028,
+              "wall_ms": 312.057614,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 102.444749,
+              "backward_ms": 118.603576,
+              "wall_ms": 221.048325,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 102.261398,
+              "backward_ms": 119.02017,
+              "wall_ms": 221.281568,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 148.117855,
+              "backward_ms": 165.830708,
+              "wall_ms": 313.948563,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 149.362511,
+              "backward_ms": 163.791508,
+              "wall_ms": 313.154019,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 102.586272,
+              "backward_ms": 119.613844,
+              "wall_ms": 222.200116,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 102.020945,
+              "backward_ms": 117.322748,
+              "wall_ms": 219.343693,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "ABBA",
+          "first": [
+            {
+              "forward_ms": 147.383984,
+              "backward_ms": 162.691187,
+              "wall_ms": 310.075171,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 147.376466,
+              "backward_ms": 162.519372,
+              "wall_ms": 309.895838,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 102.426237,
+              "backward_ms": 121.947542,
+              "wall_ms": 224.373779,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 100.598121,
+              "backward_ms": 115.467797,
+              "wall_ms": 216.065918,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "BAAB",
+          "first": [
+            {
+              "forward_ms": 146.727681,
+              "backward_ms": 162.462321,
+              "wall_ms": 309.190002,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 147.390366,
+              "backward_ms": 162.521382,
+              "wall_ms": 309.911748,
+              "backend": "component-gradient-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 100.820107,
+              "backward_ms": 119.342765,
+              "wall_ms": 220.162872,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 101.666877,
+              "backward_ms": 125.649579,
+              "wall_ms": 227.316456,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        }
+      ],
+      "case": {
+        "scenario": "sphere-atlas",
+        "batch_size": 512,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 16,
+        "dtype": "float32",
+        "workload": "backward",
+        "seed": 0
+      },
+      "decision": "passed"
+    }
+  },
+  "crossover": {
+    "euclidean-forward": [
+      {
+        "batch_size": 1,
+        "cpu_ms": 41.923561,
+        "cuda_ms": 80.376656,
+        "speedup": 0.5215887682612723
+      },
+      {
+        "batch_size": 64,
+        "cpu_ms": 56.003128,
+        "cuda_ms": 86.455439,
+        "speedup": 0.6477687077616944
+      },
+      {
+        "batch_size": 256,
+        "cpu_ms": 71.693373,
+        "cuda_ms": 87.63632,
+        "speedup": 0.8180783150182481
+      },
+      {
+        "batch_size": 512,
+        "cpu_ms": 91.124716,
+        "cuda_ms": 87.529725,
+        "speedup": 1.0410716587993394
+      },
+      {
+        "batch_size": 1024,
+        "cpu_ms": 157.372335,
+        "cuda_ms": 87.824908,
+        "speedup": 1.7918872741660032
+      },
+      {
+        "batch_size": 2048,
+        "cpu_ms": 132.062244,
+        "cuda_ms": 91.353588,
+        "speedup": 1.4456163889260703
+      },
+      {
+        "batch_size": 4096,
+        "cpu_ms": 160.622321,
+        "cuda_ms": 89.179102,
+        "speedup": 1.801120636985109
+      }
+    ],
+    "euclidean-forward-eligibility": [
+      {
+        "batch_size": 256,
+        "samples_ms": [
+          71.60666,
+          71.676137,
+          71.794647,
+          71.5938,
+          71.717636,
+          71.653703,
+          71.716821,
+          71.588229,
+          71.707259,
+          71.913215,
+          71.683177,
+          71.672651,
+          71.792198,
+          71.67077,
+          71.619088,
+          71.735189,
+          71.793342,
+          71.70861,
+          74.161094,
+          71.847051
+        ],
+        "lower_ms": 71.66492,
+        "bound_method": "deterministic percentile block bootstrap of medians",
+        "bound_requested_alpha": 0.0125,
+        "bound_resamples": 20000,
+        "bound_seed": 0
+      },
+      {
+        "batch_size": 512,
+        "samples_ms": [
+          91.128962,
+          91.257828,
+          91.399731,
+          91.23715,
+          91.241678,
+          91.249795,
+          91.356967,
+          91.772072,
+          91.157041,
+          91.487635,
+          91.571136,
+          91.172569,
+          91.248765,
+          91.349707,
+          91.362624,
+          91.078904,
+          90.996272,
+          91.358978,
+          92.636476,
+          91.452476
+        ],
+        "lower_ms": 91.23715,
+        "bound_method": "deterministic percentile block bootstrap of medians",
+        "bound_requested_alpha": 0.0125,
+        "bound_resamples": 20000,
+        "bound_seed": 0
+      },
+      {
+        "batch_size": 1024,
+        "samples_ms": [
+          118.376473,
+          116.053391,
+          120.799735,
+          116.306933,
+          161.301074,
+          116.529419,
+          115.569411,
+          124.989544,
+          115.64651,
+          122.04849,
+          117.818789,
+          116.035814,
+          115.595856,
+          126.669317,
+          117.669894,
+          116.809837,
+          116.788028,
+          161.370545,
+          116.173301,
+          120.595117
+        ],
+        "lower_ms": 116.173301,
+        "bound_method": "deterministic percentile block bootstrap of medians",
+        "bound_requested_alpha": 0.0125,
+        "bound_resamples": 20000,
+        "bound_seed": 0
+      }
+    ],
+    "euclidean-backward": [
+      {
+        "batch_size": 1,
+        "cpu_ms": 94.183832,
+        "cuda_ms": 179.314162,
+        "speedup": 0.5252448047020402
+      },
+      {
+        "batch_size": 64,
+        "cpu_ms": 125.03872,
+        "cuda_ms": 187.953309,
+        "speedup": 0.6652647972268475
+      },
+      {
+        "batch_size": 256,
+        "cpu_ms": 165.596807,
+        "cuda_ms": 191.294007,
+        "speedup": 0.8656664659651362
+      },
+      {
+        "batch_size": 512,
+        "cpu_ms": 201.756625,
+        "cuda_ms": 190.930982,
+        "speedup": 1.0566992474799088
+      },
+      {
+        "batch_size": 1024,
+        "cpu_ms": 301.421063,
+        "cuda_ms": 189.846238,
+        "speedup": 1.5877115405362945
+      },
+      {
+        "batch_size": 2048,
+        "cpu_ms": 296.554803,
+        "cuda_ms": 190.265872,
+        "speedup": 1.5586337154568635
+      },
+      {
+        "batch_size": 4096,
+        "cpu_ms": 407.647913,
+        "cuda_ms": 192.823731,
+        "speedup": 2.1140961793753488
+      }
+    ],
+    "euclidean-backward-eligibility": [
+      {
+        "batch_size": 256,
+        "samples_ms": [
+          167.561649,
+          168.607571,
+          165.216028,
+          165.259099,
+          165.587096,
+          167.655789,
+          173.374479,
+          165.430834,
+          169.357789,
+          166.206011,
+          166.544362,
+          166.945153,
+          165.18306,
+          167.073242,
+          166.415854,
+          167.313322,
+          167.807637,
+          165.808835,
+          167.167034,
+          165.316073
+        ],
+        "lower_ms": 165.587096,
+        "bound_method": "deterministic percentile block bootstrap of medians",
+        "bound_requested_alpha": 0.0125,
+        "bound_resamples": 20000,
+        "bound_seed": 0
+      }
+    ],
+    "sphere-atlas-forward": [
+      {
+        "batch_size": 1,
+        "cpu_ms": 48.551735,
+        "cuda_ms": 95.275951,
+        "speedup": 0.5095906626006809
+      },
+      {
+        "batch_size": 64,
+        "cpu_ms": 64.635156,
+        "cuda_ms": 101.990407,
+        "speedup": 0.6337376024001943
+      },
+      {
+        "batch_size": 256,
+        "cpu_ms": 79.896611,
+        "cuda_ms": 108.011477,
+        "speedup": 0.7397048278489886
+      },
+      {
+        "batch_size": 512,
+        "cpu_ms": 112.057699,
+        "cuda_ms": 101.714289,
+        "speedup": 1.101690825366729
+      },
+      {
+        "batch_size": 1024,
+        "cpu_ms": 180.113179,
+        "cuda_ms": 102.253283,
+        "speedup": 1.7614415275057722
+      },
+      {
+        "batch_size": 2048,
+        "cpu_ms": 231.181128,
+        "cuda_ms": 102.665726,
+        "speedup": 2.251784865379513
+      },
+      {
+        "batch_size": 4096,
+        "cpu_ms": 176.365055,
+        "cuda_ms": 103.184621,
+        "speedup": 1.709218421221899
+      }
+    ],
+    "sphere-atlas-forward-eligibility": [
+      {
+        "batch_size": 256,
+        "samples_ms": [
+          80.055355,
+          79.823144,
+          79.772993,
+          79.572244,
+          79.673627,
+          79.606756,
+          79.686716,
+          80.121675,
+          79.738401,
+          79.64403,
+          79.543014,
+          79.802944,
+          79.489957,
+          79.735894,
+          79.679945,
+          79.867805,
+          79.479411,
+          79.759766,
+          79.735451,
+          80.507172
+        ],
+        "lower_ms": 79.64403,
+        "bound_method": "deterministic percentile block bootstrap of medians",
+        "bound_requested_alpha": 0.0125,
+        "bound_resamples": 20000,
+        "bound_seed": 0
+      },
+      {
+        "batch_size": 512,
+        "samples_ms": [
+          112.508762,
+          110.782842,
+          111.042851,
+          111.773473,
+          110.69542,
+          113.000356,
+          113.111972,
+          112.728744,
+          112.715232,
+          112.253309,
+          112.399271,
+          111.915929,
+          112.1671,
+          111.004,
+          111.576456,
+          111.990358,
+          111.112233,
+          111.897845,
+          111.973405,
+          111.920999
+        ],
+        "lower_ms": 111.50503900000001,
+        "bound_method": "deterministic percentile block bootstrap of medians",
+        "bound_requested_alpha": 0.0125,
+        "bound_resamples": 20000,
+        "bound_seed": 0
+      }
+    ],
+    "sphere-atlas-backward": [
+      {
+        "batch_size": 1,
+        "cpu_ms": 106.712703,
+        "cuda_ms": 208.162587,
+        "speedup": 0.5126411260444222
+      },
+      {
+        "batch_size": 64,
+        "cpu_ms": 139.704582,
+        "cuda_ms": 217.984459,
+        "speedup": 0.6408923949940853
+      },
+      {
+        "batch_size": 256,
+        "cpu_ms": 185.30403,
+        "cuda_ms": 218.905301,
+        "speedup": 0.8465031643980152
+      },
+      {
+        "batch_size": 512,
+        "cpu_ms": 229.331278,
+        "cuda_ms": 225.941574,
+        "speedup": 1.0150025687614268
+      },
+      {
+        "batch_size": 1024,
+        "cpu_ms": 319.919736,
+        "cuda_ms": 217.9869,
+        "speedup": 1.4676099160087144
+      },
+      {
+        "batch_size": 2048,
+        "cpu_ms": 333.170788,
+        "cuda_ms": 219.048998,
+        "speedup": 1.5209875007052076
+      },
+      {
+        "batch_size": 4096,
+        "cpu_ms": 399.691648,
+        "cuda_ms": 220.584672,
+        "speedup": 1.8119647406869683
+      }
+    ],
+    "sphere-atlas-backward-eligibility": [
+      {
+        "batch_size": 256,
+        "samples_ms": [
+          181.398857,
+          181.194732,
+          181.115595,
+          180.949326,
+          181.186058,
+          181.077196,
+          181.197002,
+          181.31477,
+          181.19682,
+          181.389042,
+          181.146134,
+          180.907915,
+          180.822863,
+          181.261649,
+          182.500977,
+          182.545067,
+          181.180525,
+          180.849302,
+          180.821029,
+          182.490778
+        ],
+        "lower_ms": 181.04773,
+        "bound_method": "deterministic percentile block bootstrap of medians",
+        "bound_requested_alpha": 0.0125,
+        "bound_resamples": 20000,
+        "bound_seed": 0
+      }
+    ]
+  },
+  "speed_gates": {
+    "euclidean-forward": {
+      "case": {
+        "scenario": "euclidean",
+        "batch_size": 1024,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 16,
+        "dtype": "float32",
+        "workload": "forward",
+        "seed": 0
+      },
+      "cpu_duration_lower_ms": 116.173301,
+      "speedup": 1.3359633000467555,
+      "lower": 1.3143768235015314,
+      "upper": 1.351395043406476,
+      "required": 2.0,
+      "decision": "failed",
+      "blocks": [
+        {
+          "order": "CGGC",
+          "first": [
+            {
+              "forward_ms": 115.18194,
+              "backward_ms": 0.000558,
+              "wall_ms": 115.182498,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 120.838059,
+              "backward_ms": 0.000567,
+              "wall_ms": 120.838626,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 88.762425,
+              "backward_ms": 0.000294,
+              "wall_ms": 88.762719,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 87.823412,
+              "backward_ms": 0.000374,
+              "wall_ms": 87.823786,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "GCCG",
+          "first": [
+            {
+              "forward_ms": 116.477505,
+              "backward_ms": 0.000549,
+              "wall_ms": 116.478054,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 115.815241,
+              "backward_ms": 0.000503,
+              "wall_ms": 115.815744,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 88.730737,
+              "backward_ms": 0.000432,
+              "wall_ms": 88.731169,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 87.926567,
+              "backward_ms": 0.00041,
+              "wall_ms": 87.926977,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "CGGC",
+          "first": [
+            {
+              "forward_ms": 126.590263,
+              "backward_ms": 0.000656,
+              "wall_ms": 126.590919,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 117.389055,
+              "backward_ms": 0.000517,
+              "wall_ms": 117.389572,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 89.852187,
+              "backward_ms": 0.000468,
+              "wall_ms": 89.852655,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 91.074199,
+              "backward_ms": 0.000366,
+              "wall_ms": 91.074565,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "GCCG",
+          "first": [
+            {
+              "forward_ms": 115.584232,
+              "backward_ms": 0.000512,
+              "wall_ms": 115.584744,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 124.246234,
+              "backward_ms": 0.000878,
+              "wall_ms": 124.247112,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 88.351798,
+              "backward_ms": 0.000363,
+              "wall_ms": 88.352161,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 88.538183,
+              "backward_ms": 0.000436,
+              "wall_ms": 88.538619,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "CGGC",
+          "first": [
+            {
+              "forward_ms": 115.486333,
+              "backward_ms": 0.000561,
+              "wall_ms": 115.486894,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 116.267291,
+              "backward_ms": 0.000588,
+              "wall_ms": 116.267879,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 88.448755,
+              "backward_ms": 0.000395,
+              "wall_ms": 88.44915,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 87.948977,
+              "backward_ms": 0.000362,
+              "wall_ms": 87.949339,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "GCCG",
+          "first": [
+            {
+              "forward_ms": 120.862682,
+              "backward_ms": 0.000974,
+              "wall_ms": 120.863656,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 116.206837,
+              "backward_ms": 0.000539,
+              "wall_ms": 116.207376,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 88.521852,
+              "backward_ms": 0.000409,
+              "wall_ms": 88.522261,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 88.929607,
+              "backward_ms": 0.000401,
+              "wall_ms": 88.930008,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "CGGC",
+          "first": [
+            {
+              "forward_ms": 121.91026,
+              "backward_ms": 0.000576,
+              "wall_ms": 121.910836,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 115.210056,
+              "backward_ms": 0.000559,
+              "wall_ms": 115.210615,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 88.088448,
+              "backward_ms": 0.00043,
+              "wall_ms": 88.088878,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 87.764654,
+              "backward_ms": 0.000342,
+              "wall_ms": 87.764996,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "GCCG",
+          "first": [
+            {
+              "forward_ms": 119.358655,
+              "backward_ms": 0.000656,
+              "wall_ms": 119.359311,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 117.216784,
+              "backward_ms": 0.000667,
+              "wall_ms": 117.217451,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 92.09181,
+              "backward_ms": 0.00041,
+              "wall_ms": 92.09222,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 88.330985,
+              "backward_ms": 0.00036,
+              "wall_ms": 88.331345,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "CGGC",
+          "first": [
+            {
+              "forward_ms": 116.314885,
+              "backward_ms": 0.000544,
+              "wall_ms": 116.315429,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 124.719247,
+              "backward_ms": 0.000574,
+              "wall_ms": 124.719821,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 88.151393,
+              "backward_ms": 0.000396,
+              "wall_ms": 88.151789,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 87.544273,
+              "backward_ms": 0.000303,
+              "wall_ms": 87.544576,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "GCCG",
+          "first": [
+            {
+              "forward_ms": 116.99336,
+              "backward_ms": 0.000577,
+              "wall_ms": 116.993937,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 117.758543,
+              "backward_ms": 0.000508,
+              "wall_ms": 117.759051,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 88.533532,
+              "backward_ms": 0.000396,
+              "wall_ms": 88.533928,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 88.074749,
+              "backward_ms": 0.000373,
+              "wall_ms": 88.075122,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        }
+      ],
+      "backends": [
+        "tensor-eager"
+      ],
+      "fallback_reasons": []
+    },
+    "euclidean-backward": {
+      "case": {
+        "scenario": "euclidean",
+        "batch_size": 256,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 16,
+        "dtype": "float32",
+        "workload": "backward",
+        "seed": 0
+      },
+      "cpu_duration_lower_ms": 165.587096,
+      "speedup": 0.9834081434864934,
+      "lower": 0.9427605510307356,
+      "upper": 1.0259718486245526,
+      "required": 2.0,
+      "decision": "failed",
+      "blocks": [
+        {
+          "order": "CGGC",
+          "first": [
+            {
+              "forward_ms": 94.67994,
+              "backward_ms": 103.807675,
+              "wall_ms": 198.487615,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 94.858052,
+              "backward_ms": 111.638151,
+              "wall_ms": 206.496203,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 89.101385,
+              "backward_ms": 101.784501,
+              "wall_ms": 190.885886,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 88.148382,
+              "backward_ms": 100.943843,
+              "wall_ms": 189.092225,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "GCCG",
+          "first": [
+            {
+              "forward_ms": 94.747694,
+              "backward_ms": 97.351377,
+              "wall_ms": 192.099071,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 72.242445,
+              "backward_ms": 94.54786,
+              "wall_ms": 166.790305,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 88.344626,
+              "backward_ms": 107.634891,
+              "wall_ms": 195.979517,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 88.816101,
+              "backward_ms": 102.068807,
+              "wall_ms": 190.884908,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "CGGC",
+          "first": [
+            {
+              "forward_ms": 94.80123,
+              "backward_ms": 96.899216,
+              "wall_ms": 191.700446,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 94.682909,
+              "backward_ms": 97.009072,
+              "wall_ms": 191.691981,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 88.418817,
+              "backward_ms": 101.5693,
+              "wall_ms": 189.988117,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 88.04403,
+              "backward_ms": 101.538181,
+              "wall_ms": 189.582211,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "GCCG",
+          "first": [
+            {
+              "forward_ms": 94.649323,
+              "backward_ms": 103.507123,
+              "wall_ms": 198.156446,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 72.448651,
+              "backward_ms": 95.717639,
+              "wall_ms": 168.16629,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 87.964582,
+              "backward_ms": 101.125934,
+              "wall_ms": 189.090516,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 88.950739,
+              "backward_ms": 102.129523,
+              "wall_ms": 191.080262,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "CGGC",
+          "first": [
+            {
+              "forward_ms": 94.833628,
+              "backward_ms": 95.633556,
+              "wall_ms": 190.467184,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 90.555605,
+              "backward_ms": 96.917755,
+              "wall_ms": 187.47336,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 88.386301,
+              "backward_ms": 100.861608,
+              "wall_ms": 189.247909,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 93.880374,
+              "backward_ms": 102.183095,
+              "wall_ms": 196.063469,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "GCCG",
+          "first": [
+            {
+              "forward_ms": 94.783191,
+              "backward_ms": 114.751038,
+              "wall_ms": 209.534229,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 72.216216,
+              "backward_ms": 94.510954,
+              "wall_ms": 166.72717,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 88.536249,
+              "backward_ms": 100.652616,
+              "wall_ms": 189.188865,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 88.93774,
+              "backward_ms": 101.066169,
+              "wall_ms": 190.003909,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "CGGC",
+          "first": [
+            {
+              "forward_ms": 94.545673,
+              "backward_ms": 94.339731,
+              "wall_ms": 188.885404,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 94.613207,
+              "backward_ms": 111.130367,
+              "wall_ms": 205.743574,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 89.261226,
+              "backward_ms": 101.086406,
+              "wall_ms": 190.347632,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 87.698687,
+              "backward_ms": 101.062627,
+              "wall_ms": 188.761314,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "GCCG",
+          "first": [
+            {
+              "forward_ms": 94.665604,
+              "backward_ms": 111.760647,
+              "wall_ms": 206.426251,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 72.313521,
+              "backward_ms": 96.099097,
+              "wall_ms": 168.412618,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 87.769481,
+              "backward_ms": 102.215839,
+              "wall_ms": 189.98532,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 88.618261,
+              "backward_ms": 107.442051,
+              "wall_ms": 196.060312,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "CGGC",
+          "first": [
+            {
+              "forward_ms": 94.757237,
+              "backward_ms": 97.162419,
+              "wall_ms": 191.919656,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 94.76282,
+              "backward_ms": 96.808978,
+              "wall_ms": 191.571798,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 89.226791,
+              "backward_ms": 100.707069,
+              "wall_ms": 189.93386,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 87.642107,
+              "backward_ms": 101.31841,
+              "wall_ms": 188.960517,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "GCCG",
+          "first": [
+            {
+              "forward_ms": 94.685015,
+              "backward_ms": 93.356504,
+              "wall_ms": 188.041519,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 71.163599,
+              "backward_ms": 92.562468,
+              "wall_ms": 163.726067,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 88.65622,
+              "backward_ms": 100.903638,
+              "wall_ms": 189.559858,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 88.796664,
+              "backward_ms": 100.822039,
+              "wall_ms": 189.618703,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        }
+      ],
+      "backends": [
+        "tensor-eager"
+      ],
+      "fallback_reasons": []
+    },
+    "sphere-atlas-forward": {
+      "case": {
+        "scenario": "sphere-atlas",
+        "batch_size": 512,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 16,
+        "dtype": "float32",
+        "workload": "forward",
+        "seed": 0
+      },
+      "cpu_duration_lower_ms": 111.50503900000001,
+      "speedup": 1.1013972608238654,
+      "lower": 1.0869503794228659,
+      "upper": 1.1094370666506912,
+      "required": 1.5,
+      "decision": "failed",
+      "blocks": [
+        {
+          "order": "CGGC",
+          "first": [
+            {
+              "forward_ms": 112.510842,
+              "backward_ms": 0.000558,
+              "wall_ms": 112.5114,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 112.006384,
+              "backward_ms": 0.000494,
+              "wall_ms": 112.006878,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 101.636094,
+              "backward_ms": 0.000379,
+              "wall_ms": 101.636473,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 102.171941,
+              "backward_ms": 0.00042,
+              "wall_ms": 102.172361,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "GCCG",
+          "first": [
+            {
+              "forward_ms": 113.682003,
+              "backward_ms": 0.000496,
+              "wall_ms": 113.682499,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 113.388608,
+              "backward_ms": 0.000508,
+              "wall_ms": 113.389116,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 102.363844,
+              "backward_ms": 0.000379,
+              "wall_ms": 102.364223,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 102.086578,
+              "backward_ms": 0.000379,
+              "wall_ms": 102.086957,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "CGGC",
+          "first": [
+            {
+              "forward_ms": 114.129591,
+              "backward_ms": 0.000645,
+              "wall_ms": 114.130236,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 112.474038,
+              "backward_ms": 0.000518,
+              "wall_ms": 112.474556,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 102.649672,
+              "backward_ms": 0.000429,
+              "wall_ms": 102.650101,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 101.819191,
+              "backward_ms": 0.000427,
+              "wall_ms": 101.819618,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "GCCG",
+          "first": [
+            {
+              "forward_ms": 113.913417,
+              "backward_ms": 0.000509,
+              "wall_ms": 113.913926,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 113.479081,
+              "backward_ms": 0.000534,
+              "wall_ms": 113.479615,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 101.900858,
+              "backward_ms": 0.000422,
+              "wall_ms": 101.90128,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 102.478166,
+              "backward_ms": 0.000369,
+              "wall_ms": 102.478535,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "CGGC",
+          "first": [
+            {
+              "forward_ms": 112.638421,
+              "backward_ms": 0.000497,
+              "wall_ms": 112.638918,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 112.799763,
+              "backward_ms": 0.000583,
+              "wall_ms": 112.800346,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 102.675449,
+              "backward_ms": 0.000306,
+              "wall_ms": 102.675755,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 102.049724,
+              "backward_ms": 0.000329,
+              "wall_ms": 102.050053,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "GCCG",
+          "first": [
+            {
+              "forward_ms": 113.053946,
+              "backward_ms": 0.000516,
+              "wall_ms": 113.054462,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 112.775022,
+              "backward_ms": 0.00046,
+              "wall_ms": 112.775482,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 102.140843,
+              "backward_ms": 0.000373,
+              "wall_ms": 102.141216,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 102.642277,
+              "backward_ms": 0.000439,
+              "wall_ms": 102.642716,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "CGGC",
+          "first": [
+            {
+              "forward_ms": 111.981603,
+              "backward_ms": 0.000559,
+              "wall_ms": 111.982162,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 112.662679,
+              "backward_ms": 0.00053,
+              "wall_ms": 112.663209,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 101.530504,
+              "backward_ms": 0.000634,
+              "wall_ms": 101.531138,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 102.492547,
+              "backward_ms": 0.000421,
+              "wall_ms": 102.492968,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "GCCG",
+          "first": [
+            {
+              "forward_ms": 112.456168,
+              "backward_ms": 0.000487,
+              "wall_ms": 112.456655,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 112.36931,
+              "backward_ms": 0.000597,
+              "wall_ms": 112.369907,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 103.50568,
+              "backward_ms": 0.00044,
+              "wall_ms": 103.50612,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 109.473962,
+              "backward_ms": 0.000403,
+              "wall_ms": 109.474365,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "CGGC",
+          "first": [
+            {
+              "forward_ms": 114.066777,
+              "backward_ms": 0.00053,
+              "wall_ms": 114.067307,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 112.282116,
+              "backward_ms": 0.00058,
+              "wall_ms": 112.282696,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 103.348805,
+              "backward_ms": 0.000432,
+              "wall_ms": 103.349237,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 102.476263,
+              "backward_ms": 0.00039,
+              "wall_ms": 102.476653,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "GCCG",
+          "first": [
+            {
+              "forward_ms": 111.892293,
+              "backward_ms": 0.00051,
+              "wall_ms": 111.892803,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 111.065008,
+              "backward_ms": 0.000531,
+              "wall_ms": 111.065539,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 102.926495,
+              "backward_ms": 0.000405,
+              "wall_ms": 102.9269,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 104.605374,
+              "backward_ms": 0.000369,
+              "wall_ms": 104.605743,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        }
+      ],
+      "backends": [
+        "tensor-eager"
+      ],
+      "fallback_reasons": []
+    },
+    "sphere-atlas-backward": {
+      "case": {
+        "scenario": "sphere-atlas",
+        "batch_size": 256,
+        "dim": 2,
+        "hidden_width": 32,
+        "hidden_depth": 2,
+        "steps": 16,
+        "dtype": "float32",
+        "workload": "backward",
+        "seed": 0
+      },
+      "cpu_duration_lower_ms": 181.04773,
+      "speedup": 0.8316030324134402,
+      "lower": 0.8246059182136295,
+      "upper": 0.8360227444802442,
+      "required": 1.5,
+      "decision": "failed",
+      "blocks": [
+        {
+          "order": "CGGC",
+          "first": [
+            {
+              "forward_ms": 80.013192,
+              "backward_ms": 102.672098,
+              "wall_ms": 182.68529,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 79.753318,
+              "backward_ms": 105.067636,
+              "wall_ms": 184.820954,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 107.746129,
+              "backward_ms": 115.448592,
+              "wall_ms": 223.194721,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 102.699079,
+              "backward_ms": 116.873846,
+              "wall_ms": 219.572925,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "GCCG",
+          "first": [
+            {
+              "forward_ms": 79.896288,
+              "backward_ms": 102.494015,
+              "wall_ms": 182.390303,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 79.870475,
+              "backward_ms": 102.618258,
+              "wall_ms": 182.488733,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 102.22083,
+              "backward_ms": 115.951618,
+              "wall_ms": 218.172448,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 103.136444,
+              "backward_ms": 115.4809,
+              "wall_ms": 218.617344,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "CGGC",
+          "first": [
+            {
+              "forward_ms": 80.004942,
+              "backward_ms": 103.375084,
+              "wall_ms": 183.380026,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 79.423161,
+              "backward_ms": 101.75153,
+              "wall_ms": 181.174691,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 102.063015,
+              "backward_ms": 116.219962,
+              "wall_ms": 218.282977,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 102.885723,
+              "backward_ms": 115.299435,
+              "wall_ms": 218.185158,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "GCCG",
+          "first": [
+            {
+              "forward_ms": 79.650605,
+              "backward_ms": 101.90152,
+              "wall_ms": 181.552125,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 80.480648,
+              "backward_ms": 104.05871,
+              "wall_ms": 184.539358,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 103.386965,
+              "backward_ms": 115.37384,
+              "wall_ms": 218.760805,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 102.027572,
+              "backward_ms": 116.749467,
+              "wall_ms": 218.777039,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "CGGC",
+          "first": [
+            {
+              "forward_ms": 79.353301,
+              "backward_ms": 101.736692,
+              "wall_ms": 181.089993,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 79.498618,
+              "backward_ms": 105.313896,
+              "wall_ms": 184.812514,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 102.915829,
+              "backward_ms": 115.581844,
+              "wall_ms": 218.497673,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 101.746774,
+              "backward_ms": 116.900531,
+              "wall_ms": 218.647305,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "GCCG",
+          "first": [
+            {
+              "forward_ms": 79.425741,
+              "backward_ms": 101.85251,
+              "wall_ms": 181.278251,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 79.215929,
+              "backward_ms": 102.305666,
+              "wall_ms": 181.521595,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 102.831802,
+              "backward_ms": 115.592334,
+              "wall_ms": 218.424136,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 102.340222,
+              "backward_ms": 115.61994,
+              "wall_ms": 217.960162,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "CGGC",
+          "first": [
+            {
+              "forward_ms": 79.681545,
+              "backward_ms": 102.126843,
+              "wall_ms": 181.808388,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 79.645878,
+              "backward_ms": 102.33977,
+              "wall_ms": 181.985648,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 102.521174,
+              "backward_ms": 115.86039,
+              "wall_ms": 218.381564,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 102.542808,
+              "backward_ms": 116.418349,
+              "wall_ms": 218.961157,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "GCCG",
+          "first": [
+            {
+              "forward_ms": 79.54006,
+              "backward_ms": 102.081281,
+              "wall_ms": 181.621341,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 79.351121,
+              "backward_ms": 101.658946,
+              "wall_ms": 181.010067,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 102.852586,
+              "backward_ms": 116.875767,
+              "wall_ms": 219.728353,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 103.101508,
+              "backward_ms": 115.423515,
+              "wall_ms": 218.525023,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "CGGC",
+          "first": [
+            {
+              "forward_ms": 79.635214,
+              "backward_ms": 104.377922,
+              "wall_ms": 184.013136,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 79.681641,
+              "backward_ms": 102.02643,
+              "wall_ms": 181.708071,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 102.425482,
+              "backward_ms": 116.031523,
+              "wall_ms": 218.457005,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 108.917639,
+              "backward_ms": 126.117409,
+              "wall_ms": 235.035048,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        },
+        {
+          "order": "GCCG",
+          "first": [
+            {
+              "forward_ms": 79.565221,
+              "backward_ms": 101.986246,
+              "wall_ms": 181.551467,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 79.537479,
+              "backward_ms": 101.990562,
+              "wall_ms": 181.528041,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ],
+          "second": [
+            {
+              "forward_ms": 102.271096,
+              "backward_ms": 117.098105,
+              "wall_ms": 219.369201,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            },
+            {
+              "forward_ms": 103.059752,
+              "backward_ms": 119.40662,
+              "wall_ms": 222.466372,
+              "backend": "tensor-eager",
+              "fallback_reason": null
+            }
+          ]
+        }
+      ],
+      "backends": [
+        "tensor-eager"
+      ],
+      "fallback_reasons": []
+    }
+  },
+  "failures": [
+    "CUDA speedup upper bound 1.351 < 2.000: euclidean-forward",
+    "CUDA speedup upper bound 1.026 < 2.000: euclidean-backward",
+    "CUDA speedup upper bound 1.109 < 1.500: sphere-atlas-forward",
+    "CUDA speedup upper bound 0.836 < 1.500: sphere-atlas-backward"
+  ],
+  "inconclusive": [],
+  "incomplete": [],
+  "environments": {
+    "baseline_cpu": {
+      "python": "3.11.13",
+      "python_executable": "/opt/conda/bin/python",
+      "torch": "2.7.1+cu128",
+      "cuda_runtime": "12.8",
+      "geomflow_path": "/tmp/geomflow-baseline-package/geomflow/__init__.py",
+      "declared_revision": "19cf027bd80d336112d9674474d8596d6b4209f3",
+      "device": "cpu",
+      "torch_num_threads": 16,
+      "torch_num_interop_threads": 16,
+      "cpu": "x86_64",
+      "cpu_count": 32,
+      "process_affinity": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31
+      ],
+      "thread_environment": {
+        "MKL_NUM_THREADS": null,
+        "OMP_NUM_THREADS": null,
+        "OPENBLAS_NUM_THREADS": null,
+        "VECLIB_MAXIMUM_THREADS": null
+      },
+      "dependency_versions": {
+        "numpy": "2.4.6",
+        "scipy": "1.17.1",
+        "torch": "2.7.1+cu128"
+      },
+      "ram_bytes": 134963675136,
+      "torch_backends": {
+        "cudnn_benchmark": false,
+        "cudnn_deterministic": false,
+        "cuda_matmul_allow_tf32": false,
+        "cudnn_allow_tf32": true,
+        "deterministic_algorithms": false
+      },
+      "package_root": "/tmp/geomflow-baseline-package/geomflow",
+      "package_sha256": "82b3507f2417694a0f142e6329f312aa8f3b32b733667fe3b484710ccae678d8",
+      "package_file_count": 19
+    },
+    "candidate_cpu": {
+      "python": "3.11.13",
+      "python_executable": "/opt/conda/bin/python",
+      "torch": "2.7.1+cu128",
+      "cuda_runtime": "12.8",
+      "geomflow_path": "/tmp/geomflow-candidate-package/geomflow/__init__.py",
+      "declared_revision": "280f8def3cb5dfa762ed1b9b9b78476361bee2ef",
+      "device": "cpu",
+      "torch_num_threads": 16,
+      "torch_num_interop_threads": 16,
+      "cpu": "x86_64",
+      "cpu_count": 32,
+      "process_affinity": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31
+      ],
+      "thread_environment": {
+        "MKL_NUM_THREADS": null,
+        "OMP_NUM_THREADS": null,
+        "OPENBLAS_NUM_THREADS": null,
+        "VECLIB_MAXIMUM_THREADS": null
+      },
+      "dependency_versions": {
+        "numpy": "2.4.6",
+        "scipy": "1.17.1",
+        "torch": "2.7.1+cu128"
+      },
+      "ram_bytes": 134963675136,
+      "torch_backends": {
+        "cudnn_benchmark": false,
+        "cudnn_deterministic": false,
+        "cuda_matmul_allow_tf32": false,
+        "cudnn_allow_tf32": true,
+        "deterministic_algorithms": false
+      },
+      "package_root": "/tmp/geomflow-candidate-package/geomflow",
+      "package_sha256": "136ec39130f51ee43ddc40d59bf53de5aa232629e439617c2b1e335f2999243e",
+      "package_file_count": 21
+    },
+    "candidate_cuda": {
+      "python": "3.11.13",
+      "python_executable": "/opt/conda/bin/python",
+      "torch": "2.7.1+cu128",
+      "cuda_runtime": "12.8",
+      "geomflow_path": "/tmp/geomflow-candidate-package/geomflow/__init__.py",
+      "declared_revision": "280f8def3cb5dfa762ed1b9b9b78476361bee2ef",
+      "device": "cuda",
+      "torch_num_threads": 16,
+      "torch_num_interop_threads": 16,
+      "cpu": "x86_64",
+      "cpu_count": 32,
+      "process_affinity": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31
+      ],
+      "thread_environment": {
+        "MKL_NUM_THREADS": null,
+        "OMP_NUM_THREADS": null,
+        "OPENBLAS_NUM_THREADS": null,
+        "VECLIB_MAXIMUM_THREADS": null
+      },
+      "dependency_versions": {
+        "numpy": "2.4.6",
+        "scipy": "1.17.1",
+        "torch": "2.7.1+cu128"
+      },
+      "ram_bytes": 134963675136,
+      "torch_backends": {
+        "cudnn_benchmark": false,
+        "cudnn_deterministic": false,
+        "cuda_matmul_allow_tf32": false,
+        "cudnn_allow_tf32": true,
+        "deterministic_algorithms": false
+      },
+      "package_root": "/tmp/geomflow-candidate-package/geomflow",
+      "package_sha256": "136ec39130f51ee43ddc40d59bf53de5aa232629e439617c2b1e335f2999243e",
+      "package_file_count": 21,
+      "gpu": {
+        "name": "NVIDIA GeForce RTX 3060",
+        "uuid": "b38a1c7a-036b-17e0-952d-8e96ca717508",
+        "total_memory": 12487294976,
+        "capability": [
+          8,
+          6
+        ]
+      },
+      "nvidia_driver": "595.84",
+      "cudnn": 90701
+    }
+  },
+  "cpu_geomean": {
+    "ratio": 0.7389384716283038,
+    "lower": 0.7320238837743039,
+    "upper": 0.7399716625404849,
+    "decision": "passed"
+  },
+  "selected_cuda_backend": "tensor-eager"
+}

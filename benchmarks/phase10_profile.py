@@ -112,12 +112,24 @@ def profiler_summary(
     scoped_to_copy_count = 0
     allocation_event_count = 0
     graph_break_count = 0
+    autograd_engine_call_count = 0
+    operator_counts: dict[str, int] = {}
+    kernel_ranges = []
     for event in events:
         if not isinstance(event, dict):
             continue
         if not event_in_scope(event, scope_start, scope_end):
             continue
         name = str(event.get("name", ""))
+        category = str(event.get("cat", ""))
+        if name.startswith("aten::"):
+            operator_counts[name] = operator_counts.get(name, 0) + 1
+        if "autograd::engine::evaluate_function" in name:
+            autograd_engine_call_count += 1
+        if category == "kernel":
+            duration = event_duration_us(event)
+            if duration is not None:
+                kernel_ranges.append((float(event["ts"]), duration))
         if name == "cudaLaunchKernel":
             launch_count += 1
         if name == "aten::to":
@@ -151,6 +163,13 @@ def profiler_summary(
     )
     if not math.isfinite(end_to_end_us) or end_to_end_us <= 0.0:
         raise ValueError("end-to-end profile duration must be positive")
+    kernel_ranges.sort()
+    kernel_gaps_us = [
+        max(0.0, start - (previous_start + previous_duration))
+        for (previous_start, previous_duration), (start, _duration) in zip(
+            kernel_ranges, kernel_ranges[1:]
+        )
+    ]
     return {
         "linear_count": counts.get("aten::linear", 0),
         "cuda_launch_count": launch_count,
@@ -174,6 +193,12 @@ def profiler_summary(
         "aten_to_copy_count": scoped_to_copy_count,
         "allocation_event_count": allocation_event_count,
         "graph_break_count": graph_break_count,
+        "autograd_engine_call_count": autograd_engine_call_count,
+        "operator_counts": operator_counts,
+        "cuda_kernel_count": len(kernel_ranges),
+        "cuda_kernel_gap_count": len(kernel_gaps_us),
+        "cuda_kernel_gap_total_us": sum(kernel_gaps_us),
+        "cuda_kernel_gap_max_us": max(kernel_gaps_us, default=0.0),
     }
 
 
@@ -236,12 +261,29 @@ def timed_cuda_operation(operation):
     return result, (time.perf_counter_ns() - start) / 1e3
 
 
+def saved_tensor_summary(operation) -> dict[str, int]:
+    count = 0
+    total_bytes = 0
+
+    def pack(tensor: torch.Tensor):
+        nonlocal count, total_bytes
+        count += 1
+        total_bytes += tensor.numel() * tensor.element_size()
+        return tensor
+
+    with torch.autograd.graph.saved_tensors_hooks(pack, lambda tensor: tensor):
+        result = operation()
+    del result
+    return {"saved_tensor_count": count, "saved_tensor_bytes": total_bytes}
+
+
 def run_case(
     scenario: str,
     workload: str,
     batch_size: int,
     trace_path: Path,
     expected_backend: str | None = None,
+    force_eager: bool = False,
 ) -> dict[str, object]:
     case = BenchmarkCase(
         scenario=scenario,
@@ -260,7 +302,12 @@ def run_case(
     geometry = make_geometry(case)
     model = make_model(case, geometry)
     x = make_input(case)
-    kwargs = {"t0": 0.0, "t1": 1.0, "dt": 1.0 / case.steps}
+    kwargs = {
+        "t0": 0.0,
+        "t1": 1.0,
+        "dt": 1.0 / case.steps,
+        "compile": False if force_eager else None,
+    }
 
     def operation():
         if scenario == "sphere-atlas":
@@ -280,6 +327,9 @@ def run_case(
     assert torch.isfinite(timed_result.x_final).all()
     assert torch.isfinite(timed_result.divergence_integral).all()
     del timed_result
+    model.zero_grad(set_to_none=True)
+    saved_tensors = saved_tensor_summary(operation)
+    torch.cuda.synchronize()
     trace_path.parent.mkdir(parents=True, exist_ok=True)
     torch.cuda.reset_peak_memory_stats()
     with torch.profiler.profile(
@@ -335,7 +385,9 @@ def run_case(
         ),
         "backend": backend,
         "fallback_reason": fallback_reason,
+        "execution_variant": "tensor-eager-oracle" if force_eager else "production",
         "peak_allocated_bytes": peak_allocated_bytes,
+        **saved_tensors,
         **summary,
         "failures": failures,
     }
@@ -472,6 +524,18 @@ def main() -> int:
                 args.trace_dir
                 / f"ci-vast-profile-{scenario}-{workload}-b{batch_size}.json",
                 case["expected_backend"],
+            )
+        )
+        checkpoint()
+        records.append(
+            run_case(
+                scenario,
+                workload,
+                batch_size,
+                args.trace_dir
+                / f"ci-vast-profile-{scenario}-{workload}-b{batch_size}-eager.json",
+                "tensor-eager",
+                force_eager=True,
             )
         )
         checkpoint()

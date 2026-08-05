@@ -1,0 +1,74 @@
+{
+  "commit": "280f8def3cb5dfa762ed1b9b9b78476361bee2ef",
+  "os": "Linux-6.8.0-136-generic-x86_64-with-glibc2.35",
+  "python": "3.11.13 | packaged by conda-forge | (main, Jun  4 2025, 14:48:23) [GCC 13.3.0]",
+  "pytorch": "2.7.1+cu128",
+  "pytorch_cuda": "12.8",
+  "cudnn": 90701,
+  "driver": "595.84\n595.84",
+  "gpu_uuids": [
+    "GPU-b38a1c7a-036b-17e0-952d-8e96ca717508",
+    "GPU-c0854f89-5a44-6198-f7d1-bd4980ef3422"
+  ],
+  "devices": [
+    {
+      "index": 0,
+      "name": "NVIDIA GeForce RTX 3060",
+      "compute_capability": [
+        8,
+        6
+      ],
+      "memory_bytes": 12487294976
+    },
+    {
+      "index": 1,
+      "name": "NVIDIA GeForce RTX 3060",
+      "compute_capability": [
+        8,
+        6
+      ],
+      "memory_bytes": 12490440704
+    }
+  ],
+  "cpu_model": "Intel(R) Xeon(R) CPU E5-2697A v4 @ 2.60GHz",
+  "cpu_count": 32,
+  "cpu_affinity": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31
+  ],
+  "memory_bytes": 134963675136,
+  "torch_num_threads": 16,
+  "torch_num_interop_threads": 16,
+  "deterministic_algorithms": false,
+  "cudnn_benchmark": false
+}

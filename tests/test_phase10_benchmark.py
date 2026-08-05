@@ -39,6 +39,10 @@ def _compiler_module():
     return _benchmark_module("phase10_compiler")
 
 
+def _derivative_candidates_module():
+    return _benchmark_module("phase10_derivative_candidates")
+
+
 def _verify_module():
     return _benchmark_module("phase10_verify")
 
@@ -645,9 +649,18 @@ def test_profiler_uses_each_speed_gate_backend(monkeypatch, tmp_path: Path) -> N
     paired_path.write_text(json.dumps({"speed_gates": gates}))
     observed = []
 
-    def run_case(scenario, workload, batch_size, trace_path, expected_backend):
+    def run_case(
+        scenario,
+        workload,
+        batch_size,
+        trace_path,
+        expected_backend,
+        force_eager=False,
+    ):
         del trace_path
-        observed.append((scenario, workload, batch_size, expected_backend))
+        observed.append(
+            (scenario, workload, batch_size, expected_backend, force_eager)
+        )
         return {"failures": []}
 
     monkeypatch.setattr(profile.torch.cuda, "is_available", lambda: True)
@@ -669,12 +682,15 @@ def test_profiler_uses_each_speed_gate_backend(monkeypatch, tmp_path: Path) -> N
 
     assert profile.main() == 0
     assert json.loads(output_path.read_text())["status"] == "passed"
-    assert {entry[3] for entry in observed if entry[0] == "euclidean"} == {
-        "inductor"
-    }
-    assert {entry[3] for entry in observed if entry[0] == "sphere-atlas"} == {
-        "tensor-eager"
-    }
+    assert {
+        entry[3] for entry in observed if entry[0] == "euclidean" and not entry[4]
+    } == {"inductor"}
+    assert {
+        entry[3]
+        for entry in observed
+        if entry[0] == "sphere-atlas" and not entry[4]
+    } == {"tensor-eager"}
+    assert {entry[3] for entry in observed if entry[4]} == {"tensor-eager"}
 
 
 def test_profiler_records_missing_speed_gates_as_failed_evidence(
@@ -760,6 +776,41 @@ def test_compiler_harness_errors_are_not_candidate_rejections(monkeypatch) -> No
 
     assert record["status"] == "infrastructure_error"
     assert record["error"] == "RuntimeError: broken harness"
+
+
+@pytest.mark.parametrize(
+    "strategy",
+    (
+        "component-vjp",
+        "batched-vjp",
+        "vmap-jacrev",
+        "chunked-jacrev",
+        "jacfwd",
+        "jvp-trace",
+        "explicit-tangent",
+    ),
+)
+def test_derivative_candidates_match_explicit_trace(strategy: str) -> None:
+    candidates = _derivative_candidates_module()
+    torch.manual_seed(0)
+    field = candidates.ManifoldVectorField(2, hidden_dim=4, n_layers=1).double()
+    state = torch.randn(5, 2, dtype=torch.double, requires_grad=True)
+    time = state.new_full(state.shape[:-1], 0.25)
+
+    expected_value, expected_trace = candidates.value_and_trace(
+        field, time, state, "explicit-tangent"
+    )
+    actual_value, actual_trace = candidates.value_and_trace(
+        field, time, state, strategy
+    )
+
+    torch.testing.assert_close(actual_value, expected_value)
+    torch.testing.assert_close(actual_trace, expected_trace)
+    solved = candidates.solve(field, state, strategy)
+    gradients = torch.autograd.grad(
+        candidates.objective(solved), (state, *field.parameters()), allow_unused=False
+    )
+    assert all(torch.isfinite(gradient).all() for gradient in gradients)
 
 
 def test_compiler_unsupported_fullgraph_is_a_candidate_rejection(monkeypatch) -> None:

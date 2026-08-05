@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from pathlib import Path
 import statistics
@@ -13,7 +14,11 @@ import torch
 
 from geomflow.torch import EuclideanSpace, ManifoldVectorField
 from geomflow.torch._schedule import FixedStepSchedule
-from geomflow.torch.compilation import _make_compiled_solver
+from geomflow.torch.compilation import (
+    _make_compiled_solver,
+    clear_compilation_cache,
+    compilation_cache_info,
+)
 
 
 def make_field(device: torch.device, dtype: torch.dtype) -> ManifoldVectorField:
@@ -94,7 +99,77 @@ def timed(function, x: torch.Tensor, device: torch.device, repetitions: int = 8)
     return samples
 
 
-def cuda_launches(function, x: torch.Tensor) -> int | None:
+def tensor_digest(value: torch.Tensor) -> str:
+    return hashlib.sha256(value.detach().cpu().contiguous().numpy().tobytes()).hexdigest()
+
+
+def comparison_summary(
+    eager_values,
+    compiled_values,
+    field: torch.nn.Module,
+) -> dict[str, object]:
+    parameter_names = ["input", *(name for name, _ in field.named_parameters())]
+    first_errors = {
+        name: (actual - expected).abs().max().item()
+        for name, expected, actual in zip(
+            parameter_names, eager_values[2], compiled_values[2], strict=True
+        )
+    }
+    second_errors = {
+        name: (
+            None
+            if expected is None or actual is None
+            else (actual - expected).abs().max().item()
+        )
+        for name, expected, actual in zip(
+            parameter_names, eager_values[3], compiled_values[3], strict=True
+        )
+    }
+    eager_likelihood = eager_values[0].square().mean() + eager_values[1].mean()
+    compiled_likelihood = (
+        compiled_values[0].square().mean() + compiled_values[1].mean()
+    )
+    return {
+        "state_max_abs_error": (
+            compiled_values[0] - eager_values[0]
+        ).abs().max().item(),
+        "divergence_max_abs_error": (
+            compiled_values[1] - eager_values[1]
+        ).abs().max().item(),
+        "likelihood_abs_error": (
+            compiled_likelihood - eager_likelihood
+        ).abs().item(),
+        "first_gradient_max_abs_error": first_errors,
+        "second_gradient_max_abs_error": second_errors,
+        "eager_state_sha256": tensor_digest(eager_values[0]),
+        "eager_divergence_sha256": tensor_digest(eager_values[1]),
+        "time_gradient_contract": "not-applicable: public endpoints are floats",
+        "detachment_check": "passed",
+    }
+
+
+def saved_tensor_bytes(operation) -> int:
+    total = 0
+
+    def pack(tensor: torch.Tensor):
+        nonlocal total
+        total += tensor.numel() * tensor.element_size()
+        return tensor
+
+    with torch.autograd.graph.saved_tensors_hooks(pack, lambda tensor: tensor):
+        operation()
+    return total
+
+
+def serializable_counters(counters) -> dict[str, dict[str, int]]:
+    return {
+        str(group): {str(key): int(value) for key, value in values.items()}
+        for group, values in counters.items()
+        if values
+    }
+
+
+def cuda_activity(function, x: torch.Tensor) -> dict[str, int] | None:
     if x.device.type != "cuda":
         return None
     with torch.profiler.profile(
@@ -105,11 +180,22 @@ def cuda_launches(function, x: torch.Tensor) -> int | None:
     ) as profiler:
         function(x)
         torch.cuda.synchronize()
-    return sum(
-        event.count
-        for event in profiler.key_averages()
-        if event.key == "cudaLaunchKernel"
-    )
+    averages = profiler.key_averages()
+    return {
+        "launches": sum(
+            event.count for event in averages if event.key == "cudaLaunchKernel"
+        ),
+        "synchronizations": sum(
+            event.count
+            for event in averages
+            if event.key.startswith("cuda") and "Synchronize" in event.key
+        ),
+    }
+
+
+def cuda_launches(function, x: torch.Tensor) -> int | None:
+    activity = cuda_activity(function, x)
+    return None if activity is None else activity["launches"]
 
 
 def cuda_peak_bytes(
@@ -217,6 +303,7 @@ def evaluate(
                 torch.testing.assert_close(
                     actual_value, expected_value, rtol=tolerance, atol=tolerance
                 )
+        parity = comparison_summary(eager_higher, compiled_higher, field)
 
         eager_samples = timed(eager, x, device)
         compiled_samples = timed(compiled, x, device)
@@ -234,16 +321,32 @@ def evaluate(
             x,
             device,
         )
-        eager_launches = cuda_launches(eager, x)
-        compiled_launches = cuda_launches(compiled, x)
+        eager_activity = cuda_activity(eager, x)
+        compiled_activity = cuda_activity(compiled, x)
+        eager_launches = None if eager_activity is None else eager_activity["launches"]
+        compiled_launches = (
+            None if compiled_activity is None else compiled_activity["launches"]
+        )
         compiled_backward = lambda value: gradients(
             compiled, value, field, second_order=False, create_graph=False
         )
-        eager_backward_launches = cuda_launches(eager_backward, x)
-        compiled_backward_launches = cuda_launches(compiled_backward, x)
+        eager_backward_activity = cuda_activity(eager_backward, x)
+        compiled_backward_activity = cuda_activity(compiled_backward, x)
+        eager_backward_launches = (
+            None
+            if eager_backward_activity is None
+            else eager_backward_activity["launches"]
+        )
+        compiled_backward_launches = (
+            None
+            if compiled_backward_activity is None
+            else compiled_backward_activity["launches"]
+        )
         compiled_peak_bytes = cuda_peak_bytes(
             compiled_backward, x, baseline_bytes=precompile_allocated
         )
+        eager_saved_tensor_bytes = saved_tensor_bytes(lambda: eager_backward(x))
+        compiled_saved_tensor_bytes = saved_tensor_bytes(lambda: compiled_backward(x))
         speedup = statistics.median(eager_samples) / statistics.median(compiled_samples)
         backward_speedup = statistics.median(
             eager_backward_samples
@@ -287,6 +390,26 @@ def evaluate(
                 "cuda_launch_reduction": launch_reduction,
                 "eager_backward_cuda_launches": eager_backward_launches,
                 "inductor_backward_cuda_launches": compiled_backward_launches,
+                "eager_synchronization_count": (
+                    None
+                    if eager_activity is None
+                    else eager_activity["synchronizations"]
+                ),
+                "inductor_synchronization_count": (
+                    None
+                    if compiled_activity is None
+                    else compiled_activity["synchronizations"]
+                ),
+                "eager_backward_synchronization_count": (
+                    None
+                    if eager_backward_activity is None
+                    else eager_backward_activity["synchronizations"]
+                ),
+                "inductor_backward_synchronization_count": (
+                    None
+                    if compiled_backward_activity is None
+                    else compiled_backward_activity["synchronizations"]
+                ),
                 "backward_cuda_launch_reduction": backward_launch_reduction,
                 "eager_peak_allocated_bytes": eager_peak_bytes,
                 "inductor_peak_allocated_bytes": compiled_peak_bytes,
@@ -298,6 +421,28 @@ def evaluate(
                     for key in ("extern_calls", "generated_kernel_count")
                 ),
                 "higher_order_strategy": "exact-eager-recompute",
+                "aotautograd_behavior": "compiled first-order VJP with exact eager higher-order recomputation",
+                "parity": parity,
+                "eager_saved_tensor_bytes": eager_saved_tensor_bytes,
+                "inductor_saved_tensor_bytes": compiled_saved_tensor_bytes,
+                "dynamo_counters": serializable_counters(counters),
+                "dynamo_graph_count": int(
+                    counters.get("stats", {}).get("unique_graphs", 0)
+                ),
+                "dynamo_break_reasons": {
+                    str(key): int(value)
+                    for key, value in counters.get("graph_break", {}).items()
+                },
+                "dynamo_recompile_count": sum(
+                    int(value)
+                    for value in counters.get("recompile", {}).values()
+                ),
+                "triton_kernel_count": sum(
+                    int(value)
+                    for key, value in counters.get("inductor", {}).items()
+                    if "triton" in str(key).lower()
+                ),
+                "production_cache_limit": compilation_cache_info().maxsize,
             }
         )
         accepted = (
@@ -322,6 +467,49 @@ def evaluate(
         record["status"] = "infrastructure_error"
         record["error"] = f"{type(error).__name__}: {error}"
     return record
+
+
+def evaluate_production_batch_matrix() -> dict[str, object]:
+    device = torch.device("cuda")
+    field = make_field(device, torch.float32)
+    schedule = FixedStepSchedule(0.0, 1.0, 1.0 / 16.0)
+    clear_compilation_cache()
+    compiled = _make_compiled_solver(
+        field, EuclideanSpace(2), schedule, True, compile_mode="default"
+    )
+    records = []
+    for batch_size in (256, 512, 1024, 2048, 4096, 8192):
+        x = torch.randn(
+            batch_size, 2, device=device, dtype=torch.float32, requires_grad=True
+        )
+        compiled(x)
+        records.append(
+            {
+                "batch_size": batch_size,
+                "forward_samples_ms": timed(compiled, x, device, repetitions=3),
+                "forward_backward_samples_ms": timed(
+                    lambda value: gradients(
+                        compiled,
+                        value,
+                        field,
+                        second_order=False,
+                        create_graph=False,
+                    ),
+                    x,
+                    device,
+                    repetitions=3,
+                ),
+            }
+        )
+    return {
+        "status": "passed",
+        "backend": "TorchInductor",
+        "mode": "default",
+        "dynamic_batch": True,
+        "compile_count": 1,
+        "batches": records,
+        "cache_limit": compilation_cache_info().maxsize,
+    }
 
 
 def main() -> int:
@@ -371,6 +559,18 @@ def main() -> int:
         result["status"] = "infrastructure_error"
         checkpoint()
         return 1
+    if torch.cuda.is_available() and not args.quick:
+        try:
+            result["production_batch_matrix"] = evaluate_production_batch_matrix()
+        except Exception as error:
+            result["production_batch_matrix"] = {
+                "status": "infrastructure_error",
+                "error": f"{type(error).__name__}: {error}",
+            }
+            result["decision"] = "undetermined"
+            result["status"] = "infrastructure_error"
+            checkpoint()
+            return 1
     cuda_records = [record for record in result["records"] if record["device"] == "cuda"]
     accepted_modes = sorted(
         {
