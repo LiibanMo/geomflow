@@ -322,7 +322,7 @@ def integrate_multichart(
         from .compilation import _integrate_rk4_compiled
 
         chart = atlas[current_chart]
-        compiled = _integrate_rk4_compiled(
+        compiled, compiler_failure = _integrate_rk4_compiled(
             vf.head(current_chart),
             chart.analytic_metric,
             x,
@@ -344,7 +344,7 @@ def integrate_multichart(
                 )
             fallback_reason = "compiled result left the active chart"
         else:
-            fallback_reason = "compiled acceleration unavailable"
+            fallback_reason = compiler_failure
 
     def rk4_trial(
         time: float,

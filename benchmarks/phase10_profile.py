@@ -450,7 +450,14 @@ def main() -> int:
                 raise ValueError("each selected speed gate must identify one backend")
             profile_cases.append({**gate["case"], "expected_backend": backends[0]})
         if len(profile_cases) != 4:
-            raise ValueError("paired evidence must contain four selected speed gates")
+            failure = (
+                "paired evidence must contain four selected speed gates; "
+                f"found {len(profile_cases)}"
+            )
+            result["status"] = "failed"
+            result["failures"] = [failure]
+            checkpoint()
+            raise ValueError(failure)
 
     records = result["records"]
     for case in profile_cases:

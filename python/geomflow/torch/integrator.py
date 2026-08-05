@@ -147,8 +147,8 @@ def integrate_rk4(
     step's sign. Trajectory entries are ``(time, state, divergence_integral)``.
     By default they retain autograd history. ``detach_trajectory=True`` stores
     replay-only checkpoints, and ``checkpoint_interval`` controls their spacing.
-    ``compile=None`` selects exact tensor-eager execution when eligible,
-    ``False`` forces eager execution, and ``True`` requests TorchInductor.
+    ``compile=None`` selects TorchInductor for eligible CUDA solves, ``False``
+    forces eager execution, and ``True`` requests TorchInductor explicitly.
     """
     if x0.dim() < 1:
         raise ValueError("x0 must have shape (..., dim); got 0-d tensor")
@@ -190,7 +190,7 @@ def integrate_rk4(
                 )
             )
         )
-        compiled = _integrate_rk4_compiled(
+        compiled, compiler_failure = _integrate_rk4_compiled(
             vf,
             metric,
             x0,
@@ -209,7 +209,7 @@ def integrate_rk4(
                 detach_trajectory,
                 execution_backend="inductor",
             )
-        fallback_reason = unsupported_reason or "compiled acceleration unavailable"
+        fallback_reason = compiler_failure
 
     x = metric._canonicalize_unchecked(x0.clone())
     if metric._canonicalize_fn is not None:

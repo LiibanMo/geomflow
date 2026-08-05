@@ -39,12 +39,11 @@ TorchInductor for eligible CUDA built-ins, `False` forces exact tensor-eager
 execution, and `True` explicitly requests TorchInductor and warns before eager
 fallback.
 Eligible built-in solves retain the tensor-eager derivative core when
-compilation is disabled. CUDA
-variants are static-batch full graphs using `mode="reduce-overhead"`; explicitly
-compiled CPU variants retain dynamic batches. Device, dtype, schedule,
-divergence choice, gradient mode, field, metric, and CUDA shape distinguish
-variants. `compilation_cache_info()` reports the bounded eight-entry cache and
-`clear_compilation_cache()` clears successful and failed variants.
+compilation is disabled. Production compiled variants use dynamic-batch full
+graphs so changing only batch size reuses one field/schedule specialization.
+Device, dtype, schedule, divergence choice, gradient mode, field, and metric
+distinguish variants. `compilation_cache_info()` reports the bounded eight-entry
+cache and `clear_compilation_cache()` clears successful and failed variants.
 
 Compiled forward execution is connected through an exact autograd bridge.
 Backward recomputes the differentiable tensor solver, which preserves first and

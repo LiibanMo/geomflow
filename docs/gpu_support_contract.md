@@ -124,8 +124,8 @@ fallback.
 
 Compiled variants are held in an eight-entry least-recently-used cache keyed by
 the vector field and its structure, metric callbacks, input device and dtype,
-scalar schedule, divergence choice, and gradient mode. CUDA variants also
-include the static input shape; explicit CPU variants permit dynamic batch reuse.
+scalar schedule, divergence choice, and gradient mode. Production variants use
+dynamic batches so shape changes reuse the same compiled field and schedule.
 `compilation_cache_info()` reports reuse and `clear_compilation_cache()` drops
 all variants. This bound prevents unbounded growth when applications create
 new fields, metrics, or schedules.

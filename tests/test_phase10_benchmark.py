@@ -256,14 +256,14 @@ def _release_payload():
         "scenarios": ["euclidean", "sphere-atlas"],
         "workloads": ["forward", "backward"],
         "regression_batches": [256, 512],
-        "crossover_batches": [1, 64, 256, 512, 1024, 2048, 4096],
+        "crossover_batches": [1, 64, 256, 512, 1024, 2048, 4096, 8192],
         "dimension": 2,
         "hidden_width": 32,
         "hidden_depth": 2,
         "steps": 16,
         "dtype": "float32",
-        "device_execution": "eager direct autograd",
-        "divergence": "exact intrinsic component gradients",
+        "device_execution": "automatic eligible backend, direct autograd",
+        "divergence": "exact intrinsic tensor trace with eager fallback",
         "seed": 0,
         "quartets": 10,
         "warmup": 3,
@@ -447,7 +447,7 @@ def test_release_verifier_reconstructs_no_eligible_batch() -> None:
     frozen, source_digests, payload = _release_payload()
     family = "euclidean-forward"
     eligibility = []
-    for batch in (256, 512, 1024, 2048, 4096):
+    for batch in (256, 512, 1024, 2048, 4096, 8192):
         samples = [90.0] * 20
         bounds = paired.deterministic_block_bootstrap_bounds(samples, 0.05 / 4.0)
         eligibility.append(
@@ -677,6 +677,38 @@ def test_profiler_uses_each_speed_gate_backend(monkeypatch, tmp_path: Path) -> N
     }
 
 
+def test_profiler_records_missing_speed_gates_as_failed_evidence(
+    monkeypatch, tmp_path: Path
+) -> None:
+    profile = _profile_module()
+    paired_path = tmp_path / "paired.json"
+    output_path = tmp_path / "profile.json"
+    paired_path.write_text(json.dumps({"speed_gates": {}}))
+    monkeypatch.setattr(profile.torch.cuda, "is_available", lambda: True)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "phase10_profile.py",
+            "--paired",
+            str(paired_path),
+            "--output",
+            str(output_path),
+            "--trace-dir",
+            str(tmp_path / "traces"),
+        ],
+    )
+
+    with pytest.raises(ValueError, match="found 0"):
+        profile.main()
+
+    evidence = json.loads(output_path.read_text())
+    assert evidence["status"] == "failed"
+    assert evidence["failures"] == [
+        "paired evidence must contain four selected speed gates; found 0"
+    ]
+
+
 def test_resource_baseline_preserves_allocated_gradient_storage() -> None:
     resources = _benchmark_module("phase10_resources")
     model = torch.nn.Linear(2, 1)
@@ -761,6 +793,28 @@ def test_compiler_harness_errors_fail_the_evidence_run(monkeypatch, tmp_path) ->
     result = json.loads(output.read_text())
     assert result["status"] == "infrastructure_error"
     assert result["decision"] == "undetermined"
+
+
+def test_compiler_rejection_fails_the_evidence_run(monkeypatch, tmp_path) -> None:
+    compiler = _compiler_module()
+    output = tmp_path / "compiler.json"
+    monkeypatch.setattr(
+        sys, "argv", ["phase10_compiler.py", "--output", str(output), "--quick"]
+    )
+    monkeypatch.setattr(compiler.torch.cuda, "is_available", lambda: False)
+    monkeypatch.setattr(
+        compiler,
+        "evaluate",
+        lambda *_args: {"status": "rejected", "device": "cpu", "mode": "default"},
+    )
+
+    assert compiler.main() == 1
+    result = json.loads(output.read_text())
+    assert result["status"] == "failed"
+    assert result["decision"] == "retain_eager"
+    assert result["failures"] == [
+        "production default-mode TorchInductor did not pass every CUDA gate"
+    ]
 
 
 def test_run_defaults_fail_closed_with_five_repetitions(monkeypatch) -> None:

@@ -22,11 +22,20 @@ _hits = 0
 _misses = 0
 
 
+def _mark_cudagraph_step(value: torch.Tensor) -> None:
+    compiler = getattr(torch, "compiler", None)
+    marker = getattr(compiler, "cudagraph_mark_step_begin", None)
+    if value.device.type == "cuda" and marker is not None:
+        marker()
+
+
 def _with_exact_higher_order_fallback(
     compiled_solver: Callable[..., tuple[torch.Tensor, torch.Tensor]],
     compiled_vjp: Callable[..., tuple[torch.Tensor, ...]],
     eager_solver: Callable[..., tuple[torch.Tensor, torch.Tensor]],
     vf: ManifoldVectorField,
+    *,
+    mark_cudagraph_steps: bool = False,
 ) -> Callable[[torch.Tensor], tuple[torch.Tensor, torch.Tensor]]:
     parameters = tuple(vf.parameters())
 
@@ -47,7 +56,9 @@ def _with_exact_higher_order_fallback(
                 x0.new_zeros(x0.shape[:-1]) if grad_integral is None else grad_integral
             )
             if not torch.is_grad_enabled():
-                gradients = compiled_vjp(x0, *parameter_values, grad_x, grad_integral)
+                gradients = compiled_vjp(
+                    x0.detach(), *parameter_values, grad_x, grad_integral
+                )
                 direct = tuple(
                     gradient.clone() if needed and gradient is not None else None
                     for gradient, needed in zip(
@@ -76,7 +87,9 @@ def _with_exact_higher_order_fallback(
 
     def run(x0: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         with torch.no_grad():
-            compiled_x, compiled_integral = compiled_solver(x0, *parameters)
+            if mark_cudagraph_steps:
+                _mark_cudagraph_step(x0)
+            compiled_x, compiled_integral = compiled_solver(x0.detach(), *parameters)
             compiled_x = compiled_x.clone()
             compiled_integral = compiled_integral.clone()
         return ExactHigherOrderBridge.apply(
@@ -167,7 +180,7 @@ def _cache_key(
         compute_divergence,
         torch.is_grad_enabled(),
     )
-    return key + (tuple(x.shape),) if x.device.type == "cuda" else key
+    return key
 
 
 def _make_compiled_solver(
@@ -266,16 +279,13 @@ def _make_compiled_solver(
         integral = torch.where(valid, integral, torch.full_like(integral, float("nan")))
         return x, integral
 
-    device_type = next(vf.parameters()).device.type
     compile_options = {
         "backend": "inductor",
         "fullgraph": True,
-        "dynamic": device_type != "cuda",
+        "dynamic": compile_mode != "reduce-overhead",
     }
     if compile_mode is not None and compile_mode != "default":
         compile_options["mode"] = compile_mode
-    elif device_type == "cuda" and compile_mode is None:
-        compile_options["mode"] = "reduce-overhead"
     compiled_solver = torch.compile(tensor_solver, **compile_options)
 
     def scalar_objective(
@@ -289,7 +299,11 @@ def _make_compiled_solver(
     vjp = torch.func.grad(scalar_objective, argnums=tuple(range(len(parameters) + 1)))
     compiled_vjp = torch.compile(vjp, **compile_options)
     return _with_exact_higher_order_fallback(
-        compiled_solver, compiled_vjp, tensor_solver, vf
+        compiled_solver,
+        compiled_vjp,
+        tensor_solver,
+        vf,
+        mark_cudagraph_steps=compile_mode == "reduce-overhead",
     )
 
 
@@ -302,24 +316,26 @@ def _integrate_rk4_compiled(
     compute_divergence: bool,
     unsupported_reason: str | None,
     warn_fallback: bool = True,
-) -> tuple[torch.Tensor, torch.Tensor] | None:
+) -> tuple[tuple[torch.Tensor, torch.Tensor] | None, str | None]:
     global _hits, _misses
     if unsupported_reason is not None:
         if warn_fallback:
             _warn_fallback(unsupported_reason)
-        return None
+        return None, unsupported_reason
     if not hasattr(torch, "compile"):
         if warn_fallback:
             _warn_fallback("torch.compile is not provided by this PyTorch build")
-        return None
+        return None, "torch.compile is not provided by this PyTorch build"
 
     key = _cache_key(vf, metric, x0, schedule, compute_divergence)
-    failed_reason = _failures.get(key)
+    runtime_failure_key = key + ("runtime-shape", tuple(x0.shape))
+    failed_key = key if key in _failures else runtime_failure_key
+    failed_reason = _failures.get(failed_key)
     if failed_reason is not None:
-        _failures.move_to_end(key)
+        _failures.move_to_end(failed_key)
         if warn_fallback:
             _warn_fallback(failed_reason)
-        return None
+        return None, failed_reason
     solver = _cache.get(key)
     new_solver = solver is None
     if solver is None:
@@ -333,7 +349,7 @@ def _integrate_rk4_compiled(
                 _failures.popitem(last=False)
             if warn_fallback:
                 _warn_fallback(reason)
-            return None
+            return None, reason
     else:
         _hits += 1
         _cache.move_to_end(key)
@@ -342,33 +358,36 @@ def _integrate_rk4_compiled(
         if new_solver and torch.is_grad_enabled():
             probe_x = x0.detach().requires_grad_(True)
             probe_x_final, probe_integral = solver(probe_x)
-            requested = (
-                probe_x,
-                *(value for value in vf.parameters() if value.requires_grad),
+            requested = tuple(
+                value
+                for value in (probe_x, *vf.parameters())
+                if value.requires_grad
             )
-            torch.autograd.grad(
-                probe_x_final.sum() + probe_integral.sum(),
-                requested,
-                allow_unused=True,
-            )
+            probe_objective = probe_x_final.sum() + probe_integral.sum()
+            if requested and probe_objective.requires_grad:
+                torch.autograd.grad(
+                    probe_objective,
+                    requested,
+                    allow_unused=True,
+                )
         result = solver(x0)
         if not torch.isfinite(result[0]).all():
             _cache.pop(key, None)
             if warn_fallback:
                 _warn_fallback("compiled stage validation failed")
-            return None
+            return None, "compiled stage validation failed"
         if new_solver:
             _cache[key] = solver
             _cache.move_to_end(key)
             while len(_cache) > _CACHE_LIMIT:
                 _cache.popitem(last=False)
-        return result
+        return result, None
     except Exception as error:
         _cache.pop(key, None)
         reason = f"{type(error).__name__}: {error}"
-        _failures[key] = reason
+        _failures[runtime_failure_key] = reason
         while len(_failures) > _CACHE_LIMIT:
             _failures.popitem(last=False)
         if warn_fallback:
             _warn_fallback(reason)
-        return None
+        return None, reason

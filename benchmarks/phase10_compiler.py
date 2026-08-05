@@ -386,12 +386,19 @@ def main() -> int:
     result["accepted_modes"] = accepted_modes
     result["decision"] = (
         "accept_inductor"
-        if "reduce-overhead" in accepted_modes
+        if "default" in accepted_modes
         else "retain_eager"
     )
-    result["status"] = "passed"
+    result["status"] = (
+        "passed" if result["decision"] == "accept_inductor" else "failed"
+    )
+    result["failures"] = (
+        []
+        if result["status"] == "passed"
+        else ["production default-mode TorchInductor did not pass every CUDA gate"]
+    )
     checkpoint()
-    return 0
+    return 0 if result["status"] == "passed" else 1
 
 
 if __name__ == "__main__":

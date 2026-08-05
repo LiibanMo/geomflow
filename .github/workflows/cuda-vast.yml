@@ -991,7 +991,9 @@ jobs:
               evidence = load(name)
               if evidence.get("status") != "passed":
                   details = evidence.get("failures") or evidence.get("inconclusive") or []
-                  raise SystemExit(f"{name} did not pass: {details}")
+                  raise SystemExit(
+                      f"{name} status={evidence.get('status')!r}: {details}"
+                  )
           PY
           python benchmarks/phase10_verify.py \
             cuda-evidence/ci-vast-phase10-paired.json

@@ -113,6 +113,69 @@ def test_dynamic_batch_reuses_one_compiled_variant() -> None:
 
 
 @pytest.mark.compilation
+def test_production_compiler_uses_dynamic_batch_policy(monkeypatch) -> None:
+    options = []
+
+    def fake_torch_compile(function, **kwargs):
+        options.append(kwargs)
+        return function
+
+    monkeypatch.setattr(torch, "compile", fake_torch_compile)
+    compilation_runtime._make_compiled_solver(
+        _field(),
+        EuclideanSpace(2),
+        compilation_runtime.FixedStepSchedule(0.0, 0.1, 0.1),
+        True,
+    )
+
+    assert len(options) == 2
+    assert all(option["dynamic"] is True for option in options)
+    assert all("mode" not in option for option in options)
+
+
+@pytest.mark.compilation
+def test_compiled_probe_preserves_real_input_requires_grad(monkeypatch) -> None:
+    clear_compilation_cache()
+    observed_requires_grad = []
+
+    def fake_compile(vf, metric, schedule, compute_divergence):
+        del metric, schedule, compute_divergence
+        parameter_count = len(tuple(vf.parameters()))
+
+        def compiled_solver(x, *_parameters):
+            observed_requires_grad.append(x.requires_grad)
+            return x.clone(), x.new_zeros(x.shape[:-1])
+
+        def compiled_vjp(x, *values):
+            grad_x = values[parameter_count]
+            return (
+                grad_x,
+                *(torch.zeros_like(parameter) for parameter in vf.parameters()),
+            )
+
+        def eager_solver(x, *_parameters):
+            return x.clone(), x.new_zeros(x.shape[:-1])
+
+        return compilation_runtime._with_exact_higher_order_fallback(
+            compiled_solver, compiled_vjp, eager_solver, vf
+        )
+
+    monkeypatch.setattr(compilation_runtime, "_make_compiled_solver", fake_compile)
+    field = _field()
+    result = integrate_rk4(
+        field,
+        EuclideanSpace(2),
+        torch.randn(3, 2, dtype=torch.double),
+        0.0,
+        0.1,
+        0.1,
+        compile=True,
+    )
+    assert observed_requires_grad == [False, False]
+    assert result._execution_backend == "inductor"
+
+
+@pytest.mark.compilation
 def test_compiled_no_switch_atlas_matches_tensor_eager() -> None:
     clear_compilation_cache()
     atlas = Sphere2DAtlas()
@@ -254,7 +317,50 @@ def test_lazy_compiled_vjp_failure_falls_back_before_return(monkeypatch) -> None
             field, EuclideanSpace(2), x, 0.0, 0.1, 0.1, compile=True
         )
     assert result._execution_backend == "tensor-eager"
+    assert result._fallback_reason == "RuntimeError: broken compiled vjp"
     assert compilation_cache_info().currsize == 0
+
+
+@pytest.mark.compilation
+def test_dynamic_runtime_failure_does_not_poison_other_batch_shapes(monkeypatch) -> None:
+    clear_compilation_cache()
+
+    def fake_compile(vf, metric, schedule, compute_divergence):
+        del vf, metric, schedule, compute_divergence
+
+        def solver(x):
+            if x.shape[0] == 7:
+                raise RuntimeError("shape-specific failure")
+            return x.clone(), x.new_zeros(x.shape[:-1])
+
+        return solver
+
+    monkeypatch.setattr(compilation_runtime, "_make_compiled_solver", fake_compile)
+    field = _field()
+    metric = EuclideanSpace(2)
+    with pytest.warns(RuntimeWarning, match="shape-specific failure"):
+        failed = integrate_rk4(
+            field,
+            metric,
+            torch.randn(7, 2, dtype=torch.double),
+            0.0,
+            0.1,
+            0.1,
+            compile=True,
+        )
+    passed = integrate_rk4(
+        field,
+        metric,
+        torch.randn(2, 2, dtype=torch.double),
+        0.0,
+        0.1,
+        0.1,
+        compile=True,
+    )
+
+    assert "shape-specific failure" in failed._fallback_reason
+    assert passed._execution_backend == "inductor"
+    assert passed._fallback_reason is None
 
 
 @pytest.mark.compilation
@@ -288,6 +394,35 @@ def test_callback_and_compiler_failure_warn_and_fall_back_eager(monkeypatch) -> 
         eager = integrate_rk4(field, metric, x, 0.0, 0.1, 0.1)
     assert fallback.x_final.device == x.device
     torch.testing.assert_close(fallback.x_final, eager.x_final)
+
+
+@pytest.mark.compilation
+@pytest.mark.gpu
+@pytest.mark.optional
+@requires_cuda
+def test_cuda_auto_compilation_survives_worker_lifecycle() -> None:
+    clear_compilation_cache()
+    device = torch.device("cuda")
+    field = ManifoldVectorField(2, 4, 1).to(device)
+    metric = EuclideanSpace(2)
+
+    for batch_size in (2, 7):
+        x = torch.randn(batch_size, 2, device=device)
+        result = integrate_rk4(field, metric, x, 0.0, 0.1, 0.1)
+        result.divergence_integral.sum().backward()
+        assert result._execution_backend == "inductor"
+        assert result._fallback_reason is None
+        field.zero_grad(set_to_none=True)
+
+    with torch.no_grad():
+        next(field.parameters()).add_(0.01)
+    updated = integrate_rk4(
+        field, metric, torch.randn(7, 2, device=device), 0.0, 0.1, 0.1
+    )
+    assert updated._execution_backend == "inductor"
+    assert updated._fallback_reason is None
+    info = compilation_cache_info()
+    assert (info.misses, info.hits, info.currsize) == (1, 2, 1)
 
 
 @pytest.mark.compilation
