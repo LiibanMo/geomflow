@@ -115,9 +115,11 @@ def test_dynamic_batch_reuses_one_compiled_variant() -> None:
 @pytest.mark.compilation
 def test_production_compiler_uses_dynamic_batch_policy(monkeypatch) -> None:
     options = []
+    code_objects = []
 
     def fake_torch_compile(function, **kwargs):
         options.append(kwargs)
+        code_objects.append(function.__code__)
         return function
 
     monkeypatch.setattr(torch, "compile", fake_torch_compile)
@@ -127,10 +129,17 @@ def test_production_compiler_uses_dynamic_batch_policy(monkeypatch) -> None:
         compilation_runtime.FixedStepSchedule(0.0, 0.1, 0.1),
         True,
     )
+    compilation_runtime._make_compiled_solver(
+        _field(),
+        EuclideanSpace(2),
+        compilation_runtime.FixedStepSchedule(0.0, 0.1, 0.1),
+        True,
+    )
 
-    assert len(options) == 2
+    assert len(options) == 4
     assert all(option["dynamic"] is True for option in options)
     assert all("mode" not in option for option in options)
+    assert len({id(code) for code in code_objects}) == 4
 
 
 @pytest.mark.compilation

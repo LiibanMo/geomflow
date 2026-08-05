@@ -29,6 +29,12 @@ def _mark_cudagraph_step(value: torch.Tensor) -> None:
         marker()
 
 
+def _isolate_dynamo_code(function: Callable) -> Callable:
+    # Nested solver closures otherwise share one Dynamo recompile budget.
+    function.__code__ = function.__code__.replace()
+    return function
+
+
 def _with_exact_higher_order_fallback(
     compiled_solver: Callable[..., tuple[torch.Tensor, torch.Tensor]],
     compiled_vjp: Callable[..., tuple[torch.Tensor, ...]],
@@ -286,7 +292,9 @@ def _make_compiled_solver(
     }
     if compile_mode is not None and compile_mode != "default":
         compile_options["mode"] = compile_mode
-    compiled_solver = torch.compile(tensor_solver, **compile_options)
+    compiled_solver = torch.compile(
+        _isolate_dynamo_code(tensor_solver), **compile_options
+    )
 
     def scalar_objective(
         x0: torch.Tensor, *values_and_grad_outputs: torch.Tensor
@@ -297,7 +305,7 @@ def _make_compiled_solver(
         return (output_x * grad_x).sum() + (output_integral * grad_integral).sum()
 
     vjp = torch.func.grad(scalar_objective, argnums=tuple(range(len(parameters) + 1)))
-    compiled_vjp = torch.compile(vjp, **compile_options)
+    compiled_vjp = torch.compile(_isolate_dynamo_code(vjp), **compile_options)
     return _with_exact_higher_order_fallback(
         compiled_solver,
         compiled_vjp,
