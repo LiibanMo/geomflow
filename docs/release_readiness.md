@@ -34,6 +34,26 @@ candidate CUDA timing use isolated persistent workers and drift-balanced
 quartets. A failed or inconclusive performance decision blocks release only
 after its raw evidence has been uploaded.
 
+Run 37 validated commit `13d8e13adc62952f51a5689422e65137b1c898a9`
+on a verified 2x RTX 3060 host in Poland. Both PyTorch 2.5.1/CUDA 12.4 and
+PyTorch 2.7.1/CUDA 12.8 built-wheel suites passed without critical skips, as
+did DDP, soak, direct and adjoint memory, multi-chart control, compiler,
+profiling, watchdog, cleanup, and the final release verdict. Dynamic-batch
+full-graph TorchInductor was selected for eligible built-in CUDA solves with
+zero fallback and zero graph breaks; exact tensor eager remains the supported
+fallback.
+
+At the first objectively eligible batches, Euclidean forward and
+forward-plus-backward achieved lower speedup bounds of 14.438x and 2.808x
+against the 2.0x requirement. No-switch atlas forward and
+forward-plus-backward achieved 9.712x and 2.733x against 1.5x. The CPU
+candidate/baseline geometric-mean ratio was 0.711 with upper bound 0.712. The
+Vast.ai watchdog and independent cleanup job verified the instance and exact
+runner registration absent before the release verdict passed. Evidence is
+preserved under `benchmarks/results/run37`; GitHub run `30999740128` records
+artifact digest
+`sha256:9faf7681f9dcf15a1ce36b4a15131a59b7eacaf04fda1d7527af07a841dc0bce`.
+
 The July 2026 release-candidate run on a verified Norwegian 2x RTX 3060 host
 passed 253 built-wheel tests with zero skips under both PyTorch 2.5.1/CUDA 12.4
 and PyTorch 2.7.1/CUDA 12.8. Two-rank NCCL validation passed direct-autograd,
