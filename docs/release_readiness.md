@@ -158,7 +158,7 @@ a prolonged GitHub outage, check the Vast.ai console for labels beginning with
 - Multi-chart training uses direct autograd.
 - Eligible built-in CUDA solves automatically request TorchInductor with exact
   eager fallback and backward recomputation. `compile=False` forces exact
-  tensor-eager execution. Production approval remains provisional until all
-  four frozen speed gates pass without fallback.
+  tensor-eager execution. Run 37 passed all four frozen speed gates without
+  fallback.
 - The header-only C++ and pybind APIs are CPU-only.
 - MPS is best-effort, not production-supported.

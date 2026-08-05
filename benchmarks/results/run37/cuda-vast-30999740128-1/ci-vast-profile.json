@@ -1,0 +1,734 @@
+{
+  "schema_version": 2,
+  "status": "passed",
+  "records": [
+    {
+      "scenario": "euclidean",
+      "workload": "forward",
+      "batch_size": 8192,
+      "trace": "benchmarks/results/ci-vast-traces/ci-vast-profile-euclidean-forward-b8192.json",
+      "rk_step_count": 16,
+      "rk_stage_count": 64,
+      "functional_transform_attempt_count": 0,
+      "functional_transform_fallback_count": 0,
+      "exact_divergence_strategy": "compiled-tensor-value-and-trace",
+      "backend": "inductor",
+      "fallback_reason": null,
+      "peak_allocated_bytes": 175417856,
+      "linear_count": 0,
+      "cuda_launch_count": 331,
+      "synchronization_count": 3,
+      "synchronizations": [
+        {
+          "name": "cudaStreamSynchronize",
+          "duration_us": 7.35
+        },
+        {
+          "name": "cudaStreamSynchronize",
+          "duration_us": 391.697
+        },
+        {
+          "name": "cudaDeviceSynchronize",
+          "duration_us": 3.39
+        }
+      ],
+      "synchronization_duration_us": 402.437,
+      "synchronization_duration_fraction": 0.032960192841989325,
+      "unknown_synchronization_durations": [],
+      "end_to_end_us": 12209.789,
+      "copies": [
+        {
+          "name": "Memcpy DtoH (Device -> Pinned)",
+          "bytes": 1
+        },
+        {
+          "name": "Memcpy DtoH (Device -> Pinned)",
+          "bytes": 1
+        }
+      ],
+      "scalar_copy_count": 2,
+      "scalar_copy_bytes": 2,
+      "non_scalar_copies": [],
+      "materializing_full_transfer_bytes": 0,
+      "unknown_copies": [],
+      "aten_to_count": 0,
+      "aten_to_noop_count": 0,
+      "aten_to_copy_count": 0,
+      "allocation_event_count": 736,
+      "graph_break_count": 0,
+      "failures": []
+    },
+    {
+      "scenario": "euclidean",
+      "workload": "backward",
+      "batch_size": 1024,
+      "trace": "benchmarks/results/ci-vast-traces/ci-vast-profile-euclidean-backward-b1024.json",
+      "rk_step_count": 16,
+      "rk_stage_count": 64,
+      "functional_transform_attempt_count": 0,
+      "functional_transform_fallback_count": 0,
+      "exact_divergence_strategy": "compiled-tensor-value-and-trace",
+      "backend": "inductor",
+      "fallback_reason": null,
+      "peak_allocated_bytes": 74610688,
+      "linear_count": 0,
+      "cuda_launch_count": 1492,
+      "synchronization_count": 3,
+      "synchronizations": [
+        {
+          "name": "cudaStreamSynchronize",
+          "duration_us": 7.08
+        },
+        {
+          "name": "cudaStreamSynchronize",
+          "duration_us": 7.75
+        },
+        {
+          "name": "cudaDeviceSynchronize",
+          "duration_us": 4.93
+        }
+      ],
+      "synchronization_duration_us": 19.759999999999998,
+      "synchronization_duration_fraction": 0.0005011023363820355,
+      "unknown_synchronization_durations": [],
+      "end_to_end_us": 39433.063,
+      "copies": [
+        {
+          "name": "Memcpy DtoH (Device -> Pinned)",
+          "bytes": 1
+        }
+      ],
+      "scalar_copy_count": 1,
+      "scalar_copy_bytes": 1,
+      "non_scalar_copies": [],
+      "materializing_full_transfer_bytes": 0,
+      "unknown_copies": [],
+      "aten_to_count": 2,
+      "aten_to_noop_count": 2,
+      "aten_to_copy_count": 0,
+      "allocation_event_count": 3232,
+      "graph_break_count": 0,
+      "failures": []
+    },
+    {
+      "scenario": "sphere-atlas",
+      "workload": "forward",
+      "batch_size": 4096,
+      "trace": "benchmarks/results/ci-vast-traces/ci-vast-profile-sphere-atlas-forward-b4096.json",
+      "rk_step_count": 16,
+      "rk_stage_count": 64,
+      "functional_transform_attempt_count": 0,
+      "functional_transform_fallback_count": 0,
+      "exact_divergence_strategy": "compiled-tensor-value-and-trace",
+      "backend": "inductor",
+      "fallback_reason": null,
+      "peak_allocated_bytes": 94196224,
+      "linear_count": 0,
+      "cuda_launch_count": 350,
+      "synchronization_count": 4,
+      "synchronizations": [
+        {
+          "name": "cudaStreamSynchronize",
+          "duration_us": 7.49
+        },
+        {
+          "name": "cudaStreamSynchronize",
+          "duration_us": 456.536
+        },
+        {
+          "name": "cudaStreamSynchronize",
+          "duration_us": 7.87
+        },
+        {
+          "name": "cudaDeviceSynchronize",
+          "duration_us": 2.4
+        }
+      ],
+      "synchronization_duration_us": 474.296,
+      "synchronization_duration_fraction": 0.04698661954822326,
+      "unknown_synchronization_durations": [],
+      "end_to_end_us": 10094.278,
+      "copies": [
+        {
+          "name": "Memcpy DtoH (Device -> Pinned)",
+          "bytes": 1
+        },
+        {
+          "name": "Memcpy DtoH (Device -> Pinned)",
+          "bytes": 1
+        }
+      ],
+      "scalar_copy_count": 2,
+      "scalar_copy_bytes": 2,
+      "non_scalar_copies": [],
+      "materializing_full_transfer_bytes": 0,
+      "unknown_copies": [],
+      "aten_to_count": 0,
+      "aten_to_noop_count": 0,
+      "aten_to_copy_count": 0,
+      "allocation_event_count": 713,
+      "graph_break_count": 0,
+      "failures": []
+    },
+    {
+      "scenario": "sphere-atlas",
+      "workload": "backward",
+      "batch_size": 1024,
+      "trace": "benchmarks/results/ci-vast-traces/ci-vast-profile-sphere-atlas-backward-b1024.json",
+      "rk_step_count": 16,
+      "rk_stage_count": 64,
+      "functional_transform_attempt_count": 0,
+      "functional_transform_fallback_count": 0,
+      "exact_divergence_strategy": "compiled-tensor-value-and-trace",
+      "backend": "inductor",
+      "fallback_reason": null,
+      "peak_allocated_bytes": 75005952,
+      "linear_count": 0,
+      "cuda_launch_count": 1511,
+      "synchronization_count": 4,
+      "synchronizations": [
+        {
+          "name": "cudaStreamSynchronize",
+          "duration_us": 6.68
+        },
+        {
+          "name": "cudaStreamSynchronize",
+          "duration_us": 7.39
+        },
+        {
+          "name": "cudaStreamSynchronize",
+          "duration_us": 6.85
+        },
+        {
+          "name": "cudaDeviceSynchronize",
+          "duration_us": 3.94
+        }
+      ],
+      "synchronization_duration_us": 24.860000000000003,
+      "synchronization_duration_fraction": 0.0006168342809199784,
+      "unknown_synchronization_durations": [],
+      "end_to_end_us": 40302.559,
+      "copies": [
+        {
+          "name": "Memcpy DtoH (Device -> Pinned)",
+          "bytes": 1
+        },
+        {
+          "name": "Memcpy DtoH (Device -> Pinned)",
+          "bytes": 1
+        }
+      ],
+      "scalar_copy_count": 2,
+      "scalar_copy_bytes": 2,
+      "non_scalar_copies": [],
+      "materializing_full_transfer_bytes": 0,
+      "unknown_copies": [],
+      "aten_to_count": 2,
+      "aten_to_noop_count": 2,
+      "aten_to_copy_count": 0,
+      "allocation_event_count": 3576,
+      "graph_break_count": 0,
+      "failures": []
+    },
+    {
+      "scenario": "sphere-atlas-forced-switch",
+      "trace": "benchmarks/results/ci-vast-traces/ci-vast-profile-forced-switch.json",
+      "transition_count": 1,
+      "linear_count": 0,
+      "cuda_launch_count": 1802,
+      "synchronization_count": 60,
+      "synchronizations": [
+        {
+          "name": "cudaStreamSynchronize",
+          "duration_us": 7.49
+        },
+        {
+          "name": "cudaStreamSynchronize",
+          "duration_us": 7.229
+        },
+        {
+          "name": "cudaStreamSynchronize",
+          "duration_us": 7.39
+        },
+        {
+          "name": "cudaStreamSynchronize",
+          "duration_us": 7.37
+        },
+        {
+          "name": "cudaStreamSynchronize",
+          "duration_us": 7.43
+        },
+        {
+          "name": "cudaStreamSynchronize",
+          "duration_us": 7.35
+        },
+        {
+          "name": "cudaStreamSynchronize",
+          "duration_us": 7.27
+        },
+        {
+          "name": "cudaStreamSynchronize",
+          "duration_us": 7.33
+        },
+        {
+          "name": "cudaStreamSynchronize",
+          "duration_us": 7.01
+        },
+        {
+          "name": "cudaStreamSynchronize",
+          "duration_us": 7.68
+        },
+        {
+          "name": "cudaStreamSynchronize",
+          "duration_us": 7.25
+        },
+        {
+          "name": "cudaStreamSynchronize",
+          "duration_us": 7.28
+        },
+        {
+          "name": "cudaStreamSynchronize",
+          "duration_us": 7.45
+        },
+        {
+          "name": "cudaStreamSynchronize",
+          "duration_us": 7.35
+        },
+        {
+          "name": "cudaStreamSynchronize",
+          "duration_us": 7.77
+        },
+        {
+          "name": "cudaStreamSynchronize",
+          "duration_us": 6.889
+        },
+        {
+          "name": "cudaStreamSynchronize",
+          "duration_us": 7.38
+        },
+        {
+          "name": "cudaStreamSynchronize",
+          "duration_us": 7.29
+        },
+        {
+          "name": "cudaStreamSynchronize",
+          "duration_us": 7.59
+        },
+        {
+          "name": "cudaStreamSynchronize",
+          "duration_us": 7.65
+        },
+        {
+          "name": "cudaStreamSynchronize",
+          "duration_us": 7.46
+        },
+        {
+          "name": "cudaStreamSynchronize",
+          "duration_us": 7.36
+        },
+        {
+          "name": "cudaStreamSynchronize",
+          "duration_us": 7.23
+        },
+        {
+          "name": "cudaStreamSynchronize",
+          "duration_us": 7.54
+        },
+        {
+          "name": "cudaStreamSynchronize",
+          "duration_us": 7.9
+        },
+        {
+          "name": "cudaStreamSynchronize",
+          "duration_us": 7.4
+        },
+        {
+          "name": "cudaStreamSynchronize",
+          "duration_us": 7.7
+        },
+        {
+          "name": "cudaStreamSynchronize",
+          "duration_us": 7.35
+        },
+        {
+          "name": "cudaStreamSynchronize",
+          "duration_us": 7.56
+        },
+        {
+          "name": "cudaStreamSynchronize",
+          "duration_us": 7.29
+        },
+        {
+          "name": "cudaStreamSynchronize",
+          "duration_us": 7.28
+        },
+        {
+          "name": "cudaStreamSynchronize",
+          "duration_us": 7.2
+        },
+        {
+          "name": "cudaStreamSynchronize",
+          "duration_us": 7.56
+        },
+        {
+          "name": "cudaStreamSynchronize",
+          "duration_us": 7.33
+        },
+        {
+          "name": "cudaStreamSynchronize",
+          "duration_us": 7.34
+        },
+        {
+          "name": "cudaStreamSynchronize",
+          "duration_us": 7.31
+        },
+        {
+          "name": "cudaStreamSynchronize",
+          "duration_us": 7.49
+        },
+        {
+          "name": "cudaStreamSynchronize",
+          "duration_us": 7.26
+        },
+        {
+          "name": "cudaStreamSynchronize",
+          "duration_us": 7.28
+        },
+        {
+          "name": "cudaStreamSynchronize",
+          "duration_us": 7.58
+        },
+        {
+          "name": "cudaStreamSynchronize",
+          "duration_us": 7.55
+        },
+        {
+          "name": "cudaStreamSynchronize",
+          "duration_us": 7.299
+        },
+        {
+          "name": "cudaStreamSynchronize",
+          "duration_us": 7.35
+        },
+        {
+          "name": "cudaStreamSynchronize",
+          "duration_us": 7.29
+        },
+        {
+          "name": "cudaStreamSynchronize",
+          "duration_us": 7.45
+        },
+        {
+          "name": "cudaStreamSynchronize",
+          "duration_us": 7.73
+        },
+        {
+          "name": "cudaStreamSynchronize",
+          "duration_us": 7.38
+        },
+        {
+          "name": "cudaStreamSynchronize",
+          "duration_us": 7.4
+        },
+        {
+          "name": "cudaStreamSynchronize",
+          "duration_us": 7.54
+        },
+        {
+          "name": "cudaStreamSynchronize",
+          "duration_us": 7.88
+        },
+        {
+          "name": "cudaStreamSynchronize",
+          "duration_us": 7.22
+        },
+        {
+          "name": "cudaStreamSynchronize",
+          "duration_us": 7.67
+        },
+        {
+          "name": "cudaStreamSynchronize",
+          "duration_us": 7.46
+        },
+        {
+          "name": "cudaStreamSynchronize",
+          "duration_us": 7.13
+        },
+        {
+          "name": "cudaStreamSynchronize",
+          "duration_us": 7.41
+        },
+        {
+          "name": "cudaStreamSynchronize",
+          "duration_us": 7.42
+        },
+        {
+          "name": "cudaStreamSynchronize",
+          "duration_us": 7.43
+        },
+        {
+          "name": "cudaStreamSynchronize",
+          "duration_us": 7.25
+        },
+        {
+          "name": "cudaStreamSynchronize",
+          "duration_us": 7.21
+        },
+        {
+          "name": "cudaDeviceSynchronize",
+          "duration_us": 2.92
+        }
+      ],
+      "synchronization_duration_us": 439.857,
+      "synchronization_duration_fraction": 0.015627697431417314,
+      "unknown_synchronization_durations": [],
+      "end_to_end_us": 28145.989,
+      "copies": [
+        {
+          "name": "Memcpy DtoH (Device -> Pinned)",
+          "bytes": 1
+        },
+        {
+          "name": "Memcpy DtoH (Device -> Pinned)",
+          "bytes": 1
+        },
+        {
+          "name": "Memcpy DtoH (Device -> Pinned)",
+          "bytes": 1
+        },
+        {
+          "name": "Memcpy DtoH (Device -> Pinned)",
+          "bytes": 1
+        },
+        {
+          "name": "Memcpy DtoH (Device -> Pinned)",
+          "bytes": 1
+        },
+        {
+          "name": "Memcpy DtoH (Device -> Pinned)",
+          "bytes": 1
+        },
+        {
+          "name": "Memcpy DtoH (Device -> Pinned)",
+          "bytes": 1
+        },
+        {
+          "name": "Memcpy DtoH (Device -> Pinned)",
+          "bytes": 1
+        },
+        {
+          "name": "Memcpy DtoH (Device -> Pinned)",
+          "bytes": 1
+        },
+        {
+          "name": "Memcpy DtoH (Device -> Pinned)",
+          "bytes": 1
+        },
+        {
+          "name": "Memcpy DtoH (Device -> Pinned)",
+          "bytes": 1
+        },
+        {
+          "name": "Memcpy DtoH (Device -> Pinned)",
+          "bytes": 1
+        },
+        {
+          "name": "Memcpy DtoH (Device -> Pinned)",
+          "bytes": 1
+        },
+        {
+          "name": "Memcpy DtoH (Device -> Pinned)",
+          "bytes": 1
+        },
+        {
+          "name": "Memcpy DtoH (Device -> Pinned)",
+          "bytes": 1
+        },
+        {
+          "name": "Memcpy DtoH (Device -> Pinned)",
+          "bytes": 1
+        },
+        {
+          "name": "Memcpy DtoH (Device -> Pinned)",
+          "bytes": 1
+        },
+        {
+          "name": "Memcpy DtoH (Device -> Pinned)",
+          "bytes": 1
+        },
+        {
+          "name": "Memcpy DtoH (Device -> Pinned)",
+          "bytes": 1
+        },
+        {
+          "name": "Memcpy DtoH (Device -> Pinned)",
+          "bytes": 1
+        },
+        {
+          "name": "Memcpy DtoH (Device -> Pinned)",
+          "bytes": 1
+        },
+        {
+          "name": "Memcpy DtoH (Device -> Pinned)",
+          "bytes": 1
+        },
+        {
+          "name": "Memcpy DtoH (Device -> Pinned)",
+          "bytes": 1
+        },
+        {
+          "name": "Memcpy DtoH (Device -> Pinned)",
+          "bytes": 1
+        },
+        {
+          "name": "Memcpy DtoH (Device -> Pinned)",
+          "bytes": 1
+        },
+        {
+          "name": "Memcpy DtoH (Device -> Pinned)",
+          "bytes": 1
+        },
+        {
+          "name": "Memcpy DtoH (Device -> Pinned)",
+          "bytes": 1
+        },
+        {
+          "name": "Memcpy DtoH (Device -> Pinned)",
+          "bytes": 1
+        },
+        {
+          "name": "Memcpy DtoH (Device -> Pinned)",
+          "bytes": 1
+        },
+        {
+          "name": "Memcpy DtoH (Device -> Pinned)",
+          "bytes": 1
+        },
+        {
+          "name": "Memcpy DtoH (Device -> Pinned)",
+          "bytes": 1
+        },
+        {
+          "name": "Memcpy DtoH (Device -> Pinned)",
+          "bytes": 1
+        },
+        {
+          "name": "Memcpy DtoH (Device -> Pinned)",
+          "bytes": 1
+        },
+        {
+          "name": "Memcpy DtoH (Device -> Pinned)",
+          "bytes": 1
+        },
+        {
+          "name": "Memcpy DtoH (Device -> Pinned)",
+          "bytes": 1
+        },
+        {
+          "name": "Memcpy DtoH (Device -> Pinned)",
+          "bytes": 1
+        },
+        {
+          "name": "Memcpy DtoH (Device -> Pinned)",
+          "bytes": 1
+        },
+        {
+          "name": "Memcpy DtoH (Device -> Pinned)",
+          "bytes": 1
+        },
+        {
+          "name": "Memcpy DtoH (Device -> Pinned)",
+          "bytes": 1
+        },
+        {
+          "name": "Memcpy DtoH (Device -> Pinned)",
+          "bytes": 1
+        },
+        {
+          "name": "Memcpy DtoH (Device -> Pinned)",
+          "bytes": 1
+        },
+        {
+          "name": "Memcpy DtoH (Device -> Pinned)",
+          "bytes": 1
+        },
+        {
+          "name": "Memcpy DtoH (Device -> Pinned)",
+          "bytes": 1
+        },
+        {
+          "name": "Memcpy DtoH (Device -> Pinned)",
+          "bytes": 1
+        },
+        {
+          "name": "Memcpy DtoH (Device -> Pinned)",
+          "bytes": 1
+        },
+        {
+          "name": "Memcpy DtoH (Device -> Pinned)",
+          "bytes": 1
+        },
+        {
+          "name": "Memcpy DtoH (Device -> Pinned)",
+          "bytes": 1
+        },
+        {
+          "name": "Memcpy DtoH (Device -> Pinned)",
+          "bytes": 1
+        },
+        {
+          "name": "Memcpy DtoH (Device -> Pinned)",
+          "bytes": 1
+        },
+        {
+          "name": "Memcpy DtoH (Device -> Pinned)",
+          "bytes": 1
+        },
+        {
+          "name": "Memcpy DtoH (Device -> Pinned)",
+          "bytes": 1
+        },
+        {
+          "name": "Memcpy DtoH (Device -> Pinned)",
+          "bytes": 1
+        },
+        {
+          "name": "Memcpy DtoH (Device -> Pinned)",
+          "bytes": 1
+        },
+        {
+          "name": "Memcpy DtoH (Device -> Pinned)",
+          "bytes": 1
+        },
+        {
+          "name": "Memcpy DtoH (Device -> Pinned)",
+          "bytes": 1
+        },
+        {
+          "name": "Memcpy DtoH (Device -> Pinned)",
+          "bytes": 1
+        },
+        {
+          "name": "Memcpy DtoH (Device -> Pinned)",
+          "bytes": 1
+        },
+        {
+          "name": "Memcpy DtoH (Device -> Pinned)",
+          "bytes": 1
+        }
+      ],
+      "scalar_copy_count": 58,
+      "scalar_copy_bytes": 58,
+      "non_scalar_copies": [],
+      "materializing_full_transfer_bytes": 0,
+      "unknown_copies": [],
+      "aten_to_count": 2,
+      "aten_to_noop_count": 2,
+      "aten_to_copy_count": 0,
+      "allocation_event_count": 4265,
+      "graph_break_count": 0,
+      "failures": []
+    }
+  ],
+  "failures": []
+}
