@@ -469,11 +469,15 @@ jobs:
       run_attempt: ${{ steps.watchdog.outputs.run_attempt }}
       verified: ${{ steps.watchdog.outputs.verified }}
     steps:
+      - name: Install pinned Vast.ai CLI
+        run: >-
+          python -m pip install --disable-pip-version-check --no-input
+          "vastai==${VASTAI_VERSION}"
+
       - name: Enforce instance lifetime and offline-runner cleanup
         id: watchdog
         env:
           AUTHORIZED_ATTEMPT: ${{ needs.authorize.outputs.run_attempt }}
-          GH_ACTIONS_TOKEN: ${{ github.token }}
           GH_RUNNER_ADMIN_TOKEN: ${{ secrets.GH_RUNNER_ADMIN_TOKEN }}
           RUNNER_LABEL: geomflow-vast-${{ github.run_id }}-${{ github.run_attempt }}
           VAST_API_KEY: ${{ secrets.VAST_API_KEY }}
@@ -489,40 +493,25 @@ jobs:
             --retry 4 --retry-all-errors --retry-delay 2 --retry-max-time 30
             --connect-timeout 5 --max-time 30
           )
-          vast_headers=(
-            --header "Authorization: Bearer ${VAST_API_KEY}"
-            --header 'Accept: application/json'
-          )
           runner_headers=(
             --header "Authorization: Bearer ${GH_RUNNER_ADMIN_TOKEN}"
             --header 'Accept: application/vnd.github+json'
             --header 'X-GitHub-Api-Version: 2022-11-28'
           )
           actions_headers=(
-            --header "Authorization: Bearer ${GH_ACTIONS_TOKEN}"
+            --header "Authorization: Bearer ${GH_RUNNER_ADMIN_TOKEN}"
             --header 'Accept: application/vnd.github+json'
             --header 'X-GitHub-Api-Version: 2022-11-28'
           )
+          vast() {
+            env -u GH_RUNNER_ADMIN_TOKEN timeout 45s \
+              vastai --api-key "$VAST_API_KEY" --retry 4 "$@"
+          }
           vast_instances() {
-            local combined='[]' page response token=''
-            while :; do
-              query=(
-                --get --data-urlencode 'limit=25'
-                --data-urlencode 'select_cols=["id","label","start_date","dph_total"]'
-              )
-              [[ -z "$token" ]] || query+=(--data-urlencode "after_token=${token}")
-              response="$(curl "${curl_args[@]}" --fail-with-body \
-                "${vast_headers[@]}" "${query[@]}" \
-                'https://console.vast.ai/api/v1/instances/')" || return
-              page="$(jq -cer --arg label "$RUNNER_LABEL" '
-                .instances | map(select(.label == $label))
-              ' <<<"$response")" || return
-              combined="$(jq -cn --argjson left "$combined" --argjson right "$page" \
-                '$left + $right | unique_by(.id)')" || return
-              token="$(jq -er '.next_token // ""' <<<"$response")" || return
-              [[ -n "$token" ]] || break
-            done
-            printf '%s\n' "$combined"
+            local instances
+            instances="$(vast show instances --raw)" || return
+            jq -cer --arg label "$RUNNER_LABEL" \
+              'map(select(.label == $label))' <<<"$instances"
           }
           exact_runners() {
             local combined='[]' count matches page=1 response
@@ -548,25 +537,18 @@ jobs:
               "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/attempts/${GITHUB_RUN_ATTEMPT}/jobs?per_page=100"
           }
           destroy_instances() {
-            local body code failed=0 instance instances
+            local failed=0 instance instances remaining
             instances="$(vast_instances)" || return
             while IFS= read -r instance; do
               [[ -n "$instance" ]] || continue
-              body="$(mktemp)"
-              code="$(curl "${curl_args[@]}" "${vast_headers[@]}" \
-                --request DELETE --output "$body" --write-out '%{http_code}' \
-                "https://console.vast.ai/api/v0/instances/${instance}/")" || {
-                  rm -f "$body"
+              if ! vast destroy instance "$instance" -y; then
+                remaining="$(vast_instances)" || return
+                if jq -e --arg id "$instance" \
+                  'any(.[]; (.id | tostring) == $id)' <<<"$remaining" >/dev/null; then
                   failed=1
                   continue
-                }
-              if [[ ! "$code" =~ ^2[0-9][0-9]$ && "$code" != '404' ]]; then
-                cat "$body" >&2
-                rm -f "$body"
-                failed=1
-                continue
+                fi
               fi
-              rm -f "$body"
               echo "Destroyed Vast.ai instance ${instance} (${RUNNER_LABEL})"
             done < <(jq -r '.[].id' <<<"$instances")
             (( failed == 0 ))
@@ -673,7 +655,6 @@ jobs:
           trap 'exit 130' INT
           trap 'exit 143' TERM
 
-          : "${GH_ACTIONS_TOKEN:?GitHub Actions token is unavailable}"
           : "${GH_RUNNER_ADMIN_TOKEN:?GH_RUNNER_ADMIN_TOKEN is not configured as a repository secret}"
           : "${VAST_API_KEY:?VAST_API_KEY is not configured as a repository secret}"
           started_at="$(date +%s)"
