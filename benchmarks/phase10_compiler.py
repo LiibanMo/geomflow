@@ -345,8 +345,6 @@ def evaluate(
         compiled_peak_bytes = cuda_peak_bytes(
             compiled_backward, x, baseline_bytes=precompile_allocated
         )
-        eager_saved_tensor_bytes = saved_tensor_bytes(lambda: eager_backward(x))
-        compiled_saved_tensor_bytes = saved_tensor_bytes(lambda: compiled_backward(x))
         speedup = statistics.median(eager_samples) / statistics.median(compiled_samples)
         backward_speedup = statistics.median(
             eager_backward_samples
@@ -423,8 +421,6 @@ def evaluate(
                 "higher_order_strategy": "exact-eager-recompute",
                 "aotautograd_behavior": "compiled first-order VJP with exact eager higher-order recomputation",
                 "parity": parity,
-                "eager_saved_tensor_bytes": eager_saved_tensor_bytes,
-                "inductor_saved_tensor_bytes": compiled_saved_tensor_bytes,
                 "dynamo_counters": serializable_counters(counters),
                 "dynamo_graph_count": int(
                     counters.get("stats", {}).get("unique_graphs", 0)
@@ -444,6 +440,16 @@ def evaluate(
                 ),
                 "production_cache_limit": compilation_cache_info().maxsize,
             }
+        )
+        record["eager_saved_tensor_bytes"] = saved_tensor_bytes(
+            lambda: eager_backward(x)
+        )
+        record["inductor_saved_tensor_bytes"] = saved_tensor_bytes(
+            lambda: compiled(x)
+        )
+        record["inductor_saved_tensor_limitation"] = (
+            "forward graph only; torch.func.grad does not support "
+            "saved_tensors_hooks for forward-plus-backward measurement"
         )
         accepted = (
             device.type == "cuda"

@@ -328,8 +328,18 @@ def run_case(
     assert torch.isfinite(timed_result.divergence_integral).all()
     del timed_result
     model.zero_grad(set_to_none=True)
-    saved_tensors = saved_tensor_summary(operation)
-    torch.cuda.synchronize()
+    if not force_eager and workload == "backward":
+        saved_tensors = {
+            "saved_tensor_count": None,
+            "saved_tensor_bytes": None,
+            "saved_tensor_limitation": (
+                "torch.func.grad does not support saved_tensors_hooks"
+            ),
+        }
+    else:
+        saved_tensors = saved_tensor_summary(operation)
+        saved_tensors["saved_tensor_limitation"] = None
+        torch.cuda.synchronize()
     trace_path.parent.mkdir(parents=True, exist_ok=True)
     torch.cuda.reset_peak_memory_stats()
     with torch.profiler.profile(
@@ -516,8 +526,8 @@ def main() -> int:
         scenario = case["scenario"]
         workload = case["workload"]
         batch_size = int(case["batch_size"])
-        records.append(
-            run_case(
+        try:
+            production_record = run_case(
                 scenario,
                 workload,
                 batch_size,
@@ -525,10 +535,18 @@ def main() -> int:
                 / f"ci-vast-profile-{scenario}-{workload}-b{batch_size}.json",
                 case["expected_backend"],
             )
-        )
+        except Exception as error:
+            result["status"] = "failed"
+            result["failures"] = [
+                f"production profile {scenario}/{workload} failed: "
+                f"{type(error).__name__}: {error}"
+            ]
+            checkpoint()
+            return 1
+        records.append(production_record)
         checkpoint()
-        records.append(
-            run_case(
+        try:
+            eager_record = run_case(
                 scenario,
                 workload,
                 batch_size,
@@ -537,11 +555,28 @@ def main() -> int:
                 "tensor-eager",
                 force_eager=True,
             )
-        )
+        except Exception as error:
+            result["status"] = "failed"
+            result["failures"] = [
+                f"eager profile {scenario}/{workload} failed: "
+                f"{type(error).__name__}: {error}"
+            ]
+            checkpoint()
+            return 1
+        records.append(eager_record)
         checkpoint()
-    records.append(
-        run_switch_case(args.trace_dir / "ci-vast-profile-forced-switch.json")
-    )
+    try:
+        switch_record = run_switch_case(
+            args.trace_dir / "ci-vast-profile-forced-switch.json"
+        )
+    except Exception as error:
+        result["status"] = "failed"
+        result["failures"] = [
+            f"forced-switch profile failed: {type(error).__name__}: {error}"
+        ]
+        checkpoint()
+        return 1
+    records.append(switch_record)
     checkpoint()
     failures = [failure for record in records for failure in record["failures"]]
     result["status"] = "failed" if failures else "passed"

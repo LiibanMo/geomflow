@@ -725,6 +725,37 @@ def test_profiler_records_missing_speed_gates_as_failed_evidence(
     ]
 
 
+def test_profiler_checkpoints_case_exceptions_as_failed_evidence(
+    monkeypatch, tmp_path: Path
+) -> None:
+    profile = _profile_module()
+    output_path = tmp_path / "profile.json"
+    monkeypatch.setattr(profile.torch.cuda, "is_available", lambda: True)
+    monkeypatch.setattr(
+        profile,
+        "run_case",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(RuntimeError("profile failed")),
+    )
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "phase10_profile.py",
+            "--output",
+            str(output_path),
+            "--trace-dir",
+            str(tmp_path / "traces"),
+        ],
+    )
+
+    assert profile.main() == 1
+    evidence = json.loads(output_path.read_text())
+    assert evidence["status"] == "failed"
+    assert evidence["failures"] == [
+        "production profile euclidean/forward failed: RuntimeError: profile failed"
+    ]
+
+
 def test_resource_baseline_preserves_allocated_gradient_storage() -> None:
     resources = _benchmark_module("phase10_resources")
     model = torch.nn.Linear(2, 1)
@@ -811,6 +842,30 @@ def test_derivative_candidates_match_explicit_trace(strategy: str) -> None:
         candidates.objective(solved), (state, *field.parameters()), allow_unused=False
     )
     assert all(torch.isfinite(gradient).all() for gradient in gradients)
+
+
+def test_derivative_candidate_score_weights_both_complete_solve_workloads() -> None:
+    candidates = _derivative_candidates_module()
+    forward_winner = {
+        "measurements": [
+            {
+                "forward_samples_ms": [1.0, 1.0, 1.0],
+                "forward_backward_samples_ms": [2.0, 2.0, 2.0],
+            }
+        ]
+    }
+    backward_only_winner = {
+        "measurements": [
+            {
+                "forward_samples_ms": [3.0, 3.0, 3.0],
+                "forward_backward_samples_ms": [1.0, 1.0, 1.0],
+            }
+        ]
+    }
+
+    assert candidates.complete_solve_score(
+        forward_winner
+    ) < candidates.complete_solve_score(backward_only_winner)
 
 
 def test_compiler_unsupported_fullgraph_is_a_candidate_rejection(monkeypatch) -> None:

@@ -153,7 +153,7 @@ def timed(operation, repetitions: int = 3) -> list[float]:
     return samples
 
 
-def launch_count(operation) -> int:
+def operation_counts(operation) -> dict[str, int]:
     with torch.profiler.profile(
         activities=(
             torch.profiler.ProfilerActivity.CPU,
@@ -162,11 +162,17 @@ def launch_count(operation) -> int:
     ) as profiler:
         operation()
         torch.cuda.synchronize()
-    return sum(
-        event.count
-        for event in profiler.key_averages()
-        if event.key == "cudaLaunchKernel"
-    )
+    averages = profiler.key_averages()
+    return {
+        "cuda_launches": sum(
+            event.count for event in averages if event.key == "cudaLaunchKernel"
+        ),
+        "autograd_engine_calls": sum(
+            event.count
+            for event in averages
+            if event.key.startswith("autograd::engine::evaluate_function")
+        ),
+    }
 
 
 def saved_tensor_bytes(operation) -> int:
@@ -205,13 +211,28 @@ def measure(
     torch.cuda.reset_peak_memory_stats()
     backward_samples = timed(forward_backward)
     peak_bytes = torch.cuda.max_memory_allocated()
+    saved_bytes = None
+    saved_tensor_limitation = None
+    try:
+        saved_bytes = saved_tensor_bytes(forward_backward)
+    except RuntimeError as error:
+        if "don't yet support saved tensor hooks" not in str(error):
+            raise
+        saved_tensor_limitation = str(error)
+    forward_counts = operation_counts(forward)
+    forward_backward_counts = operation_counts(forward_backward)
     return {
         "batch_size": batch_size,
         "forward_samples_ms": timed(forward),
         "forward_backward_samples_ms": backward_samples,
-        "forward_cuda_launches": launch_count(forward),
-        "forward_backward_cuda_launches": launch_count(forward_backward),
-        "saved_tensor_bytes": saved_tensor_bytes(forward_backward),
+        "forward_cuda_launches": forward_counts["cuda_launches"],
+        "forward_backward_cuda_launches": forward_backward_counts["cuda_launches"],
+        "forward_autograd_engine_calls": forward_counts["autograd_engine_calls"],
+        "forward_backward_autograd_engine_calls": forward_backward_counts[
+            "autograd_engine_calls"
+        ],
+        "saved_tensor_bytes": saved_bytes,
+        "saved_tensor_limitation": saved_tensor_limitation,
         "peak_allocated_bytes": peak_bytes,
     }
 
@@ -236,6 +257,17 @@ def correctness(field: ManifoldVectorField, strategy: str) -> dict[str, float]:
             for left, right in zip(actual_gradients, reference_gradients, strict=True)
         ),
     }
+
+
+def complete_solve_score(record: dict[str, object]) -> float:
+    return statistics.geometric_mean(
+        sample
+        for measurement in record["measurements"]
+        for sample in (
+            statistics.median(measurement["forward_samples_ms"]),
+            statistics.median(measurement["forward_backward_samples_ms"]),
+        )
+    )
 
 
 def main() -> int:
@@ -294,10 +326,7 @@ def main() -> int:
     else:
         selected = min(
             passing,
-            key=lambda record: statistics.geometric_mean(
-                statistics.median(measurement["forward_backward_samples_ms"])
-                for measurement in record["measurements"]
-            ),
+            key=complete_solve_score,
         )
         result["selected_strategy"] = selected["strategy"]
         if selected["strategy"] != "explicit-tangent":
