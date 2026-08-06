@@ -492,6 +492,7 @@ jobs:
           teardown_verified=0
           offline_checks=0
           queue_checks=0
+          query_failures=0
           first_instance_seen=''
           curl_args=(
             --silent --show-error --location
@@ -671,7 +672,14 @@ jobs:
 
           while :; do
             now="$(date +%s)"
-            instances="$(vast_instances)"
+            if ! instances="$(vast_instances)"; then
+              query_failures=$((query_failures + 1))
+              if (( query_failures >= VAST_OFFLINE_CHECKS )); then
+                emergency_stop "Vast.ai polling failed repeatedly for ${RUNNER_LABEL}"
+              fi
+              sleep "$VAST_WATCHDOG_INTERVAL_SECONDS"
+              continue
+            fi
             if [[ "$(jq -r 'length' <<<"$instances")" != '0' ]]; then
               [[ -n "$first_instance_seen" ]] || first_instance_seen="$now"
               lease_start="$(jq -r '[.[].start_date | select(type == "number")] | min // 0 | floor' <<<"$instances")"
@@ -684,8 +692,15 @@ jobs:
               emergency_stop "No Vast.ai instance appeared within the provisioning grace period"
             fi
 
-            jobs="$(workflow_jobs)"
-            runners="$(exact_runners)"
+            if ! jobs="$(workflow_jobs)" || ! runners="$(exact_runners)"; then
+              query_failures=$((query_failures + 1))
+              if (( query_failures >= VAST_OFFLINE_CHECKS )); then
+                emergency_stop "GitHub lifecycle polling failed repeatedly for ${RUNNER_LABEL}"
+              fi
+              sleep "$VAST_WATCHDOG_INTERVAL_SECONDS"
+              continue
+            fi
+            query_failures=0
             provision_status="$(jq -r '
               first(.jobs[] | select(.name == "Provision approved Vast.ai runner") | .status) // "missing"
             ' <<<"$jobs")"
