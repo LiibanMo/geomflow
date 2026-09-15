@@ -27,14 +27,15 @@ defect merely because two implementation paths agree.
 | --- | --- | --- |
 | PyTorch CPU `float64` | corrected and reference-tested | high-accuracy numerical reference |
 | PyTorch CPU `float32` | supported | production CPU execution within dtype tolerances |
-| PyTorch CUDA | not approved as production support | future parity target only |
+| PyTorch CUDA `float32`/`float64` | production-supported | eligible built-ins use TorchInductor; exact eager fallback remains supported |
 | Apple MPS | unvalidated | best-effort only; no support claim |
 | Header-only C++ | CPU-only | native CPU integration and finite-difference adjoint |
 | Native C++ GPU | no architecture selected | separate future decision |
 
-The detailed per-export CPU/CUDA matrix belongs to GPU Phase 0 and must be
-created only after GPU work is explicitly authorized. Generic PyTorch device
-propagation does not establish a support claim.
+The detailed per-export CPU/CUDA matrix is maintained in
+`docs/gpu_support_contract.md`. The support claim is based on wheel-level
+correctness, gradient, memory, performance, DDP, packaging, and teardown
+evidence from CUDA/Vast.ai Run 37, not generic device propagation.
 
 ## Parity Rules
 
@@ -47,12 +48,11 @@ propagation does not establish a support claim.
 - Do not silently transfer tensors to CPU or reduce precision.
 - Rebaseline performance only after mathematical outputs stabilize.
 
-## Authorization Boundary
+## Evidence Boundary
 
-`TODO.md` remains a planning document. This handoff does not authorize GPU
-implementation, accelerator refactors, CUDA dependencies, or release claims.
-Explicit user authorization is required before GPU Phase 0 or any GPU-support
-implementation change begins.
+The PyTorch CUDA milestone is validated by the immutable Run 37 evidence under
+`benchmarks/results/run37`. Native C++ GPU execution remains a separate Phase 11
+architecture decision and is not implied by the PyTorch support claim.
 
 The local reference PDFs under `papers/` remain git-ignored research sources.
 They are not copied into documentation, packages, wheels, or release assets.

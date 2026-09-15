@@ -1,0 +1,125 @@
+{
+  "schema_version": 2,
+  "status": "passed",
+  "environment": {
+    "timestamp_utc": "2026-08-05T11:25:14.106321+00:00",
+    "git_revision": "13d8e13adc62952f51a5689422e65137b1c898a9",
+    "os": "Linux-6.8.0-134-generic-x86_64-with-glibc2.35",
+    "python": "3.11.13",
+    "torch": "2.7.1+cu128",
+    "cuda_runtime": "12.8",
+    "driver": "580.173.02\n580.173.02",
+    "gpu": "NVIDIA GeForce RTX 3060"
+  },
+  "records": [
+    {
+      "mode": "direct",
+      "steps": 16,
+      "dtype": "float32",
+      "seconds": 0.051709999999729916,
+      "fixed_allocated_bytes": 17171456,
+      "peak_allocated_bytes": 34669568,
+      "adjusted_peak_bytes": 17498112,
+      "loss": 2.858485698699951,
+      "gradients_finite": true,
+      "gradient_vector_length": 16388,
+      "gradient_vector_sha256": "a7264bb841cb9aef962d829e1cca9326f5ed4325937a4f9e7a37a10fa6eb91ac"
+    },
+    {
+      "mode": "intrinsic_adjoint",
+      "steps": 16,
+      "dtype": "float32",
+      "seconds": 0.35666808602400124,
+      "fixed_allocated_bytes": 17171456,
+      "peak_allocated_bytes": 19303936,
+      "adjusted_peak_bytes": 2132480,
+      "loss": 2.858485698699951,
+      "gradients_finite": true,
+      "gradient_vector_length": 16388,
+      "gradient_vector_sha256": "6a8140db694a2ef26352c18340b35d294c7c9ef2d7c1c4a1b98f5e13f112271e"
+    },
+    {
+      "mode": "direct",
+      "steps": 128,
+      "dtype": "float32",
+      "seconds": 0.36600336199626327,
+      "fixed_allocated_bytes": 17171456,
+      "peak_allocated_bytes": 152238592,
+      "adjusted_peak_bytes": 135067136,
+      "loss": 2.858485221862793,
+      "gradients_finite": true,
+      "gradient_vector_length": 16388,
+      "gradient_vector_sha256": "841e186487c2ddd695c8b84e005b34e76b436feb4c101c962bb465cc700faa01"
+    },
+    {
+      "mode": "intrinsic_adjoint",
+      "steps": 128,
+      "dtype": "float32",
+      "seconds": 16.8694040600094,
+      "fixed_allocated_bytes": 17171456,
+      "peak_allocated_bytes": 19303936,
+      "adjusted_peak_bytes": 2132480,
+      "loss": 2.858485221862793,
+      "gradients_finite": true,
+      "gradient_vector_length": 16388,
+      "gradient_vector_sha256": "8d2ae58057dd461dad8ffd562ac70732da7cf6f29388995b6cc5792dbb2079ab"
+    },
+    {
+      "mode": "direct",
+      "steps": 16,
+      "dtype": "float64",
+      "seconds": 0.13900774001376703,
+      "fixed_allocated_bytes": 17302528,
+      "peak_allocated_bytes": 52298752,
+      "adjusted_peak_bytes": 34996224,
+      "loss": 2.844990104202558,
+      "gradients_finite": true,
+      "gradient_vector_length": 16388,
+      "gradient_vector_sha256": "b7b845700dee39af6eccde21457543e1c005e29ded1fae689fee54f7bd3cfb3a"
+    },
+    {
+      "mode": "intrinsic_adjoint",
+      "steps": 16,
+      "dtype": "float64",
+      "seconds": 0.45288889098446816,
+      "fixed_allocated_bytes": 17302528,
+      "peak_allocated_bytes": 21564928,
+      "adjusted_peak_bytes": 4262400,
+      "loss": 2.844990104202558,
+      "gradients_finite": true,
+      "gradient_vector_length": 16388,
+      "gradient_vector_sha256": "3e30f01393fff9f3caf76e99421f127ba487871e6adcae0bdcebe4b11067d0c6"
+    },
+    {
+      "mode": "direct",
+      "steps": 128,
+      "dtype": "float64",
+      "seconds": 1.10315804000129,
+      "fixed_allocated_bytes": 17302528,
+      "peak_allocated_bytes": 287179776,
+      "adjusted_peak_bytes": 269877248,
+      "loss": 2.8449901041578536,
+      "gradients_finite": true,
+      "gradient_vector_length": 16388,
+      "gradient_vector_sha256": "33f1c5722729cc413088accc0d1c8e1d896e5ade9d4785da7843d486843b0cf1"
+    },
+    {
+      "mode": "intrinsic_adjoint",
+      "steps": 128,
+      "dtype": "float64",
+      "seconds": 17.81499365399941,
+      "fixed_allocated_bytes": 17302528,
+      "peak_allocated_bytes": 21564928,
+      "adjusted_peak_bytes": 4262400,
+      "loss": 2.8449901041578536,
+      "gradients_finite": true,
+      "gradient_vector_length": 16388,
+      "gradient_vector_sha256": "788c19b17b0a4778c305a65fd88a7fdf0e9e5fb92ab6adbb92c15399e7a168d3"
+    }
+  ],
+  "memory_growth": {
+    "float32": 1.0,
+    "float64": 1.0
+  },
+  "failures": []
+}

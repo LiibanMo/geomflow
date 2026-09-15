@@ -1,0 +1,47 @@
+{
+  "schema_version": 2,
+  "status": "passed",
+  "records": [
+    {
+      "scenario": "euclidean",
+      "batch_size": 256,
+      "fixed_allocated_bytes": 17052672,
+      "fixed_includes_parameter_gradients": true,
+      "peak_allocated_bytes": 60786176,
+      "adjusted_peak_bytes": 43733504,
+      "gradients_finite": true
+    },
+    {
+      "scenario": "euclidean",
+      "batch_size": 512,
+      "fixed_allocated_bytes": 17052672,
+      "fixed_includes_parameter_gradients": true,
+      "peak_allocated_bytes": 103470592,
+      "adjusted_peak_bytes": 86417920,
+      "gradients_finite": true
+    },
+    {
+      "scenario": "sphere-atlas",
+      "batch_size": 256,
+      "fixed_allocated_bytes": 17059328,
+      "fixed_includes_parameter_gradients": true,
+      "peak_allocated_bytes": 61166080,
+      "adjusted_peak_bytes": 44106752,
+      "gradients_finite": true
+    },
+    {
+      "scenario": "sphere-atlas",
+      "batch_size": 512,
+      "fixed_allocated_bytes": 17059328,
+      "fixed_includes_parameter_gradients": true,
+      "peak_allocated_bytes": 104222208,
+      "adjusted_peak_bytes": 87162880,
+      "gradients_finite": true
+    }
+  ],
+  "failures": [],
+  "adjusted_memory_ratios": {
+    "euclidean": 1.9760118009295573,
+    "sphere-atlas": 1.9761799735333039
+  }
+}

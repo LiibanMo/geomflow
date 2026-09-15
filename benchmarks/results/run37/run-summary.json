@@ -1,0 +1,40 @@
+{
+  "workflow_run": {
+    "id": 30999740128,
+    "number": 37,
+    "attempt": 1,
+    "url": "https://github.com/LiibanMo/geomflow/actions/runs/30999740128",
+    "commit": "13d8e13adc62952f51a5689422e65137b1c898a9",
+    "status": "passed"
+  },
+  "vast_offer": {
+    "id": 45602481,
+    "location": "Poland, PL",
+    "gpu_name": "RTX 3060",
+    "gpu_count": 2,
+    "reliability": 0.9990174,
+    "cost_usd_per_hour": 0.12555555555555556
+  },
+  "artifacts": [
+    {
+      "name": "cuda-vast-30999740128-1",
+      "digest": "sha256:9faf7681f9dcf15a1ce36b4a15131a59b7eacaf04fda1d7527af07a841dc0bce",
+      "retention_expires": "2026-11-03T11:01:03Z"
+    },
+    {
+      "name": "cuda-vast-traces-30999740128-1",
+      "digest": "sha256:ce7152721fe830242f1e06e26546d7b28635bd8929da7676cce9c63433df6fbd",
+      "retention_expires": "2026-08-19T12:13:24Z"
+    }
+  ],
+  "durable_trace_archive": {
+    "path": "cuda-vast-traces-30999740128-1.zip",
+    "digest": "sha256:415263c9c6c5cc04a13916288acdf887020ea1ba9ea713023c3ae7b31c601326"
+  },
+  "jobs": {
+    "cuda_evidence": "passed",
+    "billing_watchdog": "passed",
+    "verified_cleanup": "passed",
+    "release_verdict": "passed"
+  }
+}

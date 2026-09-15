@@ -366,8 +366,8 @@ def main() -> int:
         regression_batches = [8]
         crossover_batches = [1, 8]
     else:
-        regression_batches = [256, 512]
-        crossover_batches = [1, 64, 256, 512, 1024, 2048, 4096]
+        regression_batches = frozen_manifest["regression_batches"]
+        crossover_batches = frozen_manifest["crossover_batches"]
 
     payload: dict[str, Any] = {
         "schema_version": 2,

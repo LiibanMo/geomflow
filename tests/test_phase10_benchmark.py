@@ -39,6 +39,10 @@ def _compiler_module():
     return _benchmark_module("phase10_compiler")
 
 
+def _derivative_candidates_module():
+    return _benchmark_module("phase10_derivative_candidates")
+
+
 def _verify_module():
     return _benchmark_module("phase10_verify")
 
@@ -256,14 +260,14 @@ def _release_payload():
         "scenarios": ["euclidean", "sphere-atlas"],
         "workloads": ["forward", "backward"],
         "regression_batches": [256, 512],
-        "crossover_batches": [1, 64, 256, 512, 1024, 2048, 4096],
+        "crossover_batches": [1, 64, 256, 512, 1024, 2048, 4096, 8192],
         "dimension": 2,
         "hidden_width": 32,
         "hidden_depth": 2,
         "steps": 16,
         "dtype": "float32",
-        "device_execution": "eager direct autograd",
-        "divergence": "exact intrinsic component gradients",
+        "device_execution": "automatic eligible backend, direct autograd",
+        "divergence": "exact intrinsic tensor trace with eager fallback",
         "seed": 0,
         "quartets": 10,
         "warmup": 3,
@@ -447,7 +451,7 @@ def test_release_verifier_reconstructs_no_eligible_batch() -> None:
     frozen, source_digests, payload = _release_payload()
     family = "euclidean-forward"
     eligibility = []
-    for batch in (256, 512, 1024, 2048, 4096):
+    for batch in (256, 512, 1024, 2048, 4096, 8192):
         samples = [90.0] * 20
         bounds = paired.deterministic_block_bootstrap_bounds(samples, 0.05 / 4.0)
         eligibility.append(
@@ -645,9 +649,18 @@ def test_profiler_uses_each_speed_gate_backend(monkeypatch, tmp_path: Path) -> N
     paired_path.write_text(json.dumps({"speed_gates": gates}))
     observed = []
 
-    def run_case(scenario, workload, batch_size, trace_path, expected_backend):
+    def run_case(
+        scenario,
+        workload,
+        batch_size,
+        trace_path,
+        expected_backend,
+        force_eager=False,
+    ):
         del trace_path
-        observed.append((scenario, workload, batch_size, expected_backend))
+        observed.append(
+            (scenario, workload, batch_size, expected_backend, force_eager)
+        )
         return {"failures": []}
 
     monkeypatch.setattr(profile.torch.cuda, "is_available", lambda: True)
@@ -669,12 +682,78 @@ def test_profiler_uses_each_speed_gate_backend(monkeypatch, tmp_path: Path) -> N
 
     assert profile.main() == 0
     assert json.loads(output_path.read_text())["status"] == "passed"
-    assert {entry[3] for entry in observed if entry[0] == "euclidean"} == {
-        "inductor"
-    }
-    assert {entry[3] for entry in observed if entry[0] == "sphere-atlas"} == {
-        "tensor-eager"
-    }
+    assert {
+        entry[3] for entry in observed if entry[0] == "euclidean" and not entry[4]
+    } == {"inductor"}
+    assert {
+        entry[3]
+        for entry in observed
+        if entry[0] == "sphere-atlas" and not entry[4]
+    } == {"tensor-eager"}
+    assert {entry[3] for entry in observed if entry[4]} == {"tensor-eager"}
+
+
+def test_profiler_records_missing_speed_gates_as_failed_evidence(
+    monkeypatch, tmp_path: Path
+) -> None:
+    profile = _profile_module()
+    paired_path = tmp_path / "paired.json"
+    output_path = tmp_path / "profile.json"
+    paired_path.write_text(json.dumps({"speed_gates": {}}))
+    monkeypatch.setattr(profile.torch.cuda, "is_available", lambda: True)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "phase10_profile.py",
+            "--paired",
+            str(paired_path),
+            "--output",
+            str(output_path),
+            "--trace-dir",
+            str(tmp_path / "traces"),
+        ],
+    )
+
+    with pytest.raises(ValueError, match="found 0"):
+        profile.main()
+
+    evidence = json.loads(output_path.read_text())
+    assert evidence["status"] == "failed"
+    assert evidence["failures"] == [
+        "paired evidence must contain four selected speed gates; found 0"
+    ]
+
+
+def test_profiler_checkpoints_case_exceptions_as_failed_evidence(
+    monkeypatch, tmp_path: Path
+) -> None:
+    profile = _profile_module()
+    output_path = tmp_path / "profile.json"
+    monkeypatch.setattr(profile.torch.cuda, "is_available", lambda: True)
+    monkeypatch.setattr(
+        profile,
+        "run_case",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(RuntimeError("profile failed")),
+    )
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "phase10_profile.py",
+            "--output",
+            str(output_path),
+            "--trace-dir",
+            str(tmp_path / "traces"),
+        ],
+    )
+
+    assert profile.main() == 1
+    evidence = json.loads(output_path.read_text())
+    assert evidence["status"] == "failed"
+    assert evidence["failures"] == [
+        "production profile euclidean/forward failed: RuntimeError: profile failed"
+    ]
 
 
 def test_resource_baseline_preserves_allocated_gradient_storage() -> None:
@@ -730,6 +809,65 @@ def test_compiler_harness_errors_are_not_candidate_rejections(monkeypatch) -> No
     assert record["error"] == "RuntimeError: broken harness"
 
 
+@pytest.mark.parametrize(
+    "strategy",
+    (
+        "component-vjp",
+        "batched-vjp",
+        "vmap-jacrev",
+        "chunked-jacrev",
+        "jacfwd",
+        "jvp-trace",
+        "explicit-tangent",
+    ),
+)
+def test_derivative_candidates_match_explicit_trace(strategy: str) -> None:
+    candidates = _derivative_candidates_module()
+    torch.manual_seed(0)
+    field = candidates.ManifoldVectorField(2, hidden_dim=4, n_layers=1).double()
+    state = torch.randn(5, 2, dtype=torch.double, requires_grad=True)
+    time = state.new_full(state.shape[:-1], 0.25)
+
+    expected_value, expected_trace = candidates.value_and_trace(
+        field, time, state, "explicit-tangent"
+    )
+    actual_value, actual_trace = candidates.value_and_trace(
+        field, time, state, strategy
+    )
+
+    torch.testing.assert_close(actual_value, expected_value)
+    torch.testing.assert_close(actual_trace, expected_trace)
+    solved = candidates.solve(field, state, strategy)
+    gradients = torch.autograd.grad(
+        candidates.objective(solved), (state, *field.parameters()), allow_unused=False
+    )
+    assert all(torch.isfinite(gradient).all() for gradient in gradients)
+
+
+def test_derivative_candidate_score_weights_both_complete_solve_workloads() -> None:
+    candidates = _derivative_candidates_module()
+    forward_winner = {
+        "measurements": [
+            {
+                "forward_samples_ms": [1.0, 1.0, 1.0],
+                "forward_backward_samples_ms": [2.0, 2.0, 2.0],
+            }
+        ]
+    }
+    backward_only_winner = {
+        "measurements": [
+            {
+                "forward_samples_ms": [3.0, 3.0, 3.0],
+                "forward_backward_samples_ms": [1.0, 1.0, 1.0],
+            }
+        ]
+    }
+
+    assert candidates.complete_solve_score(
+        forward_winner
+    ) < candidates.complete_solve_score(backward_only_winner)
+
+
 def test_compiler_unsupported_fullgraph_is_a_candidate_rejection(monkeypatch) -> None:
     compiler = _compiler_module()
 
@@ -761,6 +899,28 @@ def test_compiler_harness_errors_fail_the_evidence_run(monkeypatch, tmp_path) ->
     result = json.loads(output.read_text())
     assert result["status"] == "infrastructure_error"
     assert result["decision"] == "undetermined"
+
+
+def test_compiler_rejection_fails_the_evidence_run(monkeypatch, tmp_path) -> None:
+    compiler = _compiler_module()
+    output = tmp_path / "compiler.json"
+    monkeypatch.setattr(
+        sys, "argv", ["phase10_compiler.py", "--output", str(output), "--quick"]
+    )
+    monkeypatch.setattr(compiler.torch.cuda, "is_available", lambda: False)
+    monkeypatch.setattr(
+        compiler,
+        "evaluate",
+        lambda *_args: {"status": "rejected", "device": "cpu", "mode": "default"},
+    )
+
+    assert compiler.main() == 1
+    result = json.loads(output.read_text())
+    assert result["status"] == "failed"
+    assert result["decision"] == "retain_eager"
+    assert result["failures"] == [
+        "production default-mode TorchInductor did not pass every CUDA gate"
+    ]
 
 
 def test_run_defaults_fail_closed_with_five_repetitions(monkeypatch) -> None:
