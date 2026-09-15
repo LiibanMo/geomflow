@@ -34,6 +34,32 @@ candidate CUDA timing use isolated persistent workers and drift-balanced
 quartets. A failed or inconclusive performance decision blocks release only
 after its raw evidence has been uploaded.
 
+Run 37 validated commit `13d8e13adc62952f51a5689422e65137b1c898a9`
+on a verified 2x RTX 3060 host in Poland. Both PyTorch 2.5.1/CUDA 12.4 and
+PyTorch 2.7.1/CUDA 12.8 built-wheel suites passed without critical skips, as
+did DDP, soak, direct and adjoint memory, multi-chart control, compiler,
+profiling, watchdog, cleanup, and the final release verdict. Dynamic-batch
+full-graph TorchInductor was selected for eligible built-in CUDA solves with
+zero fallback and zero graph breaks; exact tensor eager remains the supported
+fallback.
+
+At the first objectively eligible batches, Euclidean forward and
+forward-plus-backward achieved lower speedup bounds of 14.438x and 2.808x
+against the 2.0x requirement. No-switch atlas forward and
+forward-plus-backward achieved 9.712x and 2.733x against 1.5x. The CPU
+candidate/baseline geometric-mean ratio was 0.711 with upper bound 0.712. The
+Vast.ai watchdog and independent cleanup job verified the instance and exact
+runner registration absent before the release verdict passed. Evidence is
+preserved under `benchmarks/results/run37`; GitHub run `30999740128` records
+artifact digest
+`sha256:9faf7681f9dcf15a1ce36b4a15131a59b7eacaf04fda1d7527af07a841dc0bce`.
+
+The optimized tensor-eager oracle that preceded compiler selection is
+preserved under `benchmarks/results/run29`. Its scoped profile passed with zero
+materializing host transfers and no silent derivative fallback. Its failed
+speed verdict is retained rather than rewritten: Run 37 compares the accepted
+production backend against that exact eager implementation.
+
 The July 2026 release-candidate run on a verified Norwegian 2x RTX 3060 host
 passed 253 built-wheel tests with zero skips under both PyTorch 2.5.1/CUDA 12.4
 and PyTorch 2.7.1/CUDA 12.8. Two-rank NCCL validation passed direct-autograd,
@@ -42,7 +68,8 @@ checks. Forty-iteration single-chart and multi-chart soaks each measured zero
 tail allocated-memory growth. Evidence is stored in
 `benchmarks/results/phase10_{torch25,torch27,ddp,soak}*`.
 
-The optimized candidate at revision `f37bc6e` was rerun on a verified Norwegian
+In the historical run at revision `f37bc6e`, the optimized candidate was rerun
+on a verified Norwegian
 2x RTX 3060 host with reliability 0.9981399 at USD 0.127/hour. PyTorch 2.5.1
 with CUDA 12.4 and PyTorch 2.7.1 with CUDA 12.8 each passed 283 built-wheel
 tests with zero skips. DDP, soak, scoped transfer, direct-memory, adjoint-memory,
@@ -51,12 +78,13 @@ direct adjusted-memory ratios were 1.994, and adjoint 128/16-step adjusted-memor
 ratios were 1.0. Scoped profiles recorded 64 field calls, zero functional
 transform attempts or fallbacks, and zero materializing host-transfer bytes.
 
-The CPU remediation passed decisively: all eight case intervals passed and the
-equal-weight geometric-mean candidate/baseline ratio was 0.795. The release is
-still blocked because all CUDA speed gates failed at their first eligible
-batches. Speedup upper bounds were 0.363 and 0.341 for Euclidean forward and
-backward, and 0.266 and 0.265 for atlas forward and backward. The bounded
-TorchInductor experiment was rejected, so eager remains the selected backend.
+In that run, the CPU remediation passed decisively: all eight case intervals
+passed and the equal-weight geometric-mean candidate/baseline ratio was 0.795.
+The release is still blocked because all CUDA speed gates failed at their first
+eligible batches. Speedup upper bounds were 0.363 and 0.341 for Euclidean
+forward and backward, and 0.266 and 0.265 for atlas forward and backward. The
+bounded TorchInductor experiment was rejected, so that candidate retained eager
+execution.
 These results must not be converted into a release claim by choosing a later
 batch or weakening thresholds. Evidence is preserved under
 `benchmarks/results/direct-*`. Vast.ai instance `46252762` and exact-label
@@ -110,12 +138,12 @@ x64 checksum must be refreshed within 30 days of a GitHub runner release.
 
 After environment authorization, provisioning and a GitHub-hosted billing
 watchdog start independently. The watchdog discovers contracts by exact label,
-enforces a 105-minute lease from the Vast.ai start time, detects an offline
+enforces a 150-minute lease from the Vast.ai start time, detects an offline
 runner or a CUDA job left queued without assignment, and verifies instance and
 runner removal before cancelling a failed run. The unconditional cleanup job
 performs the same exact-label verification without relying on provision outputs.
 `.github/workflows/cuda-vast-reaper.yml` runs every ten minutes and removes
-managed contracts older than 110 minutes if the original workflow is lost or
+managed contracts older than 155 minutes if the original workflow is lost or
 force-cancelled. It also reconciles old managed runner registrations that have
 no corresponding instance.
 
@@ -126,7 +154,7 @@ the CUDA job.
 
 The scheduled reaper still depends on the GitHub Actions control plane. During
 a prolonged GitHub outage, check the Vast.ai console for labels beginning with
-`geomflow-vast-` and destroy any contract beyond the 105-minute lease.
+`geomflow-vast-` and destroy any contract beyond the 150-minute lease.
 
 ## Known limitations
 
@@ -136,7 +164,7 @@ a prolonged GitHub outage, check the Vast.ai console for labels beginning with
 - Multi-chart training uses direct autograd.
 - Eligible built-in CUDA solves automatically request TorchInductor with exact
   eager fallback and backward recomputation. `compile=False` forces exact
-  tensor-eager execution. Production approval remains provisional until all
-  four frozen speed gates pass without fallback.
+  tensor-eager execution. Run 37 passed all four frozen speed gates without
+  fallback.
 - The header-only C++ and pybind APIs are CPU-only.
 - MPS is best-effort, not production-supported.

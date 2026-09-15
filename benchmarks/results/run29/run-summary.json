@@ -1,0 +1,13 @@
+{
+  "workflow_run": {
+    "id": 30773184755,
+    "number": 29,
+    "commit": "280f8def3cb5dfa762ed1b9b9b78476361bee2ef",
+    "status": "failed-release-gates"
+  },
+  "purpose": "Preserved optimized tensor-eager oracle evidence before production compiler selection",
+  "profile_status": "passed",
+  "profile_backend": "tensor-eager",
+  "release_decision": "failed",
+  "teardown": "verified"
+}

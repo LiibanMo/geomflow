@@ -1,0 +1,54 @@
+{
+  "commit": "13d8e13adc62952f51a5689422e65137b1c898a9",
+  "os": "Linux-6.8.0-134-generic-x86_64-with-glibc2.35",
+  "python": "3.11.13 | packaged by conda-forge | (main, Jun  4 2025, 14:48:23) [GCC 13.3.0]",
+  "pytorch": "2.5.1+cu124",
+  "pytorch_cuda": "12.4",
+  "cudnn": 90100,
+  "driver": "580.173.02\n580.173.02",
+  "gpu_uuids": [
+    "GPU-e3de3389-28e9-e490-bd78-5631b55f8df0",
+    "GPU-2992981e-79b1-4d87-954c-d646b1242238"
+  ],
+  "devices": [
+    {
+      "index": 0,
+      "name": "NVIDIA GeForce RTX 3060",
+      "compute_capability": [
+        8,
+        6
+      ],
+      "memory_bytes": 12488343552
+    },
+    {
+      "index": 1,
+      "name": "NVIDIA GeForce RTX 3060",
+      "compute_capability": [
+        8,
+        6
+      ],
+      "memory_bytes": 12488343552
+    }
+  ],
+  "cpu_model": "AMD Ryzen 5 5600X 6-Core Processor",
+  "cpu_count": 12,
+  "cpu_affinity": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11
+  ],
+  "memory_bytes": 33569316864,
+  "torch_num_threads": 6,
+  "torch_num_interop_threads": 6,
+  "deterministic_algorithms": false,
+  "cudnn_benchmark": false
+}
